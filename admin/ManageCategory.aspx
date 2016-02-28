@@ -23,15 +23,15 @@
                 <div class="panel-body">
                     <div id="divCategoryID" class="form-group">
                         <label for="lblCategoryID" class="col-xs-2 col-sm-2 col-md-2 col-lg-2 control-label">类别ID：</label>
-                        <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10" style="padding-top: 7px;">
-                            <asp:Label ID="lblCategoryID" runat="server" ClientIDMode="Static" CssClass="control-label"></asp:Label>
+                        <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10">
+                            <p id="lblCategoryID" class="form-control-static"></p>
                             <asp:HiddenField ID="hfCategoryID" runat="server" ClientIDMode="Static" />
                         </div>
                     </div>
                     <div id="divParentID" class="form-group">
                         <label for="lblParentID" class="col-xs-2 col-sm-2 col-md-2 col-lg-2 control-label">上级类别：</label>
-                        <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10" style="padding-top: 7px;">
-                            <asp:Label ID="lblParentID" CssClass="control-label" runat="server" Text="" ClientIDMode="Static"></asp:Label>
+                        <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10">
+                            <p id="lblParentID" class="form-control-static"></p>
                             <asp:HiddenField ID="hfParentID" runat="server" ClientIDMode="Static" />
                         </div>
                     </div>
