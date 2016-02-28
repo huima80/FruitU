@@ -1,0 +1,476 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XXX果汁店</title>
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <script src="http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <style>
+        .data-theme-f{
+         background-color:orange;
+         color:white;   
+        }
+
+    </style>
+</head>
+<body>
+    <form method="post" action="MakeOrder.aspx?showwxpaytitle=1" id="frmOrder" data-ajax="false">
+        <div data-role="page" data-theme="a" id="pgSelectFruit">
+            <div data-role="header">
+                <h1>请选择您喜爱的水果搭配</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+                <div class="ui-grid-a">
+                    <div class="ui-block-a ui-btn ui-corner-all" id="divXigua">
+                        <img id="xigua" src="images\watermelon.jpg" class="ui-corner-all ui-shadow" alt="西瓜" />
+                        <input type="checkbox" id="cbWatermelon" name="cbFruit" value="" />
+                        <label for="cbWatermelon" id="lblWatermelon">西瓜</label>
+                    </div>
+                    <div class="ui-block-b ui-btn ui-corner-all" id="divCaomei">
+                        <img id="caomei" src="images\strawberry.jpg" class="ui-corner-all ui-shadow" alt="草莓" />
+                        <input type="checkbox" id="cbStrawberry" name="cbFruit" value="" />
+                        <label for="cbStrawberry" id="lblStrawberry">草莓</label>
+                    </div>
+                </div>
+
+                <div class="ui-grid-a">
+                    <div class="ui-block-a ui-btn ui-corner-all" id="divHuolongguo">
+                        <img id="huolongguo" src="images\pitaya.jpg" alt="火龙果" class="ui-corner-all ui-shadow" />
+                        <input type="checkbox" id="cbPitaya" name="cbFruit" value=""/>
+                        <label for="cbPitaya" id="lblPitaya">火龙果</label>
+                    </div>
+
+                    <div class="ui-block-b ui-btn ui-corner-all" id="divLizi">
+                        <img id="lizi" src="images\pear.jpg" class="ui-corner-all ui-shadow" alt="梨子" />
+                        <input type="checkbox" id="cbPear" name="cbFruit" value="" />
+                        <label for="cbPear" id="lblPear">梨子</label>
+                    </div>
+                </div>
+
+                <div class="ui-grid-a">
+                    <div class="ui-block-a ui-btn ui-corner-all" id="divNiuyouguo">
+                        <img id="niuyouguo" src="images\avocado.jpg" class="ui-corner-all ui-shadow" alt="牛油果"  />
+                        <input type="checkbox" id="cbAvocado" name="cbFruit" value="" />
+                        <label for="cbAvocado" id="lblAvocado">牛油果</label>
+                    </div>
+                    <div class="ui-block-b ui-btn ui-corner-all" id="divPingguo">
+                        <img id="pingguo" src="images\apple.jpg" alt="苹果" class="ui-corner-all ui-shadow" />
+                        <input type="checkbox" id="cbApple" name="cbFruit" value="" />
+                        <label for="cbApple" id="lblApple">苹果</label>
+                    </div>
+                </div>
+
+                <div class="ui-grid-a">
+                    <div class="ui-block-a ui-btn ui-corner-all" id="divHuanggua">
+                        <img id="huanggua" src="images\cucumber.png" class="ui-corner-all ui-shadow" alt="黄瓜"  />
+                        <input type="checkbox" id="cbCucumber" name="cbFruit" value=""/>
+                        <label for="cbCucumber" id="lblCucumber">黄瓜</label>
+                    </div>
+                    <div class="ui-block-b ui-btn ui-corner-all" id="divChengzi">
+                        <img id="chengzi" src="images\orange.jpg" class="ui-corner-all ui-shadow" alt="橙子"  />
+                        <input type="checkbox" id="cbOrange" name="cbFruit" value="" />
+                        <label for="cbOrange" id="lblOrange">橙子</label>
+                    </div>
+                </div>
+
+                <div class="ui-grid-a">
+                    <div class="ui-block-a ui-btn ui-corner-all" id="divHuluobo">
+                        <img id="huluobo" src="images\carrot.jpg" alt="胡萝卜" class="ui-corner-all ui-shadow"  />
+                        <input type="checkbox" id="cbCarrot" name="cbFruit" value=""/>
+                        <label for="cbCarrot" id="lblCarrot">胡萝卜</label>
+                    </div>
+                </div>
+                <a href="#pgConfirmFruit" id="btnConfirmFruit" class="ui-btn ui-corner-all ui-shadow" style="background-color:orange;color:white;">立即购买</a>
+            </div>
+            <div data-role="footer">
+                <h1></h1>
+            </div>
+        </div>
+
+
+        <div data-role="page" id="pgConfirmFruit">
+            <div data-role="header">
+                <h1>以下是您选择的水果</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+                <ul id="ulSelectedFruits" data-role="listview" data-inset="true" class="ui-corner-all" style="vertical-align:middle;"></ul>
+                您需要几份：
+                <a href="#" id="btnDesc" class="ui-btn ui-corner-all ui-icon-minus ui-btn-icon-notext ui-btn-inline">-</a>
+                <input type="text" name="txtQty" id="txtQty" data-role="none" class="ui-btn-inline" size="2" value="1" readonly style="font-size:x-large;text-align:center;">
+                <a href="#" id="btnAsc" class="ui-btn ui-corner-all ui-icon-plus ui-btn-icon-notext ui-btn-inline">+</a>
+                <br>
+                合计：<div id="divTotalPrice" class="ui-btn-inline" style="font-size:x-large;text-align:center;color:red;"></div>元
+                <br>
+    <a href="#" id="btnBack" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-back ui-btn-icon-left" data-rel="back">重新选择</a>
+    <a href="#pgDeliverInfo" id="btnDeliverInfo" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-home ui-btn-icon-left">配送地址</a>
+</div>
+
+            <div data-role="footer">
+                <h1></h1>
+            </div>
+        </div>
+
+        <div data-role="page" id="pgDeliverInfo">
+            <div data-role="header">
+                <h1>果汁送到哪里去呢？</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+                <div class="ui-field-contain">
+                    <label for="txtName">您的姓名</label>
+                    <input type="text" name="txtName" id="txtName" required>
+                    <label for="txtPhoneNumber">手机号码</label>
+                    <input type="tel" name="txtPhoneNumber" id="txtPhoneNumber" required>
+                    <label for="txtDeliverDate">配送时间</label>
+                    <input type="date" name="txtDeliverDate" id="txtDeliverDate" required>
+                    <label for="txtDeliverAddress">配送地址</label>
+                    <textarea name="txtDeliverAddress" id="txtDeliverAddress" required></textarea>
+                    <label for="txtMemo">备注信息</label>
+                    <textarea name="txtMemo" id="txtMemo" placeholder="您的其他要求..."></textarea>
+                </div>
+                <a href="#" id="btnBack" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-back ui-btn-icon-left" data-rel="back">重新选择</a>
+                <input type="submit" id="btnMakeOrder" data-inline="true" data-icon="check" data-theme="u" value="生成订单" />
+            </div>
+
+            <div data-role="footer">
+                <h1></h1>
+            </div>
+        </div>
+
+    </form>
+
+    <script>
+
+
+
+        //购物车类
+        function FruitCart(quantity, deliverName, phoneNumber, deliverDate, deliverAddress, memo) {
+            this.fruits = new Array();
+            this.quantity = quantity;
+            this.deliverName = deliverName;
+            this.phoneNumber = phoneNumber;
+            this.deliverDate = deliverDate;
+            this.deliverAddress = deliverAddress;
+            this.memo = memo;
+        }
+
+        //购物车的计算总价格方法
+        FruitCart.prototype.totalPrice = function () {
+            var sum = 0;
+            var len = this.fruits.length;
+            for (var i = 0; i < len; i++) {
+                sum += parseFloat(this.fruits[i].price);
+            }
+            sum *= this.quantity;
+            return sum;
+        };
+
+        //水果类
+        function Fruit(fruitID, fruitName, price, fruitImg) {
+            this.fruitID = fruitID,
+            this.fruitName = fruitName;
+            this.price = price;
+            this.fruitImg = fruitImg;
+        }
+
+        //全局水果对象
+        var watermelon = new Fruit(1, "西瓜", 0.01, "watermelon.jpg");
+        var strawberry = new Fruit(2, "草莓", 0.01, "strawberry.jpg");
+        var pitaya = new Fruit(3, "火龙果", 0.01, "pitaya.jpg");
+        var pear = new Fruit(4, "梨子", 0.01, "pear.jpg");
+        var avocado = new Fruit(5, "牛油果", 0.01, "avocado.jpg");
+        var apple = new Fruit(6, "苹果", 0.01, "apple.jpg");
+        var cucumber = new Fruit(7, "黄瓜", 0.01, "cucumber.png");
+        var orange = new Fruit(8, "橙子", 0.01, "orange.jpg");
+        var carrot = new Fruit(9, "胡萝卜", 0.01, "carrot.jpg");
+
+        //全局购物车对象
+        var myCart = new FruitCart();
+
+        $(function () {
+
+            $("#pgConfirmFruit").page();
+
+            //图片自适应窗口
+            ImgAutoSize();
+
+            //送货日期默认为今天
+            $("#txtDeliverDate").attr("value", (new Date()).toLocaleDateString());
+
+            //绑定水果名称和价格
+            $(":checkbox").each(function () {
+                switch ($(this).prop("id")) {
+                    case "cbWatermelon":
+                        $(this).attr("value", watermelon.fruitID + "|" + watermelon.fruitName + "|" + watermelon.price + "|" + watermelon.fruitImg);
+                        break;
+                    case "cbStrawberry":
+                        $(this).attr("value", strawberry.fruitID + "|" + strawberry.fruitName + "|" + strawberry.price + "|" + strawberry.fruitImg);
+                        break;
+                    case "cbPitaya":
+                        $(this).attr("value", pitaya.fruitID + "|" + pitaya.fruitName + "|" + pitaya.price + "|" + pitaya.fruitImg);
+                        break;
+                    case "cbPear":
+                        $(this).attr("value", pear.fruitID + "|" + pear.fruitName + "|" + pear.price + "|" + pear.fruitImg);
+                        break;
+                    case "cbAvocado":
+                        $(this).attr("value", avocado.fruitID + "|" + avocado.fruitName + "|" + avocado.price + "|" + avocado.fruitImg);
+                        break;
+                    case "cbApple":
+                        $(this).attr("value", apple.fruitID + "|" + apple.fruitName + "|" + apple.price + "|" + apple.fruitImg);
+                        break;
+                    case "cbCucumber":
+                        $(this).attr("value", cucumber.fruitID + "|" + cucumber.fruitName + "|" + cucumber.price + "|" + cucumber.fruitImg);
+                        break;
+                    case "cbOrange":
+                        $(this).attr("value", orange.fruitID + "|" + orange.fruitName + "|" + orange.price + "|" + orange.fruitImg);
+                        break;
+                    case "cbCarrot":
+                        $(this).attr("value", carrot.fruitID + "|" + carrot.fruitName + "|" + carrot.price + "|" + carrot.fruitImg);
+                        break;
+                };
+            });
+
+        });
+
+        $(window).resize(function () {
+            ImgAutoSize();
+        });
+
+        $(window).load(function () {
+            ImgAutoSize();
+        });
+
+        $("#cbWatermelon").click(function () {
+            XiguaRule();
+        }
+        );
+
+        $("img#xigua").tap(function () {
+            $("#cbWatermelon").click();
+        }
+        );
+        $("img#caomei").tap(function () {
+            $("#cbStrawberry").click();
+        }
+        );
+        $("img#huolongguo").tap(function () {
+            $("#cbPitaya").click();
+        }
+        );
+        $("img#lizi").tap(function () {
+            $("#cbPear").click();
+        }
+        );
+        $("img#niuyouguo").tap(function () {
+            $("#cbAvocado").click();
+        }
+        );
+        $("img#pingguo").tap(function () {
+            $("#cbApple").click();
+        }
+        );
+        $("img#huanggua").tap(function () {
+            $("#cbCucumber").click();
+        }
+        );
+        $("img#chengzi").tap(function () {
+            $("#cbOrange").click();
+        }
+        );
+        $("img#huluobo").tap(function () {
+            $("#cbCarrot").click();
+        }
+        );
+
+
+        //水果图片屏幕自适应
+        function ImgAutoSize() {
+            var SuitableWidth = $(window).width() * 0.43;
+
+            $("img").each(function (i, img) {
+                img.width = SuitableWidth;
+                img.height = SuitableWidth * 3 / 4;
+            });
+        }
+
+        //水果选择规则
+        function XiguaRule() {
+            if ($("#cbWatermelon").prop("checked")) {
+                $("img#caomei").fadeTo("slow", 0.15);
+                $("#cbStrawberry").attr("disabled", "disabled");
+                $("img#huolongguo").fadeTo("slow", 0.15);
+                $("#cbPitaya").attr("disabled", "disabled");
+
+            }
+            else {
+                $("img#caomei").fadeTo("slow", 1);
+                $("#cbStrawberry").removeAttr("disabled");
+                $("img#huolongguo").fadeTo("slow", 1);
+                $("#cbPitaya").removeAttr("disabled");
+            }
+        }
+
+        //填写配送地址
+        function DeliverInfo() {
+            myCart.deliverName = $("#txtName").val();
+            myCart.phoneNumber = $("#txtPhoneNumber").val();
+            myCart.deliverDate = $("#txtDeliverDate").val();
+            myCart.deliverAddress = $("#txtDeliverAddress").val();
+            myCart.memo = $("#txtMemo").val();
+
+            //测试打印购物车内容
+            //var tempStr = "", len = myCart.fruits.length;
+            //for (var i = 0; i < len; i++) {
+            //    tempStr += myCart.fruits[i].fruitName + ",";
+            //}
+            //tempStr += myCart.deliverName + ",";
+            //tempStr += myCart.phoneNumber + ",";
+            //tempStr += myCart.deliverDate + ",";
+            //tempStr += myCart.deliverAddress + ",";
+            //tempStr += myCart.memo + ",";
+            //tempStr += myCart.totalPrice() + ",";
+            //alert(tempStr);
+
+        }
+
+
+        //确认水果
+        $("#btnConfirmFruit").click(function () {
+
+            //初始化购物车
+            myCart.fruits.length = 0;
+
+            //清空已选择的水果列表
+            $("#ulSelectedFruits").empty();
+
+            //校验是否选择了水果
+            if ($("input:checked").length == 0) {
+                $("#ulSelectedFruits").append("<li>请至少选择一个水果：）</li>");
+                $("#divTotalPrice").hide();
+                $("#btnDeliverInfo").hide();
+            }
+            else {
+                var index = 0;
+
+                //把用户选择的水果加入到购物车myCart.fruits集合
+                $("input:checked").each(function () {
+
+                        switch ($(this).prop("id")) {
+                            case "cbWatermelon":
+                                myCart.fruits.push(watermelon);
+                                break;
+                            case "cbStrawberry":
+                                myCart.fruits.push(strawberry);
+                                break;
+                            case "cbPitaya":
+                                myCart.fruits.push(pitaya);
+                                break;
+                            case "cbPear":
+                                myCart.fruits.push(pear);
+                                break;
+                            case "cbAvocado":
+                                myCart.fruits.push(avocado);
+                                break;
+                            case "cbApple":
+                                myCart.fruits.push(apple);
+                                break;
+                            case "cbCucumber":
+                                myCart.fruits.push(cucumber);
+                                break;
+                            case "cbOrange":
+                                myCart.fruits.push(orange);
+                                break;
+                            case "cbCarrot":
+                                myCart.fruits.push(carrot);
+                                break;
+
+                        };
+
+                        //同时在页面上显示用户选择的水果
+                        $("#ulSelectedFruits").append("<li style='vertical-align:middle;'><img src='images\\" + myCart.fruits[index].fruitImg + "' />" + myCart.fruits[index].fruitName + " <font color='red'>" + myCart.fruits[index].price + "</font>元</li>");
+                        index++;
+
+                });
+                //更新购物车中的水果数量，初始值为1
+                myCart.quantity = parseInt($("#txtQty").val());
+
+                $("#divTotalPrice").show();
+                $("#btnDeliverInfo").show();
+
+                //显示购物车中的总价格
+                $("#divTotalPrice").text(myCart.totalPrice());
+
+
+            }
+            $("#ulSelectedFruits").listview("refresh");
+
+        });
+
+        //递减果汁数量
+        $("#btnDesc").click(function () {
+            var currQty = parseInt($("#txtQty").val());
+            if (currQty > 1) {
+                currQty--;
+            }
+            else {
+                currQty = 1;
+            }
+            //显示更新的数量
+            $("#txtQty").val(currQty);
+            
+            //更新购物车中的数量
+            myCart.quantity = currQty;
+
+            //显示购物车中的总价格
+            $("#divTotalPrice").text(myCart.totalPrice());
+
+            
+        });
+
+        //递增果汁数量
+        $("#btnAsc").click(function () {
+            var currQty = parseInt($("#txtQty").val());
+            currQty++;
+
+            //显示更新的数量
+            $("#txtQty").val(currQty);
+
+            //更新购物车中的数量
+            myCart.quantity = currQty;
+
+            //显示购物车中的总价格
+            $("#divTotalPrice").text(myCart.totalPrice());
+
+        });
+
+
+        $("#frmOrder").submit(function () {
+            //alert($("#frmOrder").serialize());
+        })
+
+        //$("#btnWXPay").click(function () {
+        //    DeliverInfo();
+        //    alert($("#frmOrder").serialize());
+        //    //后台调用微信支付统一下单接口，返回微信客户端所需的JS参数
+        //    $.post(
+        //    "JSAPIPay.ashx",
+        //    $("#frmOrder").serialize(),
+        //    function (data) {
+        //        wxJsApiParam = data;
+        //        alert(data);
+        //    },
+        //    "json"
+        //    );
+
+        //    jsApiCall();
+
+
+        //});
+
+
+    </script>
+</body>
+</html>

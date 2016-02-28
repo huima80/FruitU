@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XXX果汁店</title>
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <script src="http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+<body>
+    <div data-role="page" id="pgSelectFruit">
+        <div data-role="header">
+            <h1>请选择果汁</h1>
+        </div>
+
+        <div data-role="main" class="ui-content">
+            <div class="ui-grid-solo">
+                <div class="ui-block-a" id="divGuozhi1">
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="guozhi1" src="images\guozhi1.jpg" alt="果汁1" class="ui-corner-all ui-shadow"  />
+                        <label for="guozhi1" id="lblGuozhi1">果汁1</label>
+                    </a>
+                </div>
+            </div>
+            <div class="ui-grid-solo">
+                <div class="ui-block-a">
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="guozhi2" src="images\guozhi2.jpg" alt="果汁2" class="ui-corner-all ui-shadow" />
+                        <label for="guozhi2" id="lblGuozhi2">果汁2</label>
+                    </a>
+                </div>
+            </div>
+            <div class="ui-grid-solo">
+                <div class="ui-block-a">
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="guozhi3" src="images\guozhi3.jpg" alt="果汁3" class="ui-corner-all ui-shadow" />
+                        <label for="guozhi3" id="lblGuozhi3">果汁3</label>
+                    </a>
+                </div>
+            </div>
+            <div class="ui-grid-solo">
+                <div class="ui-block-a">
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="guozhi4" src="images\guozhi4.png" alt="果汁4" class="ui-corner-all ui-shadow" />
+                        <label for="guozhi4" id="lblGuozhi4">果汁4</label>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div data-role="footer">
+            <h1></h1>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            $(this).ImgAutoSize();
+        }
+);
+
+        $(window).resize(function () {
+            $(this).ImgAutoSize();
+        }
+        );
+
+        //果汁图片屏幕自适应
+        $.fn.ImgAutoSize = function () {
+            var SuitableWidth = $("#divGuozhi1").width() * 0.9;
+
+            $("img").each(function (i, img) {
+                img.width = SuitableWidth;
+                img.height = SuitableWidth * 3 / 4;
+            });
+        };
+
+
+    </script>
+</body>
+</html>

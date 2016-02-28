@@ -1,0 +1,70 @@
+﻿<footer class="footer">
+    <nav>
+        <ul>
+            <li><a id="navHomeBtn" class="nav-controller" href="Default.aspx"><i class="fa fa-home"></i>首页</a></li>
+            <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><i class="fa fa-shopping-cart"><span id="ProdAmountHints"></span></i>购物车</a></li>
+            <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><i class="fa fa-list"></i>我的订单</a></li>
+            <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><i class="fa fa-user"></i>个人中心</a></li>
+        </ul>
+    </nav>
+</footer>
+<!-- #include file="cs.aspx" -->
+<img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />
+
+<link href="css/footer.css" rel="stylesheet" />
+
+<!--<script src="http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>-->
+
+<script src="Scripts/jquery-1.12.0.js"></script>
+
+<script src="Scripts/jquery.cart.js"></script>
+
+<script>
+
+    var cart = new $.Cart({ cartName: "FruitUCart", isPersist: true });
+
+
+    $(function () {
+
+        //根据当前页面高亮菜单项
+        if (location.href.toLowerCase().indexOf("default") != -1) {
+            $("#navHomeBtn").addClass("active");
+        }
+        else {
+            if (location.href.toLowerCase().indexOf("mycart") != -1) {
+                $("#navCartListBtn").addClass("active");
+            }
+            else {
+                if (location.href.toLowerCase().indexOf("myorders") != -1) {
+                    $("#navOrderListBtn").addClass("active");
+                }
+                else {
+                    if (location.href.toLowerCase().indexOf("usercenter") != -1) {
+                        $("#navInfoCenterBtn").addClass("active");
+                    }
+                }
+            }
+        }
+
+        refreshCartProdQty(null, { prodQty: cart.prodAmount() });
+
+        //挂接购物车商品数量变动后事件处理函数
+        $(cart).on("prodItemsChanged", refreshCartProdQty);
+
+    });
+
+    //刷新购物车小圆点
+    function refreshCartProdQty(event, data) {
+
+        var $prodAmountHints = $("span#ProdAmountHints");
+        if (data.prodQty != 0) {
+            $prodAmountHints.text(data.prodQty);
+            $prodAmountHints.addClass("cart-prod-hint");
+            $prodAmountHints.show();
+        }
+        else {
+            $prodAmountHints.hide();
+        }
+    }
+
+</script>

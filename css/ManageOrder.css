@@ -1,0 +1,38 @@
+﻿.form-group{
+    padding: 4px;
+}
+
+input[type=checkbox] {
+    cursor:pointer;
+}
+
+.pager td{
+    padding:8px;
+    font-size:18px;
+}
+
+.search-result{
+    color:red;
+    padding:4px;
+}
+
+.purchase-price{
+    font-size:14px;
+    color:darkorange;
+}
+
+.purchase-unit{
+    font-size:10px;
+    color:darkgrey;
+}
+
+.purchase-qty{
+    font-size:10px;
+    font-style:italic;
+    color:grey;
+}
+
+.order-price{
+    font-size:large;
+    color:red;
+}

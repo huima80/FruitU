@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XXX果汁店</title>
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <script src="http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://apps.bdimg.com/libs/jquerymobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+<body>
+    <div data-role="page" id="pgSelectFruit">
+        <div data-role="header">
+            <h1>请选择榨汁或切片</h1>
+        </div>
+
+        <div data-role="main" class="ui-content">
+            <div class="ui-grid-solo">
+                <div class="ui-block-a" id="divJuice">
+                    <a href="DIYJuice.html" rel="external" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="guozhi" src="images\guozhi1.jpg" alt="果汁" class="ui-corner-all ui-shadow" />
+                        <label for="guozhi" id="lblGuozhi">果汁</label>
+                    </a>
+                </div>
+            </div>
+            <div class="ui-grid-solo">
+                <div class="ui-block-a">
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow">
+                        <img id="qiepian" src="images\qiepian1.jpg" alt="切片" class="ui-corner-all ui-shadow" />
+                        <label for="qiepian" id="lblQiepian">切片</label>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div data-role="footer">
+            <h1></h1>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            $(this).ImgAutoSize();
+        }
+);
+
+        $(window).resize(function () {
+            $(this).ImgAutoSize();
+        }
+        );
+
+        //果汁图片屏幕自适应
+        $.fn.ImgAutoSize = function () {
+            var SuitableWidth = $("#divJuice").width() * 0.9;
+
+            $("img").each(function (i, img) {
+                img.width = SuitableWidth;
+                img.height = SuitableWidth * 3 / 4;
+            });
+        };
+
+
+    </script>
+
+</body>
+</html>

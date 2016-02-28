@@ -1,0 +1,60 @@
+﻿body{
+    user-select: none;
+}
+
+.header{
+    background-color:orange;
+    min-height:100px;
+    padding:20px;
+}
+
+img.user-portrait
+{
+    width:64px;
+    height:64px;
+    vertical-align:middle;
+    border-radius:50%;
+}
+
+.col-xs-6{
+    padding:2px;
+}
+
+.info-block{
+    text-align:center;
+    min-height:80px;
+    margin:2px;
+    background-color:white;
+    border-radius:8px;
+    padding:8px;
+    cursor:pointer;
+}
+
+.info-block i{
+    font-size:50px;
+}
+
+.info-block .fa-truck{
+    color:green;
+}
+
+.info-block .fa-list{
+    color:darkblue;
+}
+
+.info-block .fa-money{
+    color:red;
+}
+
+.info-block .fa-comments{
+    color:#00CD00;
+}
+
+.info-block .fa-phone{
+    color:grey;
+}
+
+.info-block .fa-qq{
+    color:darkred;
+}
+

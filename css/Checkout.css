@@ -1,0 +1,105 @@
+﻿body {
+    background: #EDEDED;
+    user-select: none;
+    padding-bottom: 56px;
+}
+
+.container {
+    padding: 0;
+}
+
+.row {
+    margin: 0;
+}
+
+.prod-item {
+    width: 95%;
+    min-height: 100px;
+    margin: 10px auto;
+    background-color: white;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+    .prod-item div {
+        padding: 2px;
+    }
+
+.prod-item-left {
+    text-align: center;
+}
+
+.prod-item-middle {
+    text-align: left;
+}
+
+.prod-item-right {
+    text-align: right;
+}
+
+.cart-prod-img img {
+    height: 72px;
+    width: 72px;
+    border-radius: 10%;
+    margin: 4px;
+}
+
+.prod-name {
+    padding: 4px;
+    font-weight: bold;
+}
+
+.prod-desc {
+    padding: 4px;
+    font-size: 12px;
+    color: deeppink;
+}
+
+.prod-price {
+    color: red;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px;
+}
+
+.prod-qty {
+}
+
+.panel{
+    margin:4px;
+}
+
+.order-memo{
+    margin:4px;
+}
+
+.wx-user-addr-info {
+    display: none;
+}
+
+.customize-addr-info {
+    display: none;
+}
+
+hr {
+    border-color: white;
+}
+
+.sub-total {
+    text-align: center;
+}
+
+.sub-total-price {
+    color: red;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.pay-button {
+    margin: 10px auto;
+}
+
+.btn-wxpay {
+    background-color: #00CD00 !important;
+    color: white !important;
+}

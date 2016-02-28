@@ -1,0 +1,100 @@
+﻿.container {
+    padding: 0;
+}
+
+.row {
+    margin: 0;
+}
+
+.col-xs-12 {
+    padding: 0;
+}
+
+.order-item{
+    min-height:100px;
+    margin: 8px 8px 0;
+    padding: 8px;
+    background-color:white;
+    border-radius:8px;
+    position:relative;
+}
+
+.order-id{
+    font-size:12px;
+    color:lightgrey;
+}
+
+.order-state{
+    float:right;
+    font-size:12px;
+}
+
+img.prod-img{
+    width:40px;
+    height:30px;
+    vertical-align:middle;
+}
+
+.order-product-name{
+    font-size:14px;
+}
+
+.purchase-price{
+    font-size:12px;
+    color:orange;
+}
+
+.purchase-unit{
+    font-size:10px;
+    color:darkgrey;
+}
+
+.purchase-qty{
+    font-size:10px;
+    font-style:italic;
+    color:lightgrey;
+}
+
+.order-date{
+    text-align:left;
+    font-size:12px;
+    color:lightgrey;
+}
+
+.deliver-date{
+    text-align:left;
+    font-size:12px;
+    color:cornflowerblue;
+    width:100%;
+}
+
+div.order-price{
+    text-align:right;
+
+}
+
+span.order-price{
+    font-size:x-large;
+    color:red;
+}
+
+.order-quantity{
+    font-size:larger;
+    font-weight:bold;
+    color:blue;
+}
+
+.btn-wxpay{
+    background-color:#00CD00 !important;
+    color:white !important;
+    margin-left:10px;
+}
+
+.pay-success{
+    color:green;
+}
+
+.not-pay{
+    color:orange;
+}
+

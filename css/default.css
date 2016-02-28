@@ -1,0 +1,254 @@
+
+.container {
+    padding: 0;
+}
+
+.row {
+    margin: 0;
+}
+
+.col-xs-12 {
+    padding: 0;
+}
+
+.header {
+    text-align: center;
+    height: 45px;
+    line-height: 45px;
+    background: #FFFFFF;
+    -webkit-box-shadow: 0 0 4px rgba(0, 0, 0, .2);
+    box-shadow: 0 0 4px rgba(0, 0, 0, .2);
+    z-index: 9999;
+}
+
+.logo {
+    border-right: 1px solid #EDEDED;
+    padding: 0;
+}
+
+.logo-img {
+        width: 40px;
+        height: 40px;
+    }
+
+.search-input input {
+    -webkit-appearance: none;
+    border-radius: 35px;
+    width: 95%;
+    height: 35px;
+    line-height: initial;
+    border: 1px solid #EDEDED;
+    vertical-align: middle;
+    padding-left: 10px;
+}
+
+.search-button {
+    border-left: 1px solid #EDEDED;
+    padding: 0;
+}
+
+div.flexslider img {
+    height: 300px;
+    width: 400px;
+}
+
+div.category {
+    text-align: center;
+    width: 100%;
+    min-height: 100px;
+    margin: 0;
+    background-color: white;
+}
+
+ul.category {
+    padding-top: 10px;
+}
+
+    ul.category li {
+        display: block;
+        float: left;
+        width: 33.33%;
+        text-align: center;
+        height: 100%;
+        cursor: pointer;
+        color: orange;
+    }
+
+li.category-selected {
+    color: red;
+    border-bottom-color: red;
+    border-bottom-width: 6px;
+    border-bottom-style: groove;
+}
+
+ul.category img {
+    margin: 0 auto;
+    height: 64px;
+    width: 64px;
+    border-radius: 50%;
+}
+
+.prod-item {
+    text-align: center;
+    margin: 8px 8px 0;
+    padding: 8px;
+    background-color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    position:relative;
+}
+
+.prod-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.prod-desc {
+    font-size: 12px;
+    color: deeppink;
+}
+
+.prod-price {
+    font-size: 18px;
+    color: mediumvioletred;
+}
+
+.prod-unit {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 4px;
+}
+
+.sticky-prod {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: red;
+    color: white;
+    padding: 4px;
+    font-size: 9px;
+    border-radius: 4px;
+}
+
+.top-selling-year-prod {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: palevioletred;
+    color: white;
+    padding: 4px;
+    font-size: 9px;
+    border-radius: 4px;
+}
+
+.top-selling-month-prod {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: orange;
+    color: white;
+    padding: 4px;
+    font-size: 9px;
+    border-radius: 4px;
+}
+
+.main-img {
+    margin: 6px auto;
+    height: 128px;
+    width: 128px;
+}
+
+.side-img {
+    display: inline;
+    height: 64px;
+    width: 64px;
+    margin: 4px;
+}
+
+.qCode {
+    position: fixed;
+    width: 50%;
+    left: 25%;
+    top: 20%;
+    background-color: #FFF;
+    padding: 10px;
+    border-radius: 10px;
+    display: none;
+    box-shadow: 0 0 10px #9C9C9C;
+}
+
+.follow {
+    width: 30px;
+    height: 36px;
+    background: #008B00;
+    text-align: center;
+    position: fixed;
+    left: 0px;
+    bottom: 113px;
+    cursor: pointer;
+    font-size: 8px;
+    color: #FFF;
+    padding-top: 4px;
+}
+
+.priceunit {
+    display: none;
+    position: fixed;
+    top: 30%;
+    left: 30%;
+    padding-top: 10px;
+    width: 40%;
+    min-width: 150px;
+    text-align: center;
+    background-color: #FFF;
+    color: #000;
+    border-radius: 5px;
+    box-shadow: 0 0 10px #9C9C9C;
+}
+
+.triangle-topleft {
+    width: 20px;
+    height: 20px;
+    border-top: 20px solid #FFF;
+    border-right: 20px solid transparent;
+    position: relative;
+    float: left;
+    top: 0px;
+    left: 0px;
+    line-height: 20px;
+}
+
+#searchResultPanel {
+    display: none;
+    padding-left: 2%;
+    width: 100%;
+    position: fixed;
+    top: 45px;
+    z-index: 9999;
+    background-color: #FFF;
+    border-top: 1px solid #EDEDED;
+    padding-bottom: 10px;
+}
+
+    #searchResultPanel p {
+        height: 30px;
+        line-height: 30px;
+        width: 96%;
+        border-bottom: 1px dashed #EDEDED;
+        text-align: left;
+    }
+
+.scroll {
+    padding-top: 2px;
+    width: 30px;
+    height: 30px;
+    background: #1E90FF;
+    color: #fff;
+    line-height: 30px;
+    text-align: center;
+    position: fixed;
+    left: 0px;
+    bottom: 160px;
+    cursor: pointer;
+    font-size: 8px;
+}
