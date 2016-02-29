@@ -265,37 +265,36 @@
                 success: function (jProdListPager) {
 
                     //当前商品
-                    var $prodItemCol, $prodItem;
+                    var htmlItem = "";
 
                     //遍历展示当前页所有商品信息，并添加到新增的div中
                     $.each(jProdListPager, function (iProd, nProd) {
 
                         if (this["ID"] != undefined) {
 
-                            $prodItemCol = $('<div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 prod-item-col" onclick="location.href=\'ProductDetail.aspx?ProdID=' + this["ID"] + '\'" style="display:none;"></div>').appendTo($("#divProdItems"));
-                            $prodItem = $('<div class="prod-item"></div>').appendTo($prodItemCol);
+                            htmlItem += '<div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 prod-item-col" onclick="location.href=\'ProductDetail.aspx?ProdID=' + this["ID"] + '\'" style="display:none;"><div class="prod-item">';
 
                             //商品主图
                             if (this["FruitImgList"] != null) {
                                 $(this["FruitImgList"]).each(function (iImg, nImg) {
                                     if (this["MainImg"]) {
-                                        $('<img class="img-responsive img-circle main-img" />').appendTo($prodItem).attr({ src: "images/" + this["ImgName"], alt: this["ImgDesc"] });
+                                        htmlItem += '<img class="img-responsive img-circle main-img" src="images/' + this["ImgName"] + '" alt="' + this["ImgDesc"] + '"/>';
                                         return;
                                     }
                                 });
                             }
 
                             //商品名称、价格、单位、描述
-                            $prodItem.append('<div class="prod-name">' + this["FruitName"] + '</div><span class="prod-price">' + this["FruitPrice"] + '</span><span class="prod-unit">元/' + this["FruitUnit"] + '</span><div class="prod-desc">' + this["FruitDesc"] + '</div>');
+                            htmlItem += '<div class="prod-name">' + this["FruitName"] + '</div><span class="prod-price">' + this["FruitPrice"] + '</span><span class="prod-unit">元/' + this["FruitUnit"] + '</span><div class="prod-desc">' + this["FruitDesc"] + '</div>';
 
                             //置顶商品标识
                             if (this["IsSticky"]) {
-                                $prodItem.append('<span class="sticky-prod"><i class="fa fa-thumbs-up fa-lg"></i>掌柜推荐</span>');
+                                htmlItem += '<span class="sticky-prod"><i class="fa fa-thumbs-up fa-lg"></i>掌柜推荐</span>';
                             }
 
                             //当月爆款商品标识
                             if (this["TopSellingOnMonth"]) {
-                                $prodItem.append('<span class="top-selling-month-prod"><i class="fa fa-trophy fa-lg"></i>本月爆款</span>');
+                                htmlItem += '<span class="top-selling-month-prod"><i class="fa fa-trophy fa-lg"></i>本月爆款</span>';
                             }
 
                             //商品配图
@@ -304,16 +303,15 @@
                                 $(this["FruitImgList"]).each(function (iImg, nImg) {
                                     if (!this["MainImg"] && !this["DetailImg"]) {
                                         if (!showHR) {
-                                            $prodItem.append('<hr />');
+                                            htmlItem += '<hr />';
                                             showHR = true;
                                         }
-                                        $('<img class="img-responsive img-rounded side-img" />').appendTo($prodItem).attr({ src: "images/" + this["ImgName"], alt: this["ImgDesc"] });
+                                        htmlItem += '<img class="img-responsive img-rounded side-img" src="images/' + this["ImgName"] + '" alt="' + this["ImgDesc"] + '"/>';
                                     }
                                 });
                             }
 
-                            //淡出新增的div
-                            $prodItemCol.fadeIn(1000);
+                            htmlItem += '</div></div>';
 
                         }
                         else {
@@ -331,6 +329,9 @@
                             }
                         }
                     });
+
+                    //追加并淡出新增的div
+                    $(htmlItem).appendTo($("#divProdItems")).fadeIn(1000);
 
                     //$(".prod-item-row").masonry({
                     //    // options

@@ -21,9 +21,9 @@
 <body>
     <form id="form1" runat="server">
         <div class="container">
-        </div>
-        <div class="cart-footer">
-            <div class="row">
+            <div class="prod-items">
+            </div>
+            <div class="row cart-footer">
                 <div class="col-xs-12 sub-total">
                     总计：<span class="sub-total-price"></span>
                     <button class="btn btn-danger" type="button" id="btnBuynow" onclick="location.href='Checkout.aspx'"><i class="fa fa-shopping-cart fa-lg fa-fw"></i>去结算</button>
@@ -37,7 +37,7 @@
 <script>
     $(function () {
 
-        DisplayCart();
+        displayCart();
 
         //挂接购物车商品数量变动后事件处理函数
         $(cart).on("prodItemsChanged", refreshSubTotal);
@@ -57,18 +57,17 @@
     }
 
     //展示购物车里的商品
-    function DisplayCart() {
-        var $container = $("div.container");
-
-        //删除掉现有的ProdItem商品项
-        $("div.prod-item").remove();
+    function displayCart() {
+        var htmlItem = "";
 
         //遍历购物车，显示所有的商品项
         cart.getProdItems().each(function () {
-            $container.prepend('<div class="row prod-item" id="ProdItem' + this["prodID"] + '"><div class="col-xs-5 prod-item-left"><i class="fa fa-minus-square-o fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
+            htmlItem += '<div class="row prod-item" id="ProdItem' + this["prodID"] + '"><div class="col-xs-5 prod-item-left"><i class="fa fa-minus-square-o fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                 + '<div class="col-xs-7 prod-item-right"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div><div class="prod-price">￥' + this["price"] + '</div>'
-                + '<div><span class="input-group"><span id="btnDec" class="input-group-addon" onclick="DecQty(' + this["prodID"] + ');">-</span><input class="form-control" type="text" id="txtQty' + this["prodID"] + '" value="' + this["qty"] + '" onchange="CheckIsNaN(' + this["prodID"] + ');"/><span id="btnInc" class="input-group-addon" onclick="IncQty(' + this["prodID"] + ');">+</span></span></div></div></div>');
+                + '<div><span class="input-group"><span id="btnDec" class="input-group-addon" onclick="DecQty(' + this["prodID"] + ');">-</span><input class="form-control" type="text" id="txtQty' + this["prodID"] + '" value="' + this["qty"] + '" onchange="CheckIsNaN(' + this["prodID"] + ');"/><span id="btnInc" class="input-group-addon" onclick="IncQty(' + this["prodID"] + ');">+</span></span></div></div></div>';
         });
+
+        $("div.prod-items").append($(htmlItem));
 
         refreshSubTotal(null, { prodQty: cart.prodAmount(), subTotal: cart.subTotal() });
     }

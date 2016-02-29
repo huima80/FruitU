@@ -22,7 +22,7 @@
 <body>
     <form id="form1" runat="server">
         <div class="container">
-            <div class="row prod-items">
+            <div class="prod-items">
             </div>
             <hr />
             <div class="row">
@@ -93,7 +93,7 @@
 
         $(function () {
 
-            DisplayCart();
+            displayCart();
 
             lBtnWxPay = Ladda.create(document.querySelector('#btnWxPay'));
             lBtnPayCash = Ladda.create(document.querySelector('#btnPayCash'));
@@ -102,15 +102,17 @@
 
 
         //展示购物车里的商品
-        function DisplayCart() {
-            var $container = $("div.prod-items");
+        function displayCart() {
+            var htmlItem = "";
 
             //遍历购物车，显示所有的商品项
             cart.getProdItems().each(function () {
-                $container.append('<div class="row prod-item"><div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
+                htmlItem += '<div class="row prod-item"><div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                     + '<div class="col-xs-6 prod-item-middle"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div></div>'
-                    + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>')
+                    + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>';
             });
+
+            $("div.prod-items").append($(htmlItem));
 
             //显示总价格
             $("#spSubTotalPrice").text("￥" + cart.subTotal());

@@ -190,55 +190,60 @@
                         return false;
                     }
 
-                    //当前订单
-                    var $orderItemCol, $orderItem, $ul;
+                    var htmlItem = "";
 
                     //遍历展示当前页所有订单信息，并添加到新增的div中
                     $.each(jOrderListPager, function (iOL, nOL) {
 
                         if (this["ID"] != undefined) {
 
-                            $orderItemCol = $('<div class="col-xs-12 col-sm-4" style="display:none;"></div>').appendTo($("#divOrderItems"));
-                            $orderItem = $('<div class="order-item"></div>').appendTo($orderItemCol);
+                            htmlItem += '<div class="col-xs-12 col-sm-4" style="display:none;"><div class="order-item">';
 
-                            $orderItem.append('<div><span class="order-id">订单号：' + this["OrderID"].substr(18) + '</span><span class="order-state"></span></div>');
-                            $ul = $("<ul>").appendTo($orderItem);
-                            $.each(this["OrderDetailList"], function (iODL, nODL) {
-                                $ul.append('<li><img src="images/' + (this["FruitImgList"][0] != null ? this["FruitImgList"][0]["ImgName"] : defaultImg) + '" class="prod-img">  <span class="order-product-name">' + this["OrderProductName"] + '</span>  <span class="purchase-price">￥' + this["PurchasePrice"] + '</span><span class="purchase-unit">元/' + this["PurchaseUnit"] + '</span> <span class="purchase-qty">x ' + this["PurchaseQty"] + '</span></li>');
-                            });
-                            $orderItem.append('<div class="order-date">下单时间：' + (new Date(this["OrderDate"])).toLocaleDateString("zh-cn") + '</div>');
-                            $orderItem.append('<div class="deliver-date">' + (this["IsDelivered"] == true ? "配送时间：" + (new Date(this["DeliverDate"])).toLocaleDateString("zh-cn") : "未配送") + '</div>');
-                            $orderItem.append('<div class="order-price">合计：￥<span class="order-price">' + this["OrderPrice"] + '</span>元</div>');
+                            htmlItem += '<div><span class="order-id">订单号：' + this["OrderID"].substr(18) + '</span>';
 
                             //根据TradeState显示订单支付状态，对于未支付或支付失败的订单，再显示微信支付按钮
                             switch (this["TradeState"]) {
                                 case 1: //支付成功
-                                    $orderItem.find("span.order-state").text("支付成功").addClass("pay-success");
+                                    htmlItem += '<span class="order-state pay-success">支付成功</span>';
                                     break;
                                 case 2:   //转入退款
-                                    $orderItem.find("span.order-state").text("转入退款").addClass("not-pay");
+                                    htmlItem += '<span class="order-state not-pay">转入退款</span>';
                                     break;
                                 case 3:   //未支付
-                                    $orderItem.find("span.order-state").text("未支付").addClass("not-pay");
-                                    $orderItem.find('div.order-price').append('<button class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(' + this["ID"] + ');"><i class="fa fa-wechat fa-fw"></i>微信支付</button>');
+                                    htmlItem += '<span class="order-state not-pay">未支付</span>';
                                     break;
                                 case 4:   //已关闭
-                                    $orderItem.find("span.order-state").text("已关闭").addClass("not-pay");
+                                    htmlItem += '<span class="order-state not-pay">已关闭</span>';
                                     break;
                                 case 5:   //已撤销（刷卡支付）
-                                    $orderItem.find("span.order-state").text("已撤销（刷卡支付）").addClass("not-pay");
+                                    htmlItem += '<span class="order-state not-pay">已撤销（刷卡支付）</span>';
                                     break;
                                 case 6:   //用户支付中
-                                    $orderItem.find("span.order-state").text("用户支付中").addClass("not-pay");
+                                    htmlItem += '<span class="order-state not-pay">用户支付中</span>';
                                     break;
                                 case 7:   //支付失败
-                                    $orderItem.find("span.order-state").text("支付失败").addClass("not-pay");
-                                    $orderItem.find('div.order-price').append('<button class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(' + this["ID"] + ');"><i class="fa fa-wechat fa-fw"></i>微信支付</button>');
+                                    htmlItem += '<span class="order-state not-pay">支付失败</span>';
                                     break;
                             }
 
-                            //淡出新增的div
-                            $orderItemCol.fadeIn(1000);
+                            htmlItem += '</div><ul>';
+
+                            $.each(this["OrderDetailList"], function (iODL, nODL) {
+                                htmlItem += '<li><img src="images/' + (this["FruitImgList"][0] != null ? this["FruitImgList"][0]["ImgName"] : defaultImg) + '" class="prod-img">  <span class="order-product-name">' + this["OrderProductName"] + '</span>  <span class="purchase-price">￥' + this["PurchasePrice"] + '</span><span class="purchase-unit">元/' + this["PurchaseUnit"] + '</span> <span class="purchase-qty">x ' + this["PurchaseQty"] + '</span></li>';
+                            });
+
+                            htmlItem += '</ul><div class="order-date">下单时间：' + (new Date(this["OrderDate"])).toLocaleDateString("zh-cn") + '</div>';
+                            htmlItem += '<div class="deliver-date">' + (this["IsDelivered"] == true ? "配送时间：" + (new Date(this["DeliverDate"])).toLocaleDateString("zh-cn") : "未配送") + '</div>';
+                            htmlItem += '<div class="order-price">合计：￥<span class="order-price">' + this["OrderPrice"] + '</span>元';
+
+                            switch (this["TradeState"]) {
+                                case 3:   //未支付
+                                case 7:   //支付失败
+                                    htmlItem += '<button class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(' + this["ID"] + ');"><i class="fa fa-wechat fa-fw"></i>微信支付</button>';
+                                    break;
+                            }
+
+                            htmlItem += "</div></div></div>";
 
                         }
                         else {
@@ -256,6 +261,9 @@
                             }
                         }
                     });
+
+                    //追加并淡出新增的div
+                    $(htmlItem).appendTo($("#divOrderItems")).fadeIn(1000);
 
                     //下一页加载成功后，页数+1
                     pageIndex++;
