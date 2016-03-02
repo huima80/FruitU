@@ -95,9 +95,9 @@
     <!-- weixin JS-SDK -->
     <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
 
-<%--    <!-- http://masonry.desandro.com/ -->
-    <script src="https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.min.js"></script>--%>
- 
+    <!-- 瀑布流布局 http://masonry.desandro.com/ -->
+    <script src="Scripts/masonry.pkgd.min.js"></script>
+
     <script src="Scripts/config.js"></script>
 
     <script>
@@ -333,12 +333,11 @@
                     //追加并淡出新增的div
                     $(htmlItem).appendTo($("#divProdItems")).fadeIn(1000);
 
-                    //$(".prod-item-row").masonry({
-                    //    // options
-                    //    itemSelector: '.prod-item-col',
-                    //    columnWidth: '.col-xs-12 .col-sm-4 .col-md-3 .col-lg-2',
-                    //    percentPosition: true
-                    //});
+                    //瀑布流布局
+                    $("#divProdItems").masonry({
+                        // options
+                        itemSelector: '.prod-item-col',
+                    });
 
                     //加载成功后，页数+1
                     pageIndex++;
@@ -348,7 +347,7 @@
 
                     //模糊搜索结果后给出提示信息，回到首页展示全部商品
                     if (prodName != undefined && prodName != "") {
-                        $("#divProdItems").append('<p style="text-align:center;"><a href="default.aspx" style="color:red;">不是您想找的？点我看看其他的。</a></p>');
+                        $("#divProdItems").append('<h5 class="text-center"><a href="default.aspx" class="text-danger">不是您想找的？点我看看其他的。</a></h5>');
                     }
 
                     //标示已结束处理分页
