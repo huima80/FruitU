@@ -257,7 +257,7 @@ public partial class ManageProduct : System.Web.UI.Page
                 //新上传图片的备注信息，如果是多个图片，则以,分割
                 TextBox txtImgDesc = ((DetailsView)sender).FindControl("txtImgDescInsert") as TextBox;
 
-                //用于计算图片所在网格位置
+                //根据gridstack.js网格数、网格项宽度参数计算每行的网格项数量，用于后续计算每个网格项的X/Y坐标值
                 int gridItemCount = GRID_COL / GRID_ITEM_WIDTH, currentIndex;
 
                 //遍历文件上传框
@@ -738,6 +738,7 @@ public partial class ManageProduct : System.Web.UI.Page
             FruitImg fruitImg = e.Item.DataItem as FruitImg;
             HtmlContainerControl divGridStackItem = e.Item.FindControl("divGridStackItem") as HtmlContainerControl;
 
+            //把每个图片的gridstack.js的X/Y坐标值写入前端的HTML属性中
             divGridStackItem.Attributes["data-gs-x"] = fruitImg.ImgSeqX.ToString();
             divGridStackItem.Attributes["data-gs-y"] = fruitImg.ImgSeqY.ToString();
             divGridStackItem.Attributes["data-gs-width"] = GRID_ITEM_WIDTH.ToString();

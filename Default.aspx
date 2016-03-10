@@ -215,6 +215,8 @@
                     pageQueryURL: 'ProdListPager.ashx',
                     pageTemplate: '#tmplProdPage',
                     pageContainer: '#divProdItems',
+                    itemLayout: 1,
+                    masonryItemSelector: '.prod-item'
                 });
 
                 $.pager.loadPage();

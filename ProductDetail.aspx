@@ -194,7 +194,7 @@
                         'width': '150px',
                         'z-index': parseInt($("footer.footer").css("z-index")) + 1000
                     }).appendTo($('body')).animate({
-                        'top': ($.webConfig.browserVersion.wechat ? ($cartIcon.offset().top + $(document).scrollTop()) : $cartIcon.offset().top),
+                        'top': (webConfig.browserVersion.wechat ? ($cartIcon.offset().top + $(document).scrollTop()) : $cartIcon.offset().top),
                         'left': $cartIcon.offset().left + $cartIcon.width() / 2,
                         'width': 75,
                         'height': 75

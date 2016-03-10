@@ -30,19 +30,19 @@
                                 </asp:DropDownList>
                             </div>
                             <div class="form-group">
-                                <label for="ddlIsSticky" class="sr-only">按是否置顶查询</label>
-                                <asp:DropDownList ID="ddlIsSticky" runat="server" CssClass="form-control">
-                                    <asp:ListItem Selected="True" Value="-1">===是否置顶===</asp:ListItem>
-                                    <asp:ListItem Value="1">置顶</asp:ListItem>
-                                    <asp:ListItem Value="0">未置顶</asp:ListItem>
-                                </asp:DropDownList>
-                            </div>
-                            <div class="form-group">
                                 <label for="ddlIsOnSale" class="sr-only">按是否上架查询</label>
                                 <asp:DropDownList ID="ddlIsOnSale" runat="server" CssClass="form-control">
                                     <asp:ListItem Selected="True" Value="-1">===是否上架===</asp:ListItem>
                                     <asp:ListItem Value="1">已上架</asp:ListItem>
                                     <asp:ListItem Value="0">未上架</asp:ListItem>
+                                </asp:DropDownList>
+                            </div>
+                            <div class="form-group">
+                                <label for="ddlIsSticky" class="sr-only">按是否置顶查询</label>
+                                <asp:DropDownList ID="ddlIsSticky" runat="server" CssClass="form-control">
+                                    <asp:ListItem Selected="True" Value="-1">===是否置顶===</asp:ListItem>
+                                    <asp:ListItem Value="1">置顶</asp:ListItem>
+                                    <asp:ListItem Value="0">未置顶</asp:ListItem>
                                 </asp:DropDownList>
                             </div>
                             <div class="form-group">

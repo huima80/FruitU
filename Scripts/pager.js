@@ -134,7 +134,7 @@
                     //遍历展示当前页所有项数据，并使用模板渲染后加入HTML容器
                     $.each(jDataPerPage, function (i, n) {
 
-                        if (this["ID"] != undefined) {
+                        if (this["TotalRows"] == undefined) {
                             htmlItem += _pageTemplate.render(this);
                         }
                         else {
@@ -158,14 +158,16 @@
                         $(settings.pageContainer).empty();
                     }
 
-                    //追加并淡出新增的div
-                    $(htmlItem).appendTo(settings.pageContainer).css({ display: "none" }).fadeIn(settings.pageItemFadeTimer);
+                    if (htmlItem != "") {
+                        //追加并淡出新增的div
+                        $(htmlItem).appendTo(settings.pageContainer).css({ display: "none" }).fadeIn(settings.pageItemFadeTimer);
+                    }
 
                     //瀑布流布局
                     if (settings.itemLayout == 1) {
                         $(settings.pageContainer).masonry({
                             // options
-                            itemSelector: settings.masonryItemSelector,
+                            itemSelector: settings.masonryItemSelector
                         });
                     }
 
