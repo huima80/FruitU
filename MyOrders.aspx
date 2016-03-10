@@ -33,7 +33,13 @@
 <script id="tmplOrderPage" type="text/x-jsrender">
     <div class="col-xs-12 col-sm-4">
         <div class="order-item">
-            <div><span class="order-id">订单号：{{:OrderID}}</span><span class="order-state">{{:TradeStateText}}</span></div>
+            <div><span class="order-id">订单号：{{:OrderID}}</span><span class="order-state
+                {{if TradeState==1}}
+                 pay-success
+                {{else}}
+                 not-pay
+                {{/if}}
+                ">{{:TradeStateText}}</span></div>
             <ul>
                 {{for OrderDetailList}}
                 <li>

@@ -52,5 +52,5 @@
         window.onload = window.webConfig.init.bind(window.webConfig);
     }
 
-    return root.webConfig;
+    return window.webConfig;
 }));
