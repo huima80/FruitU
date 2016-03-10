@@ -4,7 +4,7 @@ using System.Web;
 using System.IO;
 
 /// <summary>
-/// Log 的摘要说明
+/// 网站日志类
 /// </summary>
 public class Log
 {
