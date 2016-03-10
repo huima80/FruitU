@@ -1,27 +1,41 @@
-﻿; (function ($) {
-    $.Cart = function (options) {
-        this.params = $.extend({}, $.Cart.defaults, options);
+﻿//购物车模块
+; (function (root, factory) {
 
-        this.init();
+    // CommonJS
+    if (typeof exports === 'object') {
+        module.exports = factory(require('jquery.js'));
+    }
+        // AMD module
+    else if (typeof define === 'function' && define.amd) {
+        define(['jquery'], factory(jQuery));
+    }
+        // Browser global
+    else {
+        root.cart = factory(jQuery);
+    }
+}
+(window, function ($) {
+    function Cart(options) {
 
-    };
+        //购物车cookies
+        var _storage;
 
-    $.Cart.defaults = {
-        cartName: "MyCart",         //String:  指定购物车在storage中的key
-        isPersist: false       //Boolean: 指定购物车的生命周期是会话级还是永久
-    };
+        //购物车参数
+        this.params = {
+            cartName: "MyCart",         //String:  指定购物车在storage中的key
+            isPersist: true       //Boolean: 指定购物车的生命周期是会话级还是永久
+        };
 
-    $.Cart.prototype.storage = {};
+        $.extend(this.params, options);
 
-    $.Cart.prototype.init = function () {
         if (this.params.isPersist) {
-            this.storage = window.localStorage;
+            _storage = window.localStorage;
         }
         else {
-            this.storage = window.sessionStorage;
+            _storage = window.sessionStorage;
         }
 
-        if (this.storage.getItem(this.params.cartName) == undefined) {
+        if (_storage.getItem(this.params.cartName) == undefined) {
             var cartInfo = {
                 name: "",
                 phone: "",
@@ -31,147 +45,161 @@
                 prodItems: []
             };
 
-            this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
         }
-    };
 
-    $.Cart.prototype.addProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty) {
-        var cartInfo, exist = false;
+        //增加商品项
+        Cart.prototype.addProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty) {
+            var cartInfo, exist = false;
 
-        //触发商品信息变动前事件
-        $(this).trigger("prodItemsChanging");
+            //触发商品信息变动前事件
+            $(this).trigger("onProdItemsChanging");
 
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < cartInfo.prodItems.length; i++) {
-            if (cartInfo.prodItems[i].prodID == prodID) {
-                //如果购物车里已有此商品，则数量累加
-                cartInfo.prodItems[i].qty = parseInt(cartInfo.prodItems[i].qty) + parseInt(qty);
-                exist = true;
-                break;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < cartInfo.prodItems.length; i++) {
+                if (cartInfo.prodItems[i].prodID == prodID) {
+                    //如果购物车里已有此商品，则数量累加
+                    cartInfo.prodItems[i].qty = parseInt(cartInfo.prodItems[i].qty) + parseInt(qty);
+                    exist = true;
+                    break;
+                }
             }
-        }
 
-        //如果购物车里没有此商品，则加入
-        if (!exist) {
-            var prodItem = {
-                prodID: prodID,
-                prodName: prodName,
-                prodDesc: prodDesc,
-                prodImg: prodImg,
-                price: price,
-                qty: qty
+            //如果购物车里没有此商品，则加入
+            if (!exist) {
+                var prodItem = {
+                    prodID: prodID,
+                    prodName: prodName,
+                    prodDesc: prodDesc,
+                    prodImg: prodImg,
+                    price: price,
+                    qty: qty
+                }
+                cartInfo.prodItems.push(prodItem);
             }
-            cartInfo.prodItems.push(prodItem);
-        }
 
-        this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
-        //触发商品信息变动后事件
-        $(this).trigger("prodItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            //触发商品信息变动后事件
+            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
-    };
+        };
 
-    $.Cart.prototype.updateProdItem = function (prodID, qty) {
-        var cartInfo;
+        //更新商品项
+        Cart.prototype.updateProdItem = function (prodID, qty) {
+            var cartInfo;
 
-        //触发商品信息变动前事件
-        $(this).trigger("prodItemsChanging");
+            //触发商品信息变动前事件
+            $(this).trigger("onProdItemsChanging");
 
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < cartInfo.prodItems.length; i++) {
-            if (cartInfo.prodItems[i].prodID == prodID) {
-                cartInfo.prodItems[i].qty = parseInt(qty);
-                break;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < cartInfo.prodItems.length; i++) {
+                if (cartInfo.prodItems[i].prodID == prodID) {
+                    cartInfo.prodItems[i].qty = parseInt(qty);
+                    break;
+                }
             }
-        }
-        this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
-        //触发商品信息变动后事件
-        $(this).trigger("prodItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            //触发商品信息变动后事件
+            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
-    };
+        };
 
-    $.Cart.prototype.updateDeliverInfo = function (name, phone, address, memo, paymentTerm) {
-        var cartInfo;
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        cartInfo.name = name;
-        cartInfo.phone = phone;
-        cartInfo.address = address;
-        cartInfo.memo = memo;
-        cartInfo.paymentTerm = paymentTerm;
-        this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+        //更新收件人信息
+        Cart.prototype.updateDeliverInfo = function (name, phone, address, memo, paymentTerm) {
+            var cartInfo;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            cartInfo.name = name;
+            cartInfo.phone = phone;
+            cartInfo.address = address;
+            cartInfo.memo = memo;
+            cartInfo.paymentTerm = paymentTerm;
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
-    };
+        };
 
-    $.Cart.prototype.removeProdItem = function (prodID) {
-        var cartInfo;
+        //删除商品项
+        Cart.prototype.removeProdItem = function (prodID) {
+            var cartInfo;
 
-        //触发商品信息变动前事件
-        $(this).trigger("prodItemsChanging");
+            //触发商品信息变动前事件
+            $(this).trigger("onProdItemsChanging");
 
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < cartInfo.prodItems.length; i++) {
-            if (cartInfo.prodItems[i].prodID == prodID) {
-                cartInfo.prodItems.splice(i, 1);
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < cartInfo.prodItems.length; i++) {
+                if (cartInfo.prodItems[i].prodID == prodID) {
+                    cartInfo.prodItems.splice(i, 1);
+                }
             }
-        }
-        this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
-        //触发商品信息变动后事件
-        $(this).trigger("prodItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            //触发商品信息变动后事件
+            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
-    };
+        };
 
-    $.Cart.prototype.clearProdItems = function () {
-        var cartInfo;
+        //清空购物车商品项 
+        Cart.prototype.clearProdItems = function () {
+            var cartInfo;
 
-        //触发商品信息变动前事件
-        $(this).trigger("prodItemsChanging");
+            //触发商品信息变动前事件
+            $(this).trigger("onProdItemsChanging");
 
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        cartInfo.prodItems.length = 0;
-        this.storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            cartInfo.prodItems.length = 0;
+            _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
-        //触发商品信息变动后事件
-        $(this).trigger("prodItemsChanged", { prodQty: 0, subTotal: 0 });
+            //触发商品信息变动后事件
+            $(this).trigger("onProdItemsChanged", { prodQty: 0, subTotal: 0 });
 
-    };
+        };
 
-    $.Cart.prototype.subTotal = function () {
-        var cartInfo, subTotal = 0;
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < cartInfo.prodItems.length; i++) {
-            subTotal += parseFloat(cartInfo.prodItems[i].price) * parseInt(cartInfo.prodItems[i].qty);
-        }
-        return parseFloat(subTotal.toFixed(2));
-    };
+        //购物车商品总价
+        Cart.prototype.subTotal = function () {
+            var cartInfo, subTotal = 0;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < cartInfo.prodItems.length; i++) {
+                subTotal += parseFloat(cartInfo.prodItems[i].price) * parseInt(cartInfo.prodItems[i].qty);
+            }
+            return parseFloat(subTotal.toFixed(2));
+        };
 
-    $.Cart.prototype.prodAmount = function () {
-        var cartInfo, prodAmount = 0;
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < cartInfo.prodItems.length; i++) {
-            prodAmount += parseInt(cartInfo.prodItems[i].qty);
-        }
-        return prodAmount;
-    };
+        //购物车商品总数
+        Cart.prototype.prodAmount = function () {
+            var cartInfo, prodAmount = 0;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < cartInfo.prodItems.length; i++) {
+                prodAmount += parseInt(cartInfo.prodItems[i].qty);
+            }
+            return prodAmount;
+        };
 
-    $.Cart.prototype.getProdItems = function () {
-        var cartInfo;
-        cartInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        return $(cartInfo.prodItems);
-    };
+        //获取购物车商品项
+        Cart.prototype.getProdItems = function () {
+            var cartInfo;
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            return $(cartInfo.prodItems);
+        };
 
-    $.Cart.prototype.makeOrderInfo = function () {
-        var orderInfo;
-        orderInfo = JSON.parse(this.storage.getItem(this.params.cartName));
-        for (var i = 0; i < orderInfo.prodItems.length; i++) {
-            delete orderInfo.prodItems[i].prodName;
-            delete orderInfo.prodItems[i].prodDesc;
-            delete orderInfo.prodItems[i].prodImg;
-            delete orderInfo.prodItems[i].price;
-        }
-        return JSON.stringify(orderInfo);
-    };
+        //生成订单信息
+        Cart.prototype.makeOrderInfo = function () {
+            var orderInfo;
+            orderInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            for (var i = 0; i < orderInfo.prodItems.length; i++) {
+                delete orderInfo.prodItems[i].prodName;
+                delete orderInfo.prodItems[i].prodDesc;
+                delete orderInfo.prodItems[i].prodImg;
+                delete orderInfo.prodItems[i].price;
+            }
+            return JSON.stringify(orderInfo);
+        };
+    }
 
+    if (!$.cart) {
+        $.cart = new Cart();
+    }
 
-})(jQuery);
+    return $.cart;
+
+}));

@@ -17,7 +17,7 @@ public partial class Default : System.Web.UI.Page
         jsSign = WxJSAPI.MakeJsAPISign(jsTicket, url, out nonceStr, out timestamp);
 
         //向前端页面注册JS变量，用于调用微信客户端JS-API
-        ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var appId = '{0}', timestamp = '{1}', nonceStr = '{2}', signature = '{3}', pageSize={4};", Config.APPID, timestamp, nonceStr, jsSign, Config.ProductListPageSize), true);
+        ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam={{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}}, pageSize={4};", Config.APPID, timestamp, nonceStr, jsSign, Config.ProductListPageSize), true);
 
     }
 }

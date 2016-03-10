@@ -83,9 +83,6 @@
         <!-- #include file="footer.html" -->
     </form>
 
-    <!-- jQuery UI，tab页插件依赖 -->
-    <script src="http://apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-
     <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
     <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
@@ -93,138 +90,132 @@
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
 
-    <!-- Modernizr -->
-    <script src="Scripts/modernizr.js"></script>
-
-    <!-- FlexSlider -->
-    <script defer="defer" src="Scripts/jquery.flexslider.js"></script>
 
     <!-- 搜狐畅言 -->
     <script src="Scripts/sohucs.js"></script>
     <script type="text/javascript" src="http://assets.changyan.sohu.com/upload/plugins/plugins.count.js">
     </script>
 
-    <!-- 系统配置 -->
-    <script src="Scripts/config.js"></script>
-
     <script>
+        requirejs(['jqueryui', 'flexslider', 'webConfig'], function () {
+            $(function () {
 
-        $(function () {
-
-            //轮播图
-            $('.flexslider').flexslider({
-                animation: "slide"
-            });
-
-            //tab页插件
-            $("#tabs").tabs();
-
-            //挂接购物车商品数量变动前的事件处理函数，飞入购物车
-            $(cart).on("prodItemsChanging", flyToCart);
-
-        });
-
-        //递减果汁数量
-        $("#btnDesc").on("click", function () {
-            var currQty = $("#txtQty").val();
-            if (!isNaN(currQty)) {
-                currQty = parseInt(currQty);
-                if (currQty > 1) {
-                    currQty--;
-                }
-                else {
-                    currQty = 1;
-                }
-                //显示更新的数量
-                $("#txtQty").val(currQty);
-            }
-            else {
-                $("#txtQty").val(1);
-            }
-        });
-
-        //递增果汁数量
-        $("#btnAsc").on("click", function () {
-            var currQty = $("#txtQty").val();
-            if (!isNaN(currQty)) {
-                currQty = parseInt(currQty);
-                currQty++;
-
-                //显示更新的数量
-                $("#txtQty").val(currQty);
-            }
-            else {
-                $("#txtQty").val(1);
-            }
-        });
-
-        //校验是否输入数值
-        $('#txtQty').on('change', function () {
-            var currQty = $("#txtQty").val();
-            if (isNaN(currQty)) {
-                $("#txtQty").val(1);
-            }
-        });
-
-        $('#btnAddCart').on('click', function () {
-
-            var $prodImg = $("#ulFlexSlider img:first");
-            var imgName = $prodImg.attr("src");
-
-            //购物车里添加商品
-            cart.addProdItem($("#hfProdID").val(), $("#lblProdName").text(), $("#lblProdDesc").text(), imgName, $("#lblProdPrice").text(), $("#txtQty").val());
-
-        });
-
-        $('#btnBuynow').on('click', function () {
-
-            var $prodImg = $("#ulFlexSlider img:first");
-            var imgName = $prodImg.attr("src");
-
-            //购物车里添加商品
-            cart.addProdItem($("#hfProdID").val(), $("#lblProdName").text(), $("#lblProdDesc").text(), imgName, $("#lblProdPrice").text(), $("#txtQty").val());
-
-            location.href = "Checkout.aspx";
-        });
-
-        //添加商品到购物车的动画
-        function flyToCart(event) {
-            var $cartIcon = $(".fa-shopping-cart");
-            var $imgFly = $("#ulFlexSlider img:first");
-            var $beginPos = $("div.flexslider");
-            if ($imgFly) {
-                var $imgClone = $imgFly.clone().offset({
-                    top: $beginPos.offset().top + $imgFly.height() * 1 / 3,
-                    left: $beginPos.offset().left + $imgFly.width() * 1 / 3
-                }).css({
-                    'opacity': '0.5',
-                    'position': 'absolute',
-                    'height': '150px',
-                    'width': '150px',
-                    'z-index': parseInt($("footer.footer").css("z-index")) + 1000
-                }).appendTo($('body')).animate({
-                    'top': ($.browser.version.wechat ? ($cartIcon.offset().top + $(document).scrollTop()) : $cartIcon.offset().top),
-                    'left': $cartIcon.offset().left + $cartIcon.width() / 2,
-                    'width': 75,
-                    'height': 75
-                }, 1000, 'swing', function () {
-                    //$cartIcon.addClass("shake-run");
-                    //setTimeout(function () {
-                    //    $cartIcon.removeClass("shake-run");
-                    //}, 500);
-
-                    $imgClone.animate({
-                        'width': 0,
-                        'height': 0
-                    }, function () {
-                        $(this).detach();
-                    });
-
+                //轮播图
+                $('.flexslider').flexslider({
+                    animation: "slide"
                 });
 
-            }
-        };
+                //tab页插件
+                $("#tabs").tabs();
 
+                requirejs(['cart'], function () {
+                    //挂接购物车商品数量变动前的事件处理函数，飞入购物车
+                    $($.cart).on("onProdItemsChanging", flyToCart);
+                });
+
+            });
+
+            //递减果汁数量
+            $("#btnDesc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    if (currQty > 1) {
+                        currQty--;
+                    }
+                    else {
+                        currQty = 1;
+                    }
+                    //显示更新的数量
+                    $("#txtQty").val(currQty);
+                }
+                else {
+                    $("#txtQty").val(1);
+                }
+            });
+
+            //递增果汁数量
+            $("#btnAsc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    currQty++;
+
+                    //显示更新的数量
+                    $("#txtQty").val(currQty);
+                }
+                else {
+                    $("#txtQty").val(1);
+                }
+            });
+
+            //校验是否输入数值
+            $('#txtQty').on('change', function () {
+                var currQty = $("#txtQty").val();
+                if (isNaN(currQty)) {
+                    $("#txtQty").val(1);
+                }
+            });
+
+            $('#btnAddCart').on('click', function () {
+
+                var $prodImg = $("#ulFlexSlider img:first");
+                var imgName = $prodImg.attr("src");
+
+                //购物车里添加商品
+                $.cart.addProdItem($("#hfProdID").val(), $("#lblProdName").text(), $("#lblProdDesc").text(), imgName, $("#lblProdPrice").text(), $("#txtQty").val());
+
+            });
+
+            $('#btnBuynow').on('click', function () {
+
+                var $prodImg = $("#ulFlexSlider img:first");
+                var imgName = $prodImg.attr("src");
+
+                //购物车里添加商品
+                $.cart.addProdItem($("#hfProdID").val(), $("#lblProdName").text(), $("#lblProdDesc").text(), imgName, $("#lblProdPrice").text(), $("#txtQty").val());
+
+                location.href = "Checkout.aspx";
+            });
+
+            //添加商品到购物车的动画
+            function flyToCart(event) {
+                var $cartIcon = $(".fa-shopping-cart");
+                var $imgFly = $("#ulFlexSlider img:first");
+                var $beginPos = $("div.flexslider");
+                if ($imgFly) {
+                    var $imgClone = $imgFly.clone().offset({
+                        top: $beginPos.offset().top + $imgFly.height() * 1 / 3,
+                        left: $beginPos.offset().left + $imgFly.width() * 1 / 3
+                    }).css({
+                        'opacity': '0.5',
+                        'position': 'absolute',
+                        'height': '150px',
+                        'width': '150px',
+                        'z-index': parseInt($("footer.footer").css("z-index")) + 1000
+                    }).appendTo($('body')).animate({
+                        'top': ($.webConfig.browserVersion.wechat ? ($cartIcon.offset().top + $(document).scrollTop()) : $cartIcon.offset().top),
+                        'left': $cartIcon.offset().left + $cartIcon.width() / 2,
+                        'width': 75,
+                        'height': 75
+                    }, 1000, 'swing', function () {
+                        //$cartIcon.addClass("shake-run");
+                        //setTimeout(function () {
+                        //    $cartIcon.removeClass("shake-run");
+                        //}, 500);
+
+                        $imgClone.animate({
+                            'width': 0,
+                            'height': 0
+                        }, function () {
+                            $(this).detach();
+                        });
+
+                    });
+
+                }
+            };
+        });
 
     </script>
 </body>

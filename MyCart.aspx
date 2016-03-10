@@ -35,108 +35,114 @@
 </body>
 
 <script>
-    $(function () {
+    requirejs(['jquery'], function ($) {
 
-        displayCart();
+        $(function () {
 
-        //挂接购物车商品数量变动后事件处理函数
-        $(cart).on("prodItemsChanged", refreshSubTotal);
+            requirejs(['cart'], function () {
+                displayCart();
 
+                //挂接购物车商品数量变动后事件处理函数
+                $($.cart).on("onProdItemsChanged", refreshSubTotal);
+            });
+        });
     });
 
-    function refreshSubTotal(event, data) {
-
         //显示购物车里的总价
-        $("span.sub-total-price").text("￥" + data.subTotal);
+        function refreshSubTotal(event, data) {
 
-        //如果购物车为空，则禁用结算按钮
-        if (data.prodQty == 0) {
-            $("#btnBuynow").attr({ disabled: "disabled" });
-            $("div.container").html('<div class="cart-empty-hint">购物车空空如也 :-(</div>');
+            $("span.sub-total-price").text("￥" + data.subTotal);
+
+            //如果购物车为空，则禁用结算按钮
+            if (data.prodQty == 0) {
+                $("#btnBuynow").attr({ disabled: "disabled" });
+                $("div.prod-items").html('<div class="cart-empty-hint">购物车空空如也 :-(</div>');
+            }
         }
-    }
 
-    //展示购物车里的商品
-    function displayCart() {
-        var htmlItem = "";
+        //展示购物车里的商品
+        function displayCart() {
+            var htmlItem = "";
 
-        //遍历购物车，显示所有的商品项
-        cart.getProdItems().each(function () {
-            htmlItem += '<div class="row prod-item" id="ProdItem' + this["prodID"] + '"><div class="col-xs-5 prod-item-left"><i class="fa fa-minus-square-o fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
-                + '<div class="col-xs-7 prod-item-right"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div><div class="prod-price">￥' + this["price"] + '</div>'
-                + '<div><span class="input-group"><span id="btnDec" class="input-group-addon" onclick="DecQty(' + this["prodID"] + ');">-</span><input class="form-control" type="text" id="txtQty' + this["prodID"] + '" value="' + this["qty"] + '" onchange="CheckIsNaN(' + this["prodID"] + ');"/><span id="btnInc" class="input-group-addon" onclick="IncQty(' + this["prodID"] + ');">+</span></span></div></div></div>';
-        });
+            //遍历购物车，显示所有的商品项
+            $.cart.getProdItems().each(function () {
+                htmlItem += '<div class="row prod-item" id="ProdItem' + this["prodID"] + '"><div class="col-xs-5 prod-item-left"><i class="fa fa-minus-square-o fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
+                    + '<div class="col-xs-7 prod-item-right"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div><div class="prod-price">￥' + this["price"] + '</div>'
+                    + '<div><span class="input-group"><span id="btnDec" class="input-group-addon" onclick="decQty(' + this["prodID"] + ');">-</span><input class="form-control" type="text" id="txtQty' + this["prodID"] + '" value="' + this["qty"] + '" onchange="checkIsNaN(' + this["prodID"] + ');"/><span id="btnInc" class="input-group-addon" onclick="incQty(' + this["prodID"] + ');">+</span></span></div></div></div>';
+            });
 
-        $("div.prod-items").append($(htmlItem));
+            $("div.prod-items").append(htmlItem);
 
-        refreshSubTotal(null, { prodQty: cart.prodAmount(), subTotal: cart.subTotal() });
-    }
-
-    //递增商品数量
-    function IncQty(prodId) {
-        var $txtQty = $("#txtQty" + prodId);
-        if (!isNaN($txtQty.val())) {
-            //当前数量递增
-            var currQty = parseInt($txtQty.val());
-            currQty++;
-
-            //显示更新的数量
-            $txtQty.val(currQty);
+            refreshSubTotal(null, { prodQty: $.cart.prodAmount(), subTotal: $.cart.subTotal() });
         }
-        else {
-            currQty = 1;
-            $txtQty.val(currQty);
-        }
-        //更新购物车里的商品数量
-        cart.updateProdItem(prodId, currQty);
-    }
 
-    //递减商品数量
-    function DecQty(prodId) {
-        var $txtQty = $("#txtQty" + prodId);
-        if (!isNaN($txtQty.val())) {
-            //当前数量递增
-            var currQty = parseInt($txtQty.val());
+        //递增商品数量
+        function incQty(prodId) {
+            var $txtQty = $("#txtQty" + prodId);
+            if (!isNaN($txtQty.val())) {
+                //当前数量递增
+                var currQty = parseInt($txtQty.val());
+                currQty++;
 
-            if (currQty > 1) {
-                currQty--;
+                //显示更新的数量
+                $txtQty.val(currQty);
             }
             else {
                 currQty = 1;
+                $txtQty.val(currQty);
             }
-
-            //显示更新的数量
-            $txtQty.val(currQty);
-        }
-        else {
-            currQty = 1;
-            $txtQty.val(currQty);
-        }
-        //更新购物车里的商品数量
-        cart.updateProdItem(prodId, currQty);
-    }
-
-    //校验是否输入数值
-    function CheckIsNaN(prodId) {
-        var $txtQty = $("#txtQty" + prodId);
-        if (isNaN($txtQty.val())) {
-            $txtQty.val(1);
-
             //更新购物车里的商品数量
-            cart.updateProdItem(prodId, 1);
+            $.cart.updateProdItem(prodId, currQty);
         }
-    }
 
-    //移除商品项
-    function removeProdItem(prodId) {
+        //递减商品数量
+        function decQty(prodId) {
+            var $txtQty = $("#txtQty" + prodId);
+            if (!isNaN($txtQty.val())) {
+                //当前数量递减
+                var currQty = parseInt($txtQty.val());
 
-        //删除购物车界面商品项
-        $("#ProdItem" + prodId).fadeOut("slow");
+                if (currQty > 1) {
+                    currQty--;
+                }
+                else {
+                    currQty = 1;
+                }
 
-        //删除购物车里的商品项
-        cart.removeProdItem(prodId);
+                //显示更新的数量
+                $txtQty.val(currQty);
+            }
+            else {
+                currQty = 1;
+                $txtQty.val(currQty);
+            }
+            //更新购物车里的商品数量
+            $.cart.updateProdItem(prodId, currQty);
+        }
 
-    }
+        //校验是否输入数值
+        function checkIsNaN(prodId) {
+            var $txtQty = $("#txtQty" + prodId);
+
+            //如果输入不是数值，则修改数量为1
+            if (isNaN($txtQty.val())) {
+                $txtQty.val(1);
+
+                //更新购物车里的商品数量
+                $.cart.updateProdItem(prodId, 1);
+            }
+        }
+
+        //移除商品项
+        function removeProdItem(prodId) {
+
+            //删除购物车界面商品项
+            $("#ProdItem" + prodId).fadeOut("slow");
+
+            //删除购物车里的商品项
+            $.cart.removeProdItem(prodId);
+
+        }
 
 </script>
 </html>

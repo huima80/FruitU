@@ -52,6 +52,39 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 //把List<>对象集合转换成JSON数据格式，返回给前端展示
                 jOrderListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(orderListPerPage));
 
+                //处理JSON值，便于前端显示
+                for (int i = 0; i < jOrderListPerPage.Count; i++)
+                {
+                    jOrderListPerPage[i]["OrderID"] = jOrderListPerPage[i]["OrderID"].ToString().Substring(18);
+
+                    jOrderListPerPage[i]["OrderDate"] = jOrderListPerPage[i]["OrderDate"].ToString().ToString();
+
+                    switch (jOrderListPerPage[i]["TradeState"].ToString())
+                    {
+                        case "1":
+                            jOrderListPerPage[i]["TradeStateText"] = "支付成功";
+                            break;
+                        case "2":
+                            jOrderListPerPage[i]["TradeStateText"] = "转入退款";
+                            break;
+                        case "3":
+                            jOrderListPerPage[i]["TradeStateText"] = "未支付";
+                            break;
+                        case "4":
+                            jOrderListPerPage[i]["TradeStateText"] = "已关闭";
+                            break;
+                        case "5":
+                            jOrderListPerPage[i]["TradeStateText"] = "已撤销（刷卡支付）";
+                            break;
+                        case "6":
+                            jOrderListPerPage[i]["TradeStateText"] = "用户支付中";
+                            break;
+                        case "7":
+                            jOrderListPerPage[i]["TradeStateText"] = "支付失败";
+                            break;
+                    }
+                }
+
                 JsonData jdTotalRows = new JsonData();
                 jdTotalRows["TotalRows"] = totalRows;
                 jOrderListPerPage.Add(jdTotalRows);

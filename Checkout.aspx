@@ -83,39 +83,40 @@
         <!-- #include file="footer.html" -->
     </form>
 
-    <script src="Scripts/spin.min.js"></script>
-    <script src="Scripts/ladda.min.js"></script>
-
     <script>
 
         //Ladda loading控制按钮
         var lBtnWxPay, lBtnPayCash;
 
-        $(function () {
+        requirejs(['jquery', 'ladda'], function ($, ladda) {
 
-            displayCart();
+            $(function () {
 
-            lBtnWxPay = Ladda.create(document.querySelector('#btnWxPay'));
-            lBtnPayCash = Ladda.create(document.querySelector('#btnPayCash'));
+                requirejs(['cart'], function () {
+                    displayCart();
+                });
 
+                lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
+                lBtnPayCash = ladda.create(document.querySelector('#btnPayCash'));
+
+            });
         });
-
 
         //展示购物车里的商品
         function displayCart() {
             var htmlItem = "";
 
             //遍历购物车，显示所有的商品项
-            cart.getProdItems().each(function () {
+            $.cart.getProdItems().each(function () {
                 htmlItem += '<div class="row prod-item"><div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                     + '<div class="col-xs-6 prod-item-middle"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div></div>'
                     + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>';
             });
 
-            $("div.prod-items").append($(htmlItem));
+            $("div.prod-items").append(htmlItem);
 
             //显示总价格
-            $("#spSubTotalPrice").text("￥" + cart.subTotal());
+            $("#spSubTotalPrice").text("￥" + $.cart.subTotal());
 
         }
 
@@ -188,7 +189,7 @@
                      //alert(res.err_code + res.err_desc + res.err_msg);
                      if (res.err_msg.indexOf("ok") != -1) {
                          //订单提交成功后清空购物车，返回首页
-                         cart.clearProdItems();
+                         $.cart.clearProdItems();
                          alert("付款成功！我们将为您送货上门。");
                          location.href = "default.aspx";
                      }
@@ -239,7 +240,7 @@
                 //JS支付参数为空场景
 
                 //判断购物车里的商品项是否为空
-                if (cart != undefined && cart.storage != undefined && cart.prodAmount() != 0) {
+                if ($.cart != undefined && $.cart.prodAmount() != 0) {
 
                     //处理收货人信息
                     var txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
@@ -286,10 +287,10 @@
                     {
                         lBtnWxPay.start();
 
-                        cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo, 1);
+                        $.cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo, 1);
 
                         //根据购物车生成JSON格式订单信息，包含订购人和商品项信息
-                        orderInfo = cart.makeOrderInfo();
+                        orderInfo = $.cart.makeOrderInfo();
 
                         //提交购物车中的信息，获取prepay_id后前台发起微信支付
                         $.post("JSAPIPay.ashx", orderInfo, function (jWxJsParam) {
@@ -320,16 +321,16 @@
 
                         lBtnPayCash.start();
 
-                        cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo, 2);
+                        $.cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo, 2);
 
                         //根据购物车生成JSON格式订单信息，包含订购人和商品项信息
-                        orderInfo = cart.makeOrderInfo();
+                        orderInfo = $.cart.makeOrderInfo();
 
                         //提交订单
                         $.post("JSAPIPay.ashx", orderInfo, function (jPoID) {
                             if (jPoID["NewPoID"] != undefined) {
                                 alert("下单成功！我们将为您送货上门收款。");
-                                cart.clearProdItems();
+                                $.cart.clearProdItems();
                                 location.href = "default.aspx";
                             }
                             else {

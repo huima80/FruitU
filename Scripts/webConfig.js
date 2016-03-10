@@ -1,6 +1,22 @@
-﻿(function () {
-    $.browser = {
-        version: function () {
+﻿; (function ($) {
+    $.webConfig = {
+        siteUrl: 'mahui.me',
+        siteName: 'FruitU',
+        siteDesc: '鲜果切',
+        siteKeywords: 'fruit,slice,juice,水果,果汁,切片',
+        siteIcon: 'images/FruitU.ico',
+        siteCopyrights: 'FruitU',
+        defaultImg: 'images/FruitU.jpg',
+        pageSize: 10,
+        siteInit: function(){
+            document.title = siteName + ' -- ' + document.title;
+            document.title = siteName + ' -- ' + document.title;
+            document.title = siteName + ' -- ' + document.title;
+            document.title = siteName + ' -- ' + document.title;
+            document.title = siteName + ' -- ' + document.title;
+
+        },
+        browserVersion: (function () {
             var u = navigator.userAgent, app = navigator.appVersion;
             return {
                 wechat: u.indexOf("MicroMessenger") > -1, //微信内置浏览器
@@ -15,16 +31,6 @@
                 iPad: u.indexOf("iPad") > -1, //是否iPad
                 webApp: u.indexOf("Safari") == -1 //是否web应该程序，没有头部与底部
             };
-        }()
+        })()
     };
-
-    $(function () {
-        if (!$.browser.version.wechat) {
-            $("#divFruitUQRCode").show();
-        }
-
-    })
-
 })(jQuery);
-
-
