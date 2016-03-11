@@ -2221,11 +2221,11 @@ return Outlayer;
   /* jshint strict: false */ /*globals define, module, require */
   if ( typeof define == 'function' && define.amd ) {
     // AMD
-    define( [
-        'outlayer/outlayer',
-        'get-size/get-size'
+      define([
+          'outlayer/outlayer',
+          'get-size/get-size'
       ],
-      factory );
+        factory());
   } else if ( typeof module == 'object' && module.exports ) {
     // CommonJS
     module.exports = factory(

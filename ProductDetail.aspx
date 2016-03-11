@@ -14,8 +14,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <link href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css" rel="stylesheet" />
-    <link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/jquery-ui-1.11.4.css" rel="stylesheet" />
+    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/flexslider.css" rel="stylesheet" media="screen" />
     <link href="css/common.css" rel="stylesheet" />
@@ -109,7 +109,7 @@
                 $("#tabs").tabs();
 
                 requirejs(['cart'], function () {
-                    //挂接购物车商品数量变动前的事件处理函数，飞入购物车
+                    //挂接购物车商品数量变动前的事件处理函数
                     $($.cart).on("onProdItemsChanging", flyToCart);
                 });
 

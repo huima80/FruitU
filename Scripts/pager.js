@@ -7,7 +7,7 @@
     }
         // AMD module
     else if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'jsrender', 'masonry'], factory(jQuery));
+        define(['jquery', 'jsrender'], factory(jQuery));
     }
         // Browser global
     else {
@@ -165,10 +165,13 @@
 
                     //瀑布流布局
                     if (settings.itemLayout == 1) {
-                        $(settings.pageContainer).masonry({
-                            // options
-                            itemSelector: settings.masonryItemSelector
-                        });
+                        require(['jquery-bridget/jquery-bridget'],
+                            function (jQueryBridget) {
+                                // make Masonry a jQuery plugin
+                                jQueryBridget('masonry', Masonry, $);
+                                // now you can use $().masonry()
+                                $(settings.pageContainer).masonry({ itemSelector: settings.masonryItemSelector });
+                            });
                     }
 
                     //触发分页后事件

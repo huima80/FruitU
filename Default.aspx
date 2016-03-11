@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
 <head>
-    <title>FruitU</title>
+    <title>首页</title>
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="keywords" content="fruit,slice,juice,水果,果汁,切片" />
@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/flexslider.css" rel="stylesheet" media="screen" />
     <link href="css/common.css" rel="stylesheet" />
@@ -202,7 +202,7 @@
         $(function () {
 
             //轮播图
-            requirejs(['jquery', 'flexslider'], function ($) {
+            requirejs(['flexslider'], function () {
                 $('.flexslider').flexslider({
                     animation: "slide"
                 });
@@ -215,8 +215,6 @@
                     pageQueryURL: 'ProdListPager.ashx',
                     pageTemplate: '#tmplProdPage',
                     pageContainer: '#divProdItems',
-                    itemLayout: 1,
-                    masonryItemSelector: '.prod-item'
                 });
 
                 $.pager.loadPage();

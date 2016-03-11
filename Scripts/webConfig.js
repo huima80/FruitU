@@ -49,7 +49,7 @@
 
     if (!window.webConfig) {
         window.webConfig = new WebConfig();
-        window.onload = window.webConfig.init.bind(window.webConfig);
+        window.onload = webConfig.init.bind(webConfig);
     }
 
     return window.webConfig;
