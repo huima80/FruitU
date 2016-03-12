@@ -142,7 +142,7 @@ public class ProductOrder
     }
 
     /// <summary>
-    /// 微信支付统一下单API返回的预支付回话标示，有效期2小时
+    /// 微信支付统一下单API返回的预支付回话标示，有效期由统一下单时的参数start_time和end_time决定
     /// </summary>
     public string PrepayID { get; set; }
 
@@ -168,16 +168,8 @@ public class ProductOrder
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
-                throw new Exception("没有配置数据库链接字符串。");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-
                 conn.Open();
                 SqlTransaction trans = conn.BeginTransaction();
 
@@ -422,14 +414,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -570,14 +555,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -733,14 +711,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -799,14 +770,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -899,14 +863,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1001,14 +958,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1159,14 +1109,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 try
                 {
@@ -1208,14 +1151,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1292,14 +1228,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1374,14 +1303,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1461,14 +1383,7 @@ public class ProductOrder
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 

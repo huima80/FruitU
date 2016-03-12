@@ -10,6 +10,11 @@ using System.Configuration;
 public static class Config
 {
     /// <summary>
+    /// 数据库链接字符串
+    /// </summary>
+    public static readonly string ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
+
+    /// <summary>
     /// 网站Title
     /// </summary>
     public static readonly string SiteTitle;

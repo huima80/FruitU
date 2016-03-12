@@ -44,14 +44,7 @@ public class Category
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -113,14 +106,7 @@ public class Category
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -182,14 +168,7 @@ public class Category
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -249,14 +228,7 @@ public class Category
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -328,14 +300,7 @@ public class Category
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -403,14 +368,7 @@ public class Category
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 

@@ -81,14 +81,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -165,14 +158,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -254,14 +240,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -407,14 +386,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -496,14 +468,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -584,18 +549,9 @@ public class Fruit
         List<Fruit> fruitList = new List<Fruit>();
         Fruit fruit;
 
-        string connStr;
-
         try
         {
-            connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -732,14 +688,7 @@ public class Fruit
 
         try
         {
-            connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -775,14 +724,7 @@ public class Fruit
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
                 SqlTransaction trans = conn.BeginTransaction();
@@ -981,14 +923,7 @@ public class Fruit
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1095,14 +1030,7 @@ public class Fruit
     {
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
                 SqlTransaction trans = conn.BeginTransaction();
@@ -1286,18 +1214,9 @@ public class Fruit
 
     public static void UpdateFruitImg(FruitImg fruitImg)
     {
-        string connStr;
-
         try
         {
-            connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1389,14 +1308,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
                 SqlTransaction trans = conn.BeginTransaction();
@@ -1460,18 +1372,9 @@ public class Fruit
 
     public static void DelFruitImg(int fruitImgID)
     {
-        string connStr;
-
         try
         {
-            connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1524,14 +1427,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 
@@ -1621,14 +1517,7 @@ public class Fruit
 
         try
         {
-            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["FruitU"].ToString();
-
-            if (string.IsNullOrEmpty(connStr))
-            {
-                throw new Exception("没有配置数据库链接字符串");
-            }
-
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
 

@@ -78,7 +78,7 @@ public class wsRefreshTradeState : System.Web.Services.WebService
                                         "yyyyMMddHHmmss",
                                         System.Globalization.CultureInfo.InvariantCulture));
                             break;
-                        case "NOTPAY":  //TODO:未支付状态，就没有交易时间time_end
+                        case "NOTPAY":  //未支付状态，就没有微信支付交易ID和时间
                             ProductOrder.UpdateTradeState(poList[i].OrderID,
                                     TradeState.NOTPAY,
                                     queryOrderPayData.GetValue("trade_state_desc").ToString(),
