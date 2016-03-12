@@ -8,7 +8,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link href="../css/ManageProduct.css" rel="stylesheet" />
     <link href="../Scripts/gridstack/gridstack-0.2.4.css" rel="stylesheet" />
-    <%--    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.4/gridstack.min.css" />--%>
 </head>
 <body>
     <!-- #include file="header.html" -->
@@ -21,7 +20,7 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-lg-2">
-                            <asp:Button ID="btnAddFruit" runat="server" Text="新增商品" OnClick="btnAddFruit_Click" CssClass="btn btn-danger" OnClientClick="theForm.__EVENTARGUMENT.value='Add';" />
+                            <asp:Button ID="btnAddFruit" runat="server" Text="新增商品" OnClick="btnAddFruit_Click" CssClass="btn btn-danger" OnClientClick="jumpToGrid();" />
                         </div>
                         <div class="col-lg-10 text-right" id="divCriterias">
                             <div class="form-group">
@@ -269,15 +268,23 @@
         };
         $('.grid-stack').gridstack(options);
 
+        theForm.onsubmit = jumpToGrid;
+        $(theForm).on("submit", setImgSeq);
+
     });
 
-    theForm.onsubmit = setImgSeq;
-    $(theForm).on("submit", setImgSeq);
+    //点击新增商品或选择按钮时，页面跳到DetailView
+    function jumpToGrid() {
+        if (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择') {
+            theForm.action += "#dvFruit";
+        }
+    }
 
+    //设置商品图片的gridstack.js的X/Y值
     function setImgSeq() {
         $(".grid-stack-item").each(function () {
-            $(this).find("input[id*='hfImgSeqX']").attr("value", $(this).data("gs-x"));
-            $(this).find("input[id*='hfImgSeqY']").attr("value", $(this).data("gs-y"));
+            $(this).find("input[id*='hfImgSeqX']").val($(this).data("gs-x"));
+            $(this).find("input[id*='hfImgSeqY']").val($(this).data("gs-y"));
         });
     }
 
@@ -335,20 +342,6 @@
             return true;
         }
     }
-
-    $(theForm).on("submit", function () {
-        if (theForm.__EVENTARGUMENT.value.indexOf("Add") != -1 || theForm.__EVENTARGUMENT.value.indexOf("Select") != -1) {
-            theForm.action += "#dvFruit";
-        }
-    });
-
-
-    //theForm.onsubmit = function () {
-    //    if (theForm.__EVENTARGUMENT.value.indexOf("Add") != -1 || theForm.__EVENTARGUMENT.value.indexOf("Select") != -1) {
-    //        theForm.action += "#dvFruit";
-    //    }
-    //    return true;
-    //};
 
 </script>
 </html>
