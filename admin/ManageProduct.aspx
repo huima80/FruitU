@@ -275,7 +275,7 @@
 
     //点击新增商品或选择按钮时，页面跳到DetailView
     function jumpToGrid() {
-        if (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择') {
+        if (event && event.currentTarget && (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择')) {
             theForm.action += "#dvFruit";
         }
     }
