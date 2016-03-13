@@ -122,7 +122,7 @@
                             <asp:BoundField DataField="OrderPrice" DataFormatString="{0:c}" HeaderText="订单金额" ReadOnly="True" SortExpression="OrderPrice" ItemStyle-CssClass="order-price" />
                             <asp:TemplateField HeaderText="收货人名称" SortExpression="DeliverName">
                                 <ItemTemplate>
-                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("DeliverName") %>' ToolTip='<%# Eval("DeliverPhone")+"\n"+Eval("DeliverAddress")+"\n备注："+Eval("OrderMemo") %>'></asp:Label>
+                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("DeliverName") %>' ToolTip='<%# Server.HtmlEncode(Eval("DeliverPhone").ToString())+"\n"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"\n备注："+Server.HtmlEncode(Eval("OrderMemo").ToString()) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="支付方式" SortExpression="PaymentTerm">
