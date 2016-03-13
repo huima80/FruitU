@@ -268,16 +268,23 @@
         };
         $('.grid-stack').gridstack(options);
 
-        theForm.onsubmit = jumpToGrid;
-        $(theForm).on("submit", setImgSeq);
+        theForm.onsubmit = onSubmitEventHandler;
 
     });
 
-    //点击新增商品或选择按钮时，页面跳到DetailView
-    function jumpToGrid() {
+    function onSubmitEventHandler() {
+
+        //点击新增商品或选择按钮时，页面跳到DetailView
         if (event && event.currentTarget && (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择')) {
             theForm.action += "#dvFruit";
         }
+
+        //设置商品图片的gridstack.js的X/Y值
+        $(".grid-stack-item").each(function () {
+            $(this).find("input[id*='hfImgSeqX']").val($(this).data("gs-x"));
+            $(this).find("input[id*='hfImgSeqY']").val($(this).data("gs-y"));
+        });
+
     }
 
     //设置商品图片的gridstack.js的X/Y值
