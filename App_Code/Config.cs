@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Web;
 using System.Configuration;
 
-
-/**
-* 	全局配置信息
-*/
+/// <summary>
+/// 全局配置信息
+/// </summary>
 public static class Config
 {
     /// <summary>
     /// 数据库链接字符串
     /// </summary>
-    public static readonly string ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
+    public static readonly string ConnStr;
 
     /// <summary>
     /// 网站Title
@@ -117,6 +116,7 @@ public static class Config
 
     static Config()
     {
+        Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
         Config.SiteTitle = ConfigurationManager.AppSettings["SiteTitle"].ToString();
         Config.SSLCertPath = ConfigurationManager.AppSettings["SSLCertPath"].ToString();
         Config.PayNotifyUrl = ConfigurationManager.AppSettings["PayNotifyUrl"].ToString();

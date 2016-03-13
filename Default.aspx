@@ -102,102 +102,6 @@
 
 <script>
 
-    requirejs(['jquery', 'jweixin'],
-        function ($, wx) {
-            $.extend(wxJsApiParam, {
-                debug: false,
-                jsApiList: [
-            'checkJsApi',
-            'onMenuShareTimeline',
-            'onMenuShareAppMessage',
-            'onMenuShareQQ',
-            'onMenuShareWeibo',
-            'onMenuShareQZone',
-            'hideMenuItems',
-            'showMenuItems',
-            'hideAllNonBaseMenuItem',
-            'showAllNonBaseMenuItem',
-            'translateVoice',
-            'startRecord',
-            'stopRecord',
-            'onVoiceRecordEnd',
-            'playVoice',
-            'onVoicePlayEnd',
-            'pauseVoice',
-            'stopVoice',
-            'uploadVoice',
-            'downloadVoice',
-            'chooseImage',
-            'previewImage',
-            'uploadImage',
-            'downloadImage',
-            'getNetworkType',
-            'openLocation',
-            'getLocation',
-            'hideOptionMenu',
-            'showOptionMenu',
-            'closeWindow',
-            'scanQRCode',
-            'chooseWXPay',
-            'openProductSpecificView',
-            'addCard',
-            'chooseCard',
-            'openCard'
-                ]
-            });
-
-            //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
-            wx.config(wxJsApiParam);
-
-            var voice = {
-                localId: '',
-                serverId: ''
-            };
-
-            // 4 音频接口
-            // 4.2 开始录音
-            $("#btnMic").on("click", function () {
-                wx.startRecord({
-                    success: function () {
-                        //3秒钟后停止录音
-                        setTimeout(function () {
-                            wx.stopRecord({
-                                success: function (res) {
-                                    //语音识别
-                                    wx.translateVoice({
-                                        localId: res.localId,
-                                        complete: function (res) {
-                                            if (res.hasOwnProperty('translateResult')) {
-                                                var text = res.translateResult;
-                                                text = text.replace("。", "").substr(text.indexOf("吃") + 1);
-                                                $("#searchInput").val(text);
-
-                                                $($.pager).one("onPageLoaded", function (event, data) {
-                                                    //模糊搜索结果后给出提示信息，回到首页展示全部商品
-                                                    $($.pager.settings.pageContainer).append('<h5 class="text-center"><a href="default.aspx" class="text-danger">不是您想找的？点我看看其他的。</a></h5>');
-                                                });
-
-                                                $.pager.loadPage({ pageQueryCriteria: { ProdName: text }, pageIndex: 1 });
-
-                                            } else {
-                                                alert('听不清哦，再说一遍吧。');
-                                            }
-                                        }
-                                    });
-                                },
-                                fail: function (res) {
-                                    alert('听不清哦，再说一遍吧。');
-                                }
-                            });
-                        }, 3000);
-                    },
-                    cancel: function () {
-                        alert('不要拒绝呀');
-                    }
-                });
-            });
-        });
-
     requirejs(['jquery'], function ($) {
         $(function () {
 
@@ -250,6 +154,103 @@
 
         $.pager.loadPage({ pageQueryCriteria: { CategoryID: categoryID }, pageIndex: 1 });
     }
+
+    requirejs(['jquery', 'jweixin'],
+    function ($, wx) {
+        $.extend(wxJsApiParam, {
+            debug: false,
+            jsApiList: [
+        'checkJsApi',
+        'onMenuShareTimeline',
+        'onMenuShareAppMessage',
+        'onMenuShareQQ',
+        'onMenuShareWeibo',
+        'onMenuShareQZone',
+        'hideMenuItems',
+        'showMenuItems',
+        'hideAllNonBaseMenuItem',
+        'showAllNonBaseMenuItem',
+        'translateVoice',
+        'startRecord',
+        'stopRecord',
+        'onVoiceRecordEnd',
+        'playVoice',
+        'onVoicePlayEnd',
+        'pauseVoice',
+        'stopVoice',
+        'uploadVoice',
+        'downloadVoice',
+        'chooseImage',
+        'previewImage',
+        'uploadImage',
+        'downloadImage',
+        'getNetworkType',
+        'openLocation',
+        'getLocation',
+        'hideOptionMenu',
+        'showOptionMenu',
+        'closeWindow',
+        'scanQRCode',
+        'chooseWXPay',
+        'openProductSpecificView',
+        'addCard',
+        'chooseCard',
+        'openCard'
+            ]
+        });
+
+        //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
+        wx.config(wxJsApiParam);
+
+        var voice = {
+            localId: '',
+            serverId: ''
+        };
+
+        // 4 音频接口
+        // 4.2 开始录音
+        $("#btnMic").on("click", function () {
+            wx.startRecord({
+                success: function () {
+                    //3秒钟后停止录音
+                    setTimeout(function () {
+                        wx.stopRecord({
+                            success: function (res) {
+                                //语音识别
+                                wx.translateVoice({
+                                    localId: res.localId,
+                                    complete: function (res) {
+                                        if (res.hasOwnProperty('translateResult')) {
+                                            var text = res.translateResult;
+                                            text = text.replace("。", "").substr(text.indexOf("吃") + 1);
+                                            $("#searchInput").val(text);
+
+                                            $($.pager).one("onPageLoaded", function (event, data) {
+                                                //模糊搜索结果后给出提示信息，回到首页展示全部商品
+                                                $($.pager.settings.pageContainer).append('<h5 class="text-center"><a href="default.aspx" class="text-danger">不是您想找的？点我看看其他的。</a></h5>');
+                                            });
+
+                                            $.pager.loadPage({ pageQueryCriteria: { ProdName: text }, pageIndex: 1 });
+
+                                        } else {
+                                            alert('听不清哦，再说一遍吧。');
+                                        }
+                                    }
+                                });
+                            },
+                            fail: function (res) {
+                                alert('听不清哦，再说一遍吧。');
+                            }
+                        });
+                    }, 3000);
+                },
+                cancel: function () {
+                    alert('不要拒绝呀');
+                }
+            });
+        });
+    });
+
 </script>
 
 </html>

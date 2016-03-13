@@ -16,10 +16,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
     public void ProcessRequest(HttpContext context)
     {
 
-        //微信统一下单API返回的预支付回话标示
+        //微信统一下单API返回的预支付会话标示
         string prepayID = string.Empty;
 
-        //根据prepay_id生产的JS支付参数
+        //根据prepay_id生成的JS支付参数
         string wxJsApiParam = string.Empty;
 
         //货到付款时返回的新生成的订单ID
