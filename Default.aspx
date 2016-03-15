@@ -75,7 +75,7 @@
 
 <!-- Declare a JsRender template, in a script block: -->
 <script id="tmplProdPage" type="text/x-jsrender">
-    <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2" onclick="location.href='ProductDetail.aspx?ProdID={{:ID}}'">
+    <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 prod-item-col" onclick="location.href='ProductDetail.aspx?ProdID={{:ID}}'">
         <div class="prod-item">
             {{for FruitImgList}}
                     {{if MainImg}}
@@ -119,6 +119,7 @@
                     pageQueryURL: 'ProdListPager.ashx',
                     pageTemplate: '#tmplProdPage',
                     pageContainer: '#divProdItems',
+                    isMasonry: true
                 });
 
                 $.pager.loadPage();

@@ -37,8 +37,7 @@
             pageTemplate: '',
             pageContainer: '',
             pageItemFadeTimer: 1000,
-            itemLayout: 0,
-            masonryItemSelector: ''
+            isMasonry: false,
         };
 
         ////////////////原型成员对象/////////////////////
@@ -164,13 +163,10 @@
                     }
 
                     //瀑布流布局
-                    if (settings.itemLayout == 1) {
-                        require(['jquery-bridget/jquery-bridget'],
-                            function (jQueryBridget) {
-                                // make Masonry a jQuery plugin
-                                jQueryBridget('masonry', Masonry, $);
-                                // now you can use $().masonry()
-                                $(settings.pageContainer).masonry({ itemSelector: settings.masonryItemSelector });
+                    if (settings.isMasonry) {
+                        requirejs(['masonry'],
+                            function (Masonry) {
+                                new Masonry(settings.pageContainer, { });
                             });
                     }
 
