@@ -83,11 +83,7 @@
         </div>
         <!-- #include file="footer.html" -->
     </form>
-
-    <!-- 搜狐畅言 -->
-    <script src="Scripts/sohucs.js"></script>
-    <script type="text/javascript" src="http://assets.changyan.sohu.com/upload/plugins/plugins.count.js">
-    </script>
+</body>
 
     <script>
         requirejs(['flexslider', 'jqueryui', 'webConfig'], function () {
@@ -211,5 +207,10 @@
         });
 
     </script>
-</body>
+
+        <!-- 搜狐畅言 -->
+    <script src="Scripts/sohucs.js"></script>
+    <script type="text/javascript" src="http://assets.changyan.sohu.com/upload/plugins/plugins.count.js">
+    </script>
+
 </html>
