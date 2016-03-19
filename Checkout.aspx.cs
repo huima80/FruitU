@@ -11,14 +11,14 @@ public partial class Checkout : System.Web.UI.Page
         {
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
-            if (Session["AuthInfo"] == null)
+            if (Session["WxAuthInfo"] == null)
             {
                 Response.Redirect("default.aspx");
             }
 
-            JsonData jAuthInfo = Session["AuthInfo"] as JsonData;
-            //如果Session["AuthInfo"]中不包含snsapi_base模式授权的token，则发起授权，并存入session键access_token_base，并记录获取的时间
-            if (!jAuthInfo.Keys.Contains("access_token_base") || string.IsNullOrEmpty(jAuthInfo["access_token_base"].ToString()))
+            JsonData jWxAuthInfo = Session["WxAuthInfo"] as JsonData;
+            //如果Session["WxAuthInfo"]中不包含snsapi_base模式授权的token，则发起授权，并存入session键access_token_base，并记录获取的时间
+            if (!jWxAuthInfo.Keys.Contains("access_token_base") || string.IsNullOrEmpty(jWxAuthInfo["access_token_base"].ToString()))
             {
                 if (Request.QueryString["CODE"] == null)
                 {
@@ -41,8 +41,8 @@ public partial class Checkout : System.Web.UI.Page
 
                     if (jAccessToken != null && jAccessToken is JsonData && jAccessToken["access_token"] != null)
                     {
-                        jAuthInfo["access_token_base"] = jAccessToken["access_token"].ToString();
-                        jAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
+                        jWxAuthInfo["access_token_base"] = jAccessToken["access_token"].ToString();
+                        jWxAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
                     }
                     else
                     {
@@ -53,18 +53,18 @@ public partial class Checkout : System.Web.UI.Page
             }
 
             //校验session中的access_token_base是否超时
-            double tokenExpire = double.Parse(jAuthInfo["expires_in"].ToString());
-            DateTime tokenTime = DateTime.ParseExact(jAuthInfo["token_base_time"].ToString(), "yyyyMMddHHmmss", null);
+            double tokenExpire = double.Parse(jWxAuthInfo["expires_in"].ToString());
+            DateTime tokenTime = DateTime.ParseExact(jWxAuthInfo["token_base_time"].ToString(), "yyyyMMddHHmmss", null);
             if (DateTime.Now >= tokenTime.AddSeconds(tokenExpire))
             {
                 //如果token超时，则清除token，重定向到本页，授权获取新的token
-                jAuthInfo["access_token_base"] = string.Empty;
+                jWxAuthInfo["access_token_base"] = string.Empty;
                 Response.Redirect(Request.Url.ToString());
             }
             else
             {
                 //获取“收货地址共享接口参数”，传给前端JS
-                string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(jAuthInfo["access_token_base"].ToString(), redirectUri);
+                string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(jWxAuthInfo["access_token_base"].ToString(), redirectUri);
 
                 ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
             }

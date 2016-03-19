@@ -160,7 +160,8 @@ public class WxJSAPI
     /// <summary>
     ///  获取收货地址js函数入口参数,详情请参考收货地址共享接口：http://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=7_9
     /// </summary>
-    /// <param name="page"></param>
+    /// <param name="accessToken"></param>
+    /// <param name="url"></param>
     /// <returns>共享收货地址js函数需要的参数，json格式可以直接做参数使用</returns>
     public static string MakeEditAddressJsParam(string accessToken, string url)
     {

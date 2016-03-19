@@ -684,8 +684,6 @@ public class Fruit
     {
         List<FruitImg> fruitImgList;
 
-        string connStr;
-
         try
         {
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))

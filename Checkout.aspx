@@ -29,7 +29,7 @@
                 <div class="col-xs-12">
                     <div class="panel panel-info">
                         <div class="panel-heading" onclick="SelectDeliverAddress();">
-                            选择收货地址 >>
+                            <i class="fa fa-map-marker"></i> 选择收货地址 >>
                         </div>
                         <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
                             <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>

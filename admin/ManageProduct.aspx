@@ -1,17 +1,10 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" EnableViewStateMac="false" EnableEventValidation="false" CodeFile="ManageProduct.aspx.cs" Inherits="ManageProduct" Debug="True" %>
+﻿<%@ Page Title="商品管理" Language="C#" MasterPageFile="~/admin/MasterPage.master" AutoEventWireup="true" CodeFile="ManageProduct.aspx.cs" Inherits="ManageProduct" %>
 
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title>商品管理</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
     <link href="../css/ManageProduct.css" rel="stylesheet" />
     <link href="../Scripts/gridstack/gridstack-0.2.4.css" rel="stylesheet" />
-</head>
-<body>
-    <!-- #include file="header.html" -->
-    <form id="form1" runat="server" enctype="multipart/form-data" class="form-inline">
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
         <div class="container-fluid">
             <div class="panel panel-info">
                 <div class="panel-heading text-center">
@@ -85,7 +78,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated">
+                    <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" ClientIDMode="Static">
                         <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                         <Fields>
                             <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" ControlStyle-CssClass="form-control">
@@ -255,9 +248,6 @@
                 </div>
             </div>
         </div>
-    </form>
-</body>
-
 <script src="../Scripts/lodash.min.js"></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.4/gridstack.min.js'></script>
 
@@ -268,32 +258,30 @@
         };
         $('.grid-stack').gridstack(options);
 
-        theForm.onsubmit = onSubmitEventHandler;
+        theForm.onsubmit = jumpToGrid;
 
     });
 
-    function onSubmitEventHandler() {
+    //点击新增商品或选择按钮时，页面跳到DetailView
+    function jumpToGrid() {
 
-        //点击新增商品或选择按钮时，页面跳到DetailView
         if (event && event.currentTarget && (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择')) {
             theForm.action += "#dvFruit";
         }
 
-        //设置商品图片的gridstack.js的X/Y值
-        $(".grid-stack-item").each(function () {
-            $(this).find("input[id*='hfImgSeqX']").val($(this).data("gs-x"));
-            $(this).find("input[id*='hfImgSeqY']").val($(this).data("gs-y"));
-        });
-
+        setImgSeq();
     }
 
     //设置商品图片的gridstack.js的X/Y值
     function setImgSeq() {
+
         $(".grid-stack-item").each(function () {
             $(this).find("input[id*='hfImgSeqX']").val($(this).data("gs-x"));
             $(this).find("input[id*='hfImgSeqY']").val($(this).data("gs-y"));
         });
+
     }
+
 
     var fuNum = 1;
 
@@ -351,4 +339,5 @@
     }
 
 </script>
-</html>
+
+</asp:Content>

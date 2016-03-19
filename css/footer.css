@@ -73,3 +73,9 @@
     background-color:red;
     border-radius:50%;
 }
+
+.qq-login{
+    position:fixed;
+    top:50px;
+    right:5px;
+}

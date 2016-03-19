@@ -1,4 +1,19 @@
-; (function ($) {
+; (function (root, factory) {
+
+    // CommonJS
+    if (typeof exports === 'object') {
+        module.exports = factory(require('jquery.js'));
+    }
+        // AMD module
+    else if (typeof define === 'function' && define.amd) {
+        define(['jquery123'], factory(jQuery));
+    }
+        // Browser global
+    else {
+        //root.saas = factory(jQuery);
+    }
+}
+(window, function ($) {
 
     $.fn.extend({
         showTree: function (opt) {
@@ -144,4 +159,4 @@
             }
         }
     });
-})(jQuery);
+}));

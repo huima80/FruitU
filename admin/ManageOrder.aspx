@@ -1,16 +1,9 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ManageOrder.aspx.cs" Inherits="ManageOrder" %>
+﻿<%@ Page Title="订单管理" Language="C#" MasterPageFile="~/admin/MasterPage.master" AutoEventWireup="true" CodeFile="ManageOrder.aspx.cs" Inherits="ManageOrder" %>
 
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <title>订单管理</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
     <link href="../css/ManageOrder.css" rel="stylesheet" />
-</head>
-<body>
-    <!-- #include file="header.html" -->
-    <form id="form1" class="form-inline" runat="server">
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-12">
@@ -80,11 +73,11 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="txtStartOrderDate" class="sr-only">订单开始日期</label>
-                                        <asp:TextBox ID="txtStartOrderDate" runat="server" size="10" placeholder="订单开始日期" CssClass="form-control"></asp:TextBox>
+                                        <asp:TextBox ID="txtStartOrderDate" runat="server" size="10" placeholder="订单开始日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
                                     </div>
                                     <div class="form-group">
                                         <label for="EndOrderDate" class="sr-only">订单结束日期</label>
-                                        <asp:TextBox ID="txtEndOrderDate" runat="server" size="10" placeholder="订单结束日期" CssClass="form-control"></asp:TextBox>
+                                        <asp:TextBox ID="txtEndOrderDate" runat="server" size="10" placeholder="订单结束日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
                                     </div>
 
                                 </div>
@@ -157,8 +150,6 @@
             </div>
             <asp:ObjectDataSource ID="odsOrderList" runat="server" SelectMethod="FindProductOrderPager" TypeName="ProductOrder" EnablePaging="True" OnSelecting="odsOrderList_Selecting" OnSelected="odsOrderList_Selected" SelectCountMethod="FindProductOrderCount" UpdateMethod="UpdateOrderDeliver"></asp:ObjectDataSource>
         </div>
-    </form>
-</body>
 
 <script>
 
@@ -214,5 +205,4 @@
     }
 
 </script>
-
-</html>
+</asp:Content>

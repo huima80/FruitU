@@ -15,8 +15,8 @@
     }
 }(window, function () {
     function WebConfig() {
-        this.siteUrl = 'mahui.me';
-        this.siteName = 'FruitU';
+        this.siteDomain = 'mahui.me';
+        this.siteTitle = 'FruitU';
         this.siteDesc = '鲜果切';
         this.siteKeywords = 'fruit,slice,juice,水果,果汁,切片';
         this.siteIcon = 'images/FruitU.ico';
@@ -26,7 +26,7 @@
 
     //初始化网站配置
     WebConfig.prototype.init = function () {
-        document.title = this.siteName + ' -- ' + document.title;
+        document.title = this.siteTitle + ' -- ' + document.title;
     };
 
     //客户端浏览器信息

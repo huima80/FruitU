@@ -19,6 +19,26 @@ public static class Config
     public static readonly string SiteTitle;
 
     /// <summary>
+    /// 网站简介
+    /// </summary>
+    public static readonly string SiteDesc;
+
+    /// <summary>
+    /// 网站搜索引擎关键字
+    /// </summary>
+    public static readonly string SiteKeywords;
+
+    /// <summary>
+    /// 网站图标
+    /// </summary>
+    public static readonly string SiteIcon;
+
+    /// <summary>
+    /// 网站版权
+    /// </summary>
+    public static readonly string SiteCopyrights;
+
+    /// <summary>
     /// 微信支付订单（prepay_id）有效期（分钟）
     /// </summary>
     public static readonly int WeChatOrderExpire;
@@ -114,10 +134,25 @@ public static class Config
     /// </summary>
     public static readonly string DefaultImg;
 
+    /////////////////////////// QQ互联平台：http://connect.qq.com
+    /// <summary>
+    /// QQ互联APP ID
+    /// </summary>
+    public const string QQAppID = "101296477";
+
+    /// <summary>
+    /// QQ互联APP KEY
+    /// </summary>
+    public const string QQAppKey = "864b70ac0e208b75527191a9f69d0c0f";
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
         Config.SiteTitle = ConfigurationManager.AppSettings["SiteTitle"].ToString();
+        Config.SiteDesc = ConfigurationManager.AppSettings["SiteDesc"].ToString();
+        Config.SiteKeywords = ConfigurationManager.AppSettings["SiteKeywords"].ToString();
+        Config.SiteCopyrights = ConfigurationManager.AppSettings["SiteCopyrights"].ToString();
+        Config.SiteIcon = ConfigurationManager.AppSettings["SiteIcon"].ToString();
         Config.SSLCertPath = ConfigurationManager.AppSettings["SSLCertPath"].ToString();
         Config.PayNotifyUrl = ConfigurationManager.AppSettings["PayNotifyUrl"].ToString();
         Config.ImgPath = ConfigurationManager.AppSettings["ImgPath"].ToString();
