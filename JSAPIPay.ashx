@@ -39,8 +39,8 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
             }
 
 
-            JsonData jAuthInfo = new JsonData();
-            jAuthInfo = context.Session["AuthInfo"] as JsonData;
+            JsonData jWxAuthInfo = new JsonData();
+            jWxAuthInfo = context.Session["WxAuthInfo"] as JsonData;
 
             if (poID == 0)  //1，新订单处理流程
             {
@@ -54,8 +54,8 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     //--------------生成订单业务对象START-----------------
                     ProductOrder po = new ProductOrder();
                     po.OrderID = ProductOrder.MakeOrderID();    //生成OrderID
-                    po.OpenID = jAuthInfo["openid"].ToString();
-                    po.ClientIP = jAuthInfo["client_ip"].ToString();
+                    po.OpenID = jWxAuthInfo["openid"].ToString();
+                    po.ClientIP = jWxAuthInfo["client_ip"].ToString();
                     po.DeliverName = jOrderInfo["name"].ToString();
                     po.DeliverPhone = jOrderInfo["phone"].ToString();
                     po.DeliverAddress = jOrderInfo["address"].ToString();
@@ -127,7 +127,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                         case PaymentTerm.WECHAT:    //付款方式为微信支付
 
                             //统一下单，获取prepay_id，如果有错误发生，则stateCode有返回值
-                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jAuthInfo, po, out stateCode);
+                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
 
                             if (!string.IsNullOrEmpty(prepayID))
                             {
@@ -182,7 +182,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                         if (DateTime.Now >= timeOfPrepayID.AddMinutes(Config.WeChatOrderExpire))
                         {
                             //重新发起统一下单，获取新的prepay_id
-                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jAuthInfo, po, out stateCode);
+                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
 
                             //使用刷新的PrepayID更新数据库
                             ProductOrder.UpdatePrepayID(po.ID, prepayID);
@@ -191,7 +191,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     else
                     {
                         //如果PrepayID为空（上次下单时选择的货到付款），这里使用OrderID发起统一下单，首次获取prepay_id
-                        prepayID = WxPayAPI.CallUnifiedOrderAPI(jAuthInfo, po, out stateCode);
+                        prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
 
                         //使用首次获得的PrepayID更新数据库
                         ProductOrder.UpdatePrepayID(po.ID, prepayID);

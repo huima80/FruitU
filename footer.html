@@ -10,6 +10,12 @@
         </ul>
     </nav>
 </footer>
+<div class="qq-login">
+    <a href="qqauth.ashx">
+        <img alt="" src="http://qzonestyle.gtimg.cn/qzone/vas/opensns/res/img/Connect_logo_7.png" />
+    </a><br />
+    <wb:share-button type="button" size="middle"> </wb:share-button>
+</div>
 
 <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
 <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
@@ -19,6 +25,7 @@
       <![endif]-->
 
 <script src="Scripts/require.js"></script>
+<script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=3535172822" type="text/javascript" charset="utf-8"></script>
 
 <script>
     requirejs.config({
@@ -111,7 +118,19 @@
         }
     });
 
+    WB2.anyWhere(function (W) {
+        W.parseCMD("/users/show.json", function (sResult, bStatus) {
+            try {
+                //to do something...
+            } catch (e) { }
+        }, {
+            uid: '123456789'
+        }, {
+            method: 'get'
+        });
+    });
 </script>
+
 
 <!-- #include file="cs.aspx" -->
 <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />

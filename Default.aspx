@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xmlns:wb="http://open.weibo.com/wb">
 <head>
     <title>首页</title>
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
@@ -13,6 +13,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta property="qc:admins" content="543230621051655" />
+    <meta property="wb:webmaster" content="db2652c9f08157d9" />
     <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/flexslider.css" rel="stylesheet" media="screen" />

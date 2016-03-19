@@ -79,7 +79,7 @@ public class Auth : IHttpHandler, System.Web.SessionState.IRequiresSessionState
                     jAuthInfo["client_ip"] = context.Request.UserHostAddress;
 
                     //openid和access token存入session
-                    context.Session["AuthInfo"] = jAuthInfo;
+                    context.Session["WxAuthInfo"] = jAuthInfo;
 
                     //进一步获取用户信息
                     if (jAuthInfo["scope"].ToString().ToLower() == "snsapi_userinfo")
@@ -113,7 +113,7 @@ public class Auth : IHttpHandler, System.Web.SessionState.IRequiresSessionState
 
                         if (jUserInfo != null && jUserInfo["openid"] != null)
                         {
-                            context.Session["UserInfo"] = jUserInfo;
+                            context.Session["WxUserInfo"] = jUserInfo;
                         }
                         else
                         {

@@ -13,7 +13,7 @@ public partial class MyOrders : System.Web.UI.Page
     {
         try
         {
-            if (Session["UserInfo"] != null && Session["UserInfo"] is JsonData)
+            if (Session["WxUserInfo"] != null && Session["WxUserInfo"] is JsonData)
             {
 
                 //在前端页面定义pageSize变量用于分页操作
@@ -21,7 +21,7 @@ public partial class MyOrders : System.Web.UI.Page
             }
             else
             {
-                Response.Redirect("auth.ashx");
+                Response.Redirect("wxauth.ashx");
             }
         }
         catch (Exception ex)

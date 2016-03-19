@@ -29,7 +29,7 @@
     {
         // 在新会话启动时运行的代码
 
-        if (Session["AuthInfo"] == null || Session["UserInfo"] == null)
+        if (Session["WxAuthInfo"] == null || Session["WxUserInfo"] == null)
         {
             if (Request.Url.Host.ToLower().IndexOf("localhost") != -1)
             {
@@ -39,15 +39,15 @@
                 jAuthInfo["client_ip"] = "127.0.0.1";
                 jAuthInfo["access_token_base"] = "ACCESS_TOKEN_BASE";
                 jAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
-                Session["AuthInfo"] = jAuthInfo;
+                Session["WxAuthInfo"] = jAuthInfo;
 
                 string strUserInfo = "{\"openid\":\"o5gbrsixFkd1G6eszfG5mN-WbMeE\",\"nickname\":\"Mehmet_DEBUG\",\"sex\":1,\"language\":\"zh_CN\",\"city\":\"南京\",\"province\":\"江苏\",\"country\":\"中国\",\"headimgurl\":\"http://wx.qlogo.cn/mmopen/ajNVdqHZLLAp3L8QaUmuaQtNibOMeJBmnEd5mu6WSWKx0YNWHiaGcVEkgPN8rhLPO7ZUe4JHQ09K2Ug5ibPWQARGw/0\",\"privilege\":[]}";
                 JsonData jUserInfo = JsonMapper.ToObject(strUserInfo);
-                Session["UserInfo"] = jUserInfo;
+                Session["WxUserInfo"] = jUserInfo;
             }
             else
             {
-                Response.Redirect("~/auth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
+                Response.Redirect("~/wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
             }
         }
     }

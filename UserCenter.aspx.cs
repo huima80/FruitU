@@ -15,12 +15,12 @@ public partial class UserCenter : System.Web.UI.Page
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
 
-            if (Session["AuthInfo"] != null && Session["AuthInfo"] is JsonData)
+            if (Session["WxAuthInfo"] != null && Session["WxAuthInfo"] is JsonData)
             {
-                JsonData jAuthInfo = Session["AuthInfo"] as JsonData;
+                JsonData jWxAuthInfo = Session["WxAuthInfo"] as JsonData;
 
                 //如果Session["AuthInfo"]中不包含snsapi_base模式授权的token，则发起授权，并存入session键access_token_base，并记录获取的时间
-                if (!jAuthInfo.Keys.Contains("access_token_base") || string.IsNullOrEmpty(jAuthInfo["access_token_base"].ToString()))
+                if (!jWxAuthInfo.Keys.Contains("access_token_base") || string.IsNullOrEmpty(jWxAuthInfo["access_token_base"].ToString()))
                 {
                     ////开始：鉴权获取微信用户地址编辑JS参数
                     if (Request.QueryString["CODE"] == null)
@@ -44,8 +44,8 @@ public partial class UserCenter : System.Web.UI.Page
 
                         if (jAccessToken != null && jAccessToken is JsonData && jAccessToken["access_token"] != null)
                         {
-                            jAuthInfo["access_token_base"] = jAccessToken["access_token"].ToString();
-                            jAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
+                            jWxAuthInfo["access_token_base"] = jAccessToken["access_token"].ToString();
+                            jWxAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
                         }
                         else
                         {
@@ -57,18 +57,18 @@ public partial class UserCenter : System.Web.UI.Page
                 }
 
                 //校验session中的access_token_base是否超时
-                double tokenExpire = double.Parse(jAuthInfo["expires_in"].ToString());
-                DateTime tokenTime = DateTime.ParseExact(jAuthInfo["token_base_time"].ToString(), "yyyyMMddHHmmss", null);
+                double tokenExpire = double.Parse(jWxAuthInfo["expires_in"].ToString());
+                DateTime tokenTime = DateTime.ParseExact(jWxAuthInfo["token_base_time"].ToString(), "yyyyMMddHHmmss", null);
                 if (DateTime.Now >= tokenTime.AddSeconds(tokenExpire))
                 {
                     //如果token超时，则清除token，重定向到本页，授权获取新的token
-                    jAuthInfo["access_token_base"] = string.Empty;
+                    jWxAuthInfo["access_token_base"] = string.Empty;
                     Response.Redirect(Request.Url.ToString());
                 }
                 else
                 {
                     //如果session中的token有效，生成“收货地址共享接口参数”，传给前端JS
-                    string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(jAuthInfo["access_token_base"].ToString(), redirectUri);
+                    string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(jWxAuthInfo["access_token_base"].ToString(), redirectUri);
 
                     ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
                 }
@@ -79,26 +79,26 @@ public partial class UserCenter : System.Web.UI.Page
             }
 
             ////开始：显示auth.ashx鉴权获取的微信用户信息
-            if (Session["UserInfo"] != null && Session["UserInfo"] is JsonData)
+            if (Session["WxUserInfo"] != null && Session["WxUserInfo"] is JsonData)
             {
-                JsonData jUserInfo = Session["UserInfo"] as JsonData;
+                JsonData jWxUserInfo = Session["WxUserInfo"] as JsonData;
 
                 //显示用户头像、昵称、特权
-                this.imgPortrait.ImageUrl = jUserInfo["headimgurl"].ToString();
-                this.lblNickName.Text = jUserInfo["nickname"].ToString();
-                if (jUserInfo["privilege"].IsArray && jUserInfo["privilege"].Count != 0)
+                this.imgPortrait.ImageUrl = jWxUserInfo["headimgurl"].ToString();
+                this.lblNickName.Text = jWxUserInfo["nickname"].ToString();
+                if (jWxUserInfo["privilege"].IsArray && jWxUserInfo["privilege"].Count != 0)
                 {
                     string privilege = "";
-                    for (int i = 0; i < jUserInfo["privilege"].Count; i++)
+                    for (int i = 0; i < jWxUserInfo["privilege"].Count; i++)
                     {
-                        privilege += jUserInfo["privilege"][i] + ",";
+                        privilege += jWxUserInfo["privilege"][i] + ",";
                     }
                     this.lblPrivilege.Text = "【" + privilege.TrimEnd(',') + "】";
                 }
             }
             else
             {
-                Response.Redirect("auth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
+                Response.Redirect("wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
             }
             ////结束：显示auth.ashx鉴权获取的微信用户信息
 
