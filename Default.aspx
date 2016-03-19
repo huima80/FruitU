@@ -7,7 +7,6 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-
     <div class="container">
         <div class="row header">
             <div class="col-xs-2 logo">
@@ -111,30 +110,13 @@
             });
         });
 
+        //根据当前类别高亮菜单项
         function findProductByCategoryID(categoryID) {
-            //根据当前类别高亮菜单项
-            switch (categoryID) {
-                case 28:
-                    $("#liFruit").addClass("category-selected");
-                    $("#liJuice").removeClass("category-selected");
-                    $("#liJuiceDIY").removeClass("category-selected");
-                    break;
-                case 1:
-                    $("#liFruit").removeClass("category-selected");
-                    $("#liJuice").addClass("category-selected");
-                    $("#liJuiceDIY").removeClass("category-selected");
-                    break;
-                case 3:
-                    $("#liFruit").removeClass("category-selected");
-                    $("#liJuice").removeClass("category-selected");
-                    $("#liJuiceDIY").addClass("category-selected");
-                    break;
-                default:
-                    $("#liFruit").removeClass("category-selected");
-                    $("#liJuice").removeClass("category-selected");
-                    $("#liJuiceDIY").removeClass("category-selected");
-                    break;
-            }
+            var $li = $(event.currentTarget);
+            $li.addClass("category-selected");
+            $li.siblings().each(function () {
+                $(this).removeClass("category-selected");
+            });
 
             $.pager.loadPage({ pageQueryCriteria: { CategoryID: categoryID }, pageIndex: 1 });
         }
