@@ -1,52 +1,33 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="MyCart.aspx.cs" Inherits="MyCart" %>
+﻿<%@ Page Title="购物车" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="MyCart.aspx.cs" Inherits="MyCart" %>
 
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <title>购物车</title>
-    <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="keywords" content="fruit,slice,juice,水果,果汁,切片" />
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
-    <link href="css/font-awesome.min.css" rel="stylesheet" />
-    <link href="css/common.css" rel="stylesheet" />
+<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/MyCart.css" rel="stylesheet" />
-</head>
-<body>
-    <form id="form1" runat="server">
-        <div class="container">
-            <div class="prod-items">
-            </div>
-            <div class="row cart-footer">
-                <div class="col-xs-12 sub-total">
-                    总计：<span class="sub-total-price"></span>
-                    <button class="btn btn-danger" type="button" id="btnBuynow" onclick="location.href='Checkout.aspx'"><i class="fa fa-shopping-cart fa-lg fa-fw"></i>去结算</button>
-                </div>
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
+    <div class="container">
+        <div class="prod-items">
+        </div>
+        <div class="row cart-footer">
+            <div class="col-xs-12 sub-total">
+                总计：<span class="sub-total-price"></span>
+                <button class="btn btn-danger" type="button" id="btnBuynow" onclick="location.href='Checkout.aspx'"><i class="fa fa-shopping-cart fa-lg fa-fw"></i>去结算</button>
             </div>
         </div>
-        <!-- #include file="footer.html" -->
-    </form>
-</body>
+    </div>
 
-<script>
-    requirejs(['jquery'], function ($) {
+    <script>
+        requirejs(['jquery'], function ($) {
 
-        $(function () {
+            $(function () {
 
-            requirejs(['cart'], function () {
-                displayCart();
+                requirejs(['cart'], function () {
+                    displayCart();
 
-                //挂接购物车商品数量变动后事件处理函数
-                $($.cart).on("onProdItemsChanged", refreshSubTotal);
+                    //挂接购物车商品数量变动后事件处理函数
+                    $($.cart).on("onProdItemsChanged", refreshSubTotal);
+                });
             });
         });
-    });
 
         //显示购物车里的总价
         function refreshSubTotal(event, data) {
@@ -144,5 +125,5 @@
 
         }
 
-</script>
-</html>
+    </script>
+</asp:Content>

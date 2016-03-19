@@ -1,87 +1,68 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="Checkout.aspx.cs" Inherits="Checkout" %>
+﻿<%@ Page Title="确定订单" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="Checkout.aspx.cs" Inherits="Checkout" %>
 
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <title>确定订单</title>
-    <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="keywords" content="fruit,slice,juice,水果,果汁,切片" />
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
-    <link href="css/font-awesome.min.css" rel="stylesheet" />
-    <link href="css/common.css" rel="stylesheet" />
+<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/Checkout.css" rel="stylesheet" />
     <link href="css/ladda-themeless.min.css" rel="stylesheet" />
-</head>
-<body>
-    <form id="form1" runat="server">
-        <div class="container">
-            <div class="prod-items">
-            </div>
-            <hr />
-            <div class="row">
-                <div class="col-xs-12">
-                    <div class="panel panel-info">
-                        <div class="panel-heading" onclick="SelectDeliverAddress();">
-                            <i class="fa fa-map-marker"></i> 选择收货地址 >>
-                        </div>
-                        <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
-                            <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>
-                            <br />
-                            <span class="wx-user-address"></span>
-                        </div>
-                        <div id="divCustomizeAddrInfo" class="panel-body customize-addr-info">
-                            <div class="form-group">
-                                <label for="txtDeliverName" class="sr-only control-label">您的姓名</label>
-                                <input type="text" class="form-control" id="txtDeliverName" required="required" placeholder="您的姓名" />
-                            </div>
-                            <div class="form-group">
-                                <label for="txtDeliverPhone" class="sr-only control-label">您的电话</label>
-                                <input type="text" class="form-control" id="txtDeliverPhone" required="required" placeholder="您的电话" />
-                            </div>
-                            <div class="form-group">
-                                <label for="txtDeliverAddress" class="sr-only control-label">收货地址</label>
-                                <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="收货地址"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <hr />
-            <div class="row">
-                <div class="col-sm-10">
-                    <div class="form-group order-memo">
-                        <label for="txtMemo" class="sr-only control-label">订单备注</label>
-                        <textarea name="txtMemo" id="txtMemo" class="form-control" placeholder="订单备注..."></textarea>
-                    </div>
-                </div>
-            </div>
-            <hr />
-            <div class="row sub-total">
-                <div class="col-xs-12">
-                    <span>总价：<span class="sub-total-price" id="spSubTotalPrice"></span></span>
-                </div>
-            </div>
-            <div class="row pay-button">
-                <div class="col-xs-12">
-                    <p>
-                        <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="MakeOrder(true);"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
-                    </p>
-                    <p>
-                        <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-info ladda-button" data-style="zoom-in" onclick="MakeOrder(false);"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
-                    </p>
-                </div>
-            </div>
-
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
+    <div class="container">
+        <div class="prod-items">
         </div>
-        <!-- #include file="footer.html" -->
-    </form>
+        <hr />
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="panel panel-info">
+                    <div class="panel-heading" onclick="SelectDeliverAddress();">
+                        <i class="fa fa-map-marker"></i>选择收货地址 >>
+                    </div>
+                    <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
+                        <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>
+                        <br />
+                        <span class="wx-user-address"></span>
+                    </div>
+                    <div id="divCustomizeAddrInfo" class="panel-body customize-addr-info">
+                        <div class="form-group">
+                            <label for="txtDeliverName" class="sr-only control-label">您的姓名</label>
+                            <input type="text" class="form-control" id="txtDeliverName" required="required" placeholder="您的姓名" />
+                        </div>
+                        <div class="form-group">
+                            <label for="txtDeliverPhone" class="sr-only control-label">您的电话</label>
+                            <input type="text" class="form-control" id="txtDeliverPhone" required="required" placeholder="您的电话" />
+                        </div>
+                        <div class="form-group">
+                            <label for="txtDeliverAddress" class="sr-only control-label">收货地址</label>
+                            <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="收货地址"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-sm-10">
+                <div class="form-group order-memo">
+                    <label for="txtMemo" class="sr-only control-label">订单备注</label>
+                    <textarea name="txtMemo" id="txtMemo" class="form-control" placeholder="订单备注..."></textarea>
+                </div>
+            </div>
+        </div>
+        <hr />
+        <div class="row sub-total">
+            <div class="col-xs-12">
+                <span>总价：<span class="sub-total-price" id="spSubTotalPrice"></span></span>
+            </div>
+        </div>
+        <div class="row pay-button">
+            <div class="col-xs-12">
+                <p>
+                    <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="MakeOrder(true);"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
+                </p>
+                <p>
+                    <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-info ladda-button" data-style="zoom-in" onclick="MakeOrder(false);"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
+                </p>
+            </div>
+        </div>
+    </div>
 
     <script>
 
@@ -355,5 +336,4 @@
         }
 
     </script>
-</body>
-</html>
+</asp:Content>

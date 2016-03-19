@@ -57,63 +57,63 @@
 
 </head>
 <body>
-        <form id="form1" runat="server" enctype="multipart/form-data" class="form-inline">
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">
-                    <img class="logo-img" src="../images/FruitU.jpg" /></a>
-            </div>
-
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li id="liCategory"><a href="ManageCategory.aspx">商品类别管理</a></li>
-                    <li id="liProduct"><a href="ManageProduct.aspx">商品管理</a></li>
-                    <li id="liOrder"><a href="ManageOrder.aspx">订单管理</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">经营数据分析 <span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#">商品统计</a></li>
-                            <li><a href="http://changyan.kuaizhan.com/" target="_blank">商品评论管理</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">订单统计</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="http://www.cnzz.com/" target="_blank">CNZZ统计</a></li>
-                            <li><a href="http://zhanzhang.baidu.com/" target="_blank">百度统计</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">微信平台 <span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="http://mp.weixin.qq.com/" target="_blank">微信公众平台</a></li>
-                            <li><a href="https://pay.weixin.qq.com/" target="_blank">微信支付商户平台</a></li>
-                        </ul>
-                    </li>
-                    <li id="liWebConfig"><a href="#">平台参数设置</a></li>
-                    <li>
-                        <asp:LinkButton ID="lbLogout" runat="server" OnClientClick="return confirm('确认退出吗？');" OnClick="lbLogout_Click" >退出系统</asp:LinkButton>
-                </ul>
-                <div class="navbar-header navbar-right">
+    <form id="form1" runat="server" enctype="multipart/form-data" class="form-inline">
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
                     <a class="navbar-brand" href="#">
-                        <asp:Label ID="lblNickName" runat="server" CssClass="navbar-text"></asp:Label><asp:Image ID="imgQQImg" runat="server" ImageAlign="AbsMiddle" CssClass="img-rounded" /></a>
+                        <img class="logo-img" src="../images/FruitU.jpg" /></a>
                 </div>
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li id="liCategory"><a href="ManageCategory.aspx">商品类别管理</a></li>
+                        <li id="liProduct"><a href="ManageProduct.aspx">商品管理</a></li>
+                        <li id="liOrder"><a href="ManageOrder.aspx">订单管理</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">经营数据分析 <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">商品统计</a></li>
+                                <li><a href="http://changyan.kuaizhan.com/" target="_blank">商品评论管理</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="#">订单统计</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="http://www.cnzz.com/" target="_blank">CNZZ统计</a></li>
+                                <li><a href="http://zhanzhang.baidu.com/" target="_blank">百度统计</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">微信平台 <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="http://mp.weixin.qq.com/" target="_blank">微信公众平台</a></li>
+                                <li><a href="https://pay.weixin.qq.com/" target="_blank">微信支付商户平台</a></li>
+                            </ul>
+                        </li>
+                        <li id="liWebConfig"><a href="#">平台参数设置</a></li>
+                        <li>
+                            <asp:LinkButton ID="lbLogout" runat="server" OnClientClick="return confirm('确认退出吗？');" OnClick="lbLogout_Click">退出系统</asp:LinkButton>
+                    </ul>
+                    <div class="navbar-header navbar-right">
+                        <a class="navbar-brand" href="#">
+                            <asp:Label ID="lblNickName" runat="server" CssClass="navbar-text"></asp:Label><asp:Image ID="imgQQImg" runat="server" ImageAlign="AbsMiddle" CssClass="img-rounded" /></a>
+                    </div>
+                </div>
+                <!-- /.navbar-collapse -->
             </div>
-            <!-- /.navbar-collapse -->
-        </div>
-    </nav>
-    <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
-    </asp:ContentPlaceHolder>
-    <!-- #include file="../cs.aspx" -->
-    <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />
-</form>
+        </nav>
+        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" ClientIDMode="Static">
+        </asp:ContentPlaceHolder>
+        <!-- #include file="../cs.aspx" -->
+        <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />
+    </form>
 </body>
 
 </html>

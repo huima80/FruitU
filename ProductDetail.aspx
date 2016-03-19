@@ -1,29 +1,11 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ProductDetail.aspx.cs" Inherits="ProductDetail" %>
-<%@OutputCache Duration="60" VaryByParam="ProdID" %>
+﻿<%@ Page Title="商品详情" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="ProductDetail.aspx.cs" Inherits="ProductDetail" %>
 
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>商品详情</title>
-    <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="keywords" content="fruit,slice,juice,水果,果汁,切片" />
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/jquery-ui-1.11.4.css" rel="stylesheet" />
-    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
-    <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/flexslider.css" rel="stylesheet" media="screen" />
-    <link href="css/common.css" rel="stylesheet" />
     <link href="css/ProductDetail.css" rel="stylesheet" />
-</head>
-<body>
-    <form id="form1" runat="server">
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
         <div class="container">
             <div class="row">
                 <div class="col-xs-12">
@@ -81,9 +63,6 @@
                 </div>
             </div>
         </div>
-        <!-- #include file="footer.html" -->
-    </form>
-</body>
 
     <script>
         requirejs(['flexslider', 'jqueryui', 'webConfig'], function () {
@@ -212,5 +191,4 @@
     <script src="Scripts/sohucs.js"></script>
     <script type="text/javascript" src="http://assets.changyan.sohu.com/upload/plugins/plugins.count.js">
     </script>
-
-</html>
+</asp:Content>
