@@ -35,7 +35,7 @@
             _storage = window.sessionStorage;
         }
 
-        if (_storage.getItem(this.params.cartName) == undefined) {
+        if (_storage.getItem(this.params.cartName) == undefined || _storage.getItem(this.params.cartName) == null) {
             var cartInfo = {
                 name: "",
                 phone: "",
@@ -51,6 +51,15 @@
         //增加商品项
         Cart.prototype.addProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty) {
             var cartInfo, exist = false;
+            if (isNaN(prodID)) {
+                throw new TypeError("商品ID不正确");
+            }
+            if (isNaN(price)) {
+                throw new TypeError("商品价格不正确");
+            }
+            if (isNaN(qty)) {
+                throw new TypeError("商品数量不正确");
+            }
 
             //触发商品信息变动前事件
             $(this).trigger("onProdItemsChanging");
@@ -88,6 +97,12 @@
         //更新商品项
         Cart.prototype.updateProdItem = function (prodID, qty) {
             var cartInfo;
+            if (isNaN(prodID)) {
+                throw new TypeError("商品ID不正确");
+            }
+            if (isNaN(qty)) {
+                throw new TypeError("商品数量不正确");
+            }
 
             //触发商品信息变动前事件
             $(this).trigger("onProdItemsChanging");
@@ -122,6 +137,9 @@
         //删除商品项
         Cart.prototype.removeProdItem = function (prodID) {
             var cartInfo;
+            if (isNaN(prodID)) {
+                throw new TypeError("商品ID不正确");
+            }
 
             //触发商品信息变动前事件
             $(this).trigger("onProdItemsChanging");

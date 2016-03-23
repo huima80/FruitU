@@ -8,7 +8,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container">
-        <div class="row header">
+                <div class="row header">
             <div class="col-xs-2 logo">
                 <img src="images/FruitU.jpg" class="logo-img" />
             </div>
@@ -36,15 +36,15 @@
         <div class="row category">
             <div class="col-xs-12">
                 <ul class="category">
-                    <li id="liFruit" onclick="findProductByCategoryID(28)">
+                    <li id="liFruit" data-categoryid="28">
                         <img src="images/b1.jpg" /><br />
                         精选水果
                     </li>
-                    <li id="liJuice" onclick="findProductByCategoryID(1)">
+                    <li id="liJuice" data-categoryid="1">
                         <img src="images/guozhi1.jpg" /><br />
                         鲜榨果汁
                     </li>
-                    <li id="liJuiceDIY" onclick="findProductByCategoryID(3)">
+                    <li id="liJuiceDIY" data-categoryid="3">
                         <img src="images/guozhi4.png" /><br />
                         果汁DIY
                     </li>
@@ -92,6 +92,7 @@
                     $('.flexslider').flexslider({
                         animation: "slide"
                     });
+
                 });
 
                 requirejs(['pager'], function () {
@@ -107,14 +108,16 @@
                     $.pager.loadPage();
                 });
 
+                $("ul.category li").on("click", findProductByCategoryID);
+
             });
         });
 
         //根据当前类别高亮菜单项
-        function findProductByCategoryID(categoryID) {
+        function findProductByCategoryID() {
             var $li = $(event.currentTarget);
-            $li.addClass("category-selected");
-            $li.siblings().each(function () {
+            var categoryID = $li.data("categoryid");
+            $li.addClass("category-selected").siblings().each(function () {
                 $(this).removeClass("category-selected");
             });
 

@@ -125,13 +125,22 @@
         }
         $.each(bindings, function (id, v) {
             var is_my = ($(o).attr('ismy') == '1' || v.ismy) ? 1 : 0;
-            $('<li/>').html(v.val).css(cur.itemStyle).css(!is_my && cur.itemFalseStyle).hover(
+            var nodeID = $(trigger).attr("val");
+            var thisStyle;
+            //如果是根节点并且菜单项是修改或删除，则菜单项CSS灰色
+            if (nodeID == 0 && (id == "pg_update" || id == "pg_delete")) {
+                thisStyle = $.extend({}, cur.itemStyle, cur.itemFalseStyle);
+            }
+            else {
+                thisStyle = cur.itemStyle;
+            }
+            $('<li/>').html(v.val).css(thisStyle).hover(
 			function () {
 			    is_my && $(this).css(cur.itemHoverStyle);
 			    $(this).parent().nextAll().remove();
 			    (is_my && v.nt) && menus(o, cur, v.nt, trigger, this);
 			}, function () {
-			    is_my && $(this).css(cur.itemStyle);
+			    is_my && $(this).css(thisStyle);
 			}).click(function () {
 			    hide();
 			    (!v.nt && is_my) && v.cb(trigger, currentTarget);
@@ -144,16 +153,16 @@
     }
     function hide() {
         menu.hide();
-        shadow.hide()
+        shadow.hide();
     }
     $.contextMenu = {
         defaults: function (userDefaults) {
             $.each(userDefaults, function (i, val) {
                 if (typeof val == 'object' && defaults[i]) {
-                    $.extend(defaults[i], val)
+                    $.extend(defaults[i], val);
                 } else
-                    defaults[i] = val
-            })
+                    defaults[i] = val;
+            });
         }
-    }
+    };
 }));

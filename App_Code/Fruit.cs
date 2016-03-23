@@ -7,7 +7,7 @@ using System.Data.SqlClient;
 /// <summary>
 /// Fruit 的摘要说明
 /// </summary>
-public class Fruit
+public class Fruit : IComparable<Fruit> 
 {
     /// <summary>
     /// 产品ID
@@ -1592,8 +1592,58 @@ public class Fruit
         return prodID;
     }
 
+    /// <summary>
+    /// 根据是否置顶、优先级、ID判断大小
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    int IComparable<Fruit>.CompareTo(Fruit other)
+    {
+        if (this.IsSticky && !other.IsSticky)
+        {
+            return 1;
+        }
+        else
+        {
+            if (!this.IsSticky && other.IsSticky)
+            {
+                return -1;
+            }
+            else
+            {
+                if (this.Priority > other.Priority)
+                {
+                    return 1;
+                }
+                else
+                {
+                    if (this.Priority < other.Priority)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        if (this.ID > other.ID)
+                        {
+                            return 1;
+                        }
+                        else
+                        {
+                            if (this.ID < other.ID)
+                            {
+                                return -1;
+                            }
+                            else
+                            {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
-
 
 
 /// <summary>
@@ -1602,10 +1652,12 @@ public class Fruit
 public class FruitImg : IComparable<FruitImg>
 {
     public int ImgID { get; set; }
+    
     /// <summary>
     /// 图片文件名
     /// </summary>
     public string ImgName { get; set; }
+
     /// <summary>
     /// 图片描述
     /// </summary>

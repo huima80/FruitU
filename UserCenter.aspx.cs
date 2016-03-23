@@ -75,7 +75,7 @@ public partial class UserCenter : System.Web.UI.Page
             }
             else
             {
-                Response.Redirect("auth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
+                Response.Redirect("wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
             }
 
             ////开始：显示auth.ashx鉴权获取的微信用户信息

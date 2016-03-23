@@ -1,9 +1,10 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MasterPage.master.cs" Inherits="MasterPage" %>
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="FruitU.master.cs" Inherits="FruitU" %>
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wb="http://open.weibo.com/wb">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -17,9 +18,8 @@
     <meta property="wb:webmaster" content="db2652c9f08157d9" />
     <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
-    <link href="css/common.css" rel="stylesheet" />
-    <link href="css/footer.css" rel="stylesheet" />
-    <asp:ContentPlaceHolder ID="head" runat="server">
+    <link href="css/FruitU.css" rel="stylesheet" />
+    <asp:ContentPlaceHolder id="head" runat="server">
     </asp:ContentPlaceHolder>
     <script src="Scripts/require.js"></script>
     <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
@@ -28,7 +28,6 @@
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
-
     <script>
         requirejs.config({
             //By default load any module IDs from js/lib
@@ -56,11 +55,13 @@
                 flexslider: 'jquery.flexslider-min',
                 cart: 'jquery.cart',
                 pager: 'pager',
-                webConfig: 'webConfig'
+                webConfig: 'webConfig',
+                jssor: 'jssor.slider.mini'
             },
             shim: {
                 'flexslider': ['jquery'],
-                'bootstrap': ['jquery']
+                'bootstrap': ['jquery'],
+                'jssor': ['jquery']
             }
         });
 
@@ -73,18 +74,18 @@
             throw err;
         };
     </script>
-    <script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=3535172822" type="text/javascript" charset="utf-8"></script>
-
 </head>
 <body>
     <form id="form1" runat="server">
-        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" ClientIDMode="Static">
+    <div>
+        <asp:ContentPlaceHolder id="ContentPlaceHolder1" runat="server">
+        
         </asp:ContentPlaceHolder>
-
+    </div>
         <footer class="footer">
             <nav>
                 <ul>
-                    <li><a id="navHomeBtn" class="nav-controller" href="Default.aspx"><i class="fa fa-home"></i>首页</a></li>
+                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><i class="fa fa-home"></i>首页</a></li>
                     <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><i class="fa fa-shopping-cart"><span id="ProdAmountHints"></span></i>购物车</a></li>
                     <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><i class="fa fa-list"></i>我的订单</a></li>
                     <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><i class="fa fa-user"></i>个人中心</a></li>
@@ -95,8 +96,6 @@
             <a href="qqauth.ashx">
                 <img alt="" src="http://qzonestyle.gtimg.cn/qzone/vas/opensns/res/img/Connect_logo_7.png" />
             </a>
-            <br />
-            <wb:share-button appkey="3535172822" addition="simple" type="button" language="zh_cn"></wb:share-button>
         </div>
     </form>
 
@@ -106,7 +105,7 @@
             $(function () {
 
                 //根据当前页面高亮菜单项
-                if (location.href.toLowerCase().indexOf("default") != -1) {
+                if (location.href.toLowerCase().indexOf("index") != -1) {
                     $("#navHomeBtn").addClass("active");
                 }
                 else {
@@ -126,13 +125,24 @@
                 }
 
                 requirejs(['cart'], function () {
+
+                    //刷新当前购物车里的商品数量
                     refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
+
+                    //挂接购物车商品数量变动前的事件处理函数
+                    $($.cart).on("onProdItemsChanging", addToCart);
 
                     //挂接购物车商品数量变动后事件处理函数
                     $($.cart).on("onProdItemsChanged", refreshCartProdQty);
                 });
 
             });
+
+            //添加商品到购物车的动画
+            function addToCart() {
+
+
+            };
 
             //刷新购物车小圆点
             function refreshCartProdQty(event, data) {
@@ -147,30 +157,11 @@
                     $prodAmountHints.hide();
                 }
             }
-
-            function wblogin(o) {
-                alert(JSON.stringify(o));
-            }
-        });
-
-        WB2.anyWhere(function (W) {
-            W.widget.connectButton({
-                id: "wb_connect_btn",
-                type: "3,2",
-                callback: {
-                    wblogin: function (o) {
-                        JSON.stringify(o);
-                    },
-                    wblogout: function () {	//退出后的回调函数
-                    }
-                }
-            });
         });
 
     </script>
 
     <!-- #include file="cs.aspx" -->
     <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />
-
 </body>
 </html>

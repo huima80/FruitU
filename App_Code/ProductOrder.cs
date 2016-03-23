@@ -1072,11 +1072,11 @@ public class ProductOrder
 
                         od.ID = int.Parse(sdrOrderDetail["Id"].ToString());
                         od.ProductID = int.Parse(sdrOrderDetail["ProductID"].ToString());
-                        od.FruitName = sdrOrderDetail["ProductName"].ToString();
-                        od.FruitDesc = sdrOrderDetail["ProductDesc"].ToString();
-                        od.FruitPrice = decimal.Parse(sdrOrderDetail["ProductPrice"].ToString());
-                        od.OnSale = bool.Parse(sdrOrderDetail["ProductOnSale"].ToString());
-                        od.InventoryQty = int.Parse(sdrOrderDetail["InventoryQty"].ToString());
+                        od.FruitName = sdrOrderDetail["ProductName"] != DBNull.Value ? sdrOrderDetail["ProductName"].ToString() : string.Empty;
+                        od.FruitDesc = sdrOrderDetail["ProductDesc"] != DBNull.Value ? sdrOrderDetail["ProductDesc"].ToString() : string.Empty;
+                        od.FruitPrice = sdrOrderDetail["ProductPrice"] != DBNull.Value ? decimal.Parse(sdrOrderDetail["ProductPrice"].ToString()) : 0;
+                        od.OnSale = sdrOrderDetail["ProductOnSale"] != DBNull.Value ? bool.Parse(sdrOrderDetail["ProductOnSale"].ToString()) : false;
+                        od.InventoryQty = sdrOrderDetail["InventoryQty"] != DBNull.Value ? int.Parse(sdrOrderDetail["InventoryQty"].ToString()) : 0;
                         od.OrderProductName = sdrOrderDetail["OrderProductName"].ToString();
                         od.PurchasePrice = decimal.Parse(sdrOrderDetail["PurchasePrice"].ToString());
                         od.PurchaseQty = int.Parse(sdrOrderDetail["PurchaseQty"].ToString());

@@ -111,6 +111,27 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         strUserInfo = HttpService.Get(authUrl);
                         Log.Info("QQ UserInfo", strUserInfo);
 
+                        //{
+                        //    "ret": 0,
+                        //    "msg": "",
+                        //    "is_lost":0,
+                        //    "nickname": "Mehmet",
+                        //    "gender": "男",
+                        //    "province": "江苏",
+                        //    "city": "南京",
+                        //    "year": "1986",
+                        //    "figureurl": "http:\/\/qzapp.qlogo.cn\/qzapp\/101296477\/0065B13A1E75740D1B048850D9A3E31D\/30",
+                        //    "figureurl_1": "http:\/\/qzapp.qlogo.cn\/qzapp\/101296477\/0065B13A1E75740D1B048850D9A3E31D\/50",
+                        //    "figureurl_2": "http:\/\/qzapp.qlogo.cn\/qzapp\/101296477\/0065B13A1E75740D1B048850D9A3E31D\/100",
+                        //    "figureurl_qq_1": "http:\/\/q.qlogo.cn\/qqapp\/101296477\/0065B13A1E75740D1B048850D9A3E31D\/40",
+                        //    "figureurl_qq_2": "http:\/\/q.qlogo.cn\/qqapp\/101296477\/0065B13A1E75740D1B048850D9A3E31D\/100",
+                        //    "is_yellow_vip": "0",
+                        //    "vip": "0",
+                        //    "yellow_vip_level": "0",
+                        //    "level": "0",
+                        //    "is_yellow_year_vip": "0"
+                        //}
+
                         JsonData jUserInfo = JsonMapper.ToObject(strUserInfo);
 
                         if (jUserInfo != null && jUserInfo["ret"].ToString() == "0" && jUserInfo["nickname"] != null)
@@ -118,17 +139,46 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                             //QQ用户信息存入session
                             context.Session["QQUserInfo"] = jUserInfo;
 
-                            //验证是否credentials中指定的QQ用户
-                            if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
+                            //在成员资格数据库中查找此QQ用户信息
+                            MembershipUser qqUser = Membership.GetUser(jAuthInfo["openid"].ToString(), true);
+
+                            //如果此QQ用户未注册，则新建用户并设置角色
+                            if (qqUser == null)
                             {
-                                //如果credentials中指定了此QQ用户，则为其生成认证凭证和cookies，跳转到原请求页
-                                FormsAuthentication.RedirectFromLoginPage(jUserInfo["nickname"].ToString(), false);
+                                qqUser = Membership.CreateUser(jAuthInfo["openid"].ToString(), Membership.GeneratePassword(10, 1));
+                                if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
+                                {
+                                    //如果credentials中指定了此QQ用户，则加入管理员组，否则加入访客组
+                                    Roles.AddUserToRole(jAuthInfo["openid"].ToString(), Config.AdminRoleName);
+
+                                    //为此QQ用户生成认证凭证和cookies，跳转到defaultUrl
+                                    FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
+
+                                }
+                                else
+                                {
+                                    //如果此QQ用户没有权限，则加入访客组，并跳转到登录页面
+                                    Roles.AddUserToRole(jAuthInfo["openid"].ToString(), Config.GuestRoleName);
+                                    FormsAuthentication.RedirectToLoginPage();
+                                }
                             }
                             else
                             {
-                                //如果此QQ用户没有认证，即跳回登录页
-                                context.Response.Redirect("login.aspx");
+                                //此QQ用户已注册，则直接为此QQ用户生成认证凭证和cookies，跳转到defaultUrl
+                                FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
                             }
+
+                            ////验证是否credentials中指定的QQ用户
+                            //if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
+                            //{
+                            //    //如果credentials中指定了此QQ用户，则为其生成认证凭证和cookies，跳转到原请求页
+                            //    FormsAuthentication.RedirectFromLoginPage(jUserInfo["nickname"].ToString(), false);
+                            //}
+                            //else
+                            //{
+                            //    //如果此QQ用户没有认证，即跳回登录页
+                            //    context.Response.Redirect("login.aspx");
+                            //}
                         }
                         else
                         {
@@ -155,6 +205,7 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
         catch (Exception ex)
         {
             Log.Error(this.GetType().ToString(), ex.Message);
+            FormsAuthentication.RedirectToLoginPage("ErrMsg=" + ex.Message);
         }
     }
 

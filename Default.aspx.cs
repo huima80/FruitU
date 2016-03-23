@@ -20,4 +20,5 @@ public partial class Default : System.Web.UI.Page
         ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam={{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}}, pageSize={4};", Config.APPID, timestamp, nonceStr, jsSign, Config.ProductListPageSize), true);
 
     }
+
 }

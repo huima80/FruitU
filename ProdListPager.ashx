@@ -36,8 +36,8 @@ public class ProdListPager : IHttpHandler {
                 pageSize = int.Parse(context.Request.QueryString["PageSize"]);
             }
 
-            //选择条件：上架的、非果汁原料的商品
-            strWhere = "ProductOnSale=1 and CategoryID <> 3";
+            //选择条件：上架的商品
+            strWhere = "ProductOnSale=1";
 
             //选择条件：商品类别
             if (!string.IsNullOrEmpty(context.Request.QueryString["CategoryID"]))

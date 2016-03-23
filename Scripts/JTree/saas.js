@@ -6,7 +6,7 @@
     }
         // AMD module
     else if (typeof define === 'function' && define.amd) {
-        define(['jquery123'], factory(jQuery));
+        define(['jquery'], factory(jQuery));
     }
         // Browser global
     else {
@@ -36,7 +36,7 @@
             var funcBefore = opt.before || function () { };
             if (opt.alert == 'alert') {
                 $(this).click(function () {
-                    var html = '<div  style="height:450px;width:200px;overflow:auto"><ul class="treeview filetree" id="showTreeSelectParent">';
+                    var html = '<div style="height:450px;width:200px;overflow:auto"><ul class="treeview filetree" id="showTreeSelectParent">';
 
                     $.each(dataList, function (i, n) {
                         if (n.ID == rootID) {
@@ -100,31 +100,12 @@
                         return true;
                     }
 
-                    //在每个span上绑定单击toggle事件，切换子类别树显示
-                    $(this).bind('click', this, addChindList).toggle(function () {
-                        var o = $(this).parent();
-                        o.find('>ul').show();
-                        if (o.hasClass('lastExpandable')) {
-                            o.addClass('lastCollapsable').removeClass('lastExpandable');
-                        }
-                        else {
-                            o.addClass('collapsable').removeClass('expandable');
-                        }
-                        o.siblings().each(function () {
-                            if ($(this).hasClass('collapsable') || $(this).hasClass('lastCollapsable')) {
-                                $(this).find('>span:first').click();
-                            }
-                        });
-                    }, function () {
-                        var o = $(this).parent();
-                        o.find('>ul').hide();
-                        if (o.hasClass('lastCollapsable')) {
-                            o.addClass('lastExpandable').removeClass('lastCollapsable');
-                        }
-                        else {
-                            o.addClass('expandable').removeClass('collapsable');
-                        }
-                    });
+                    //在每个span的单击事件上绑定一次增加树枝节点数据函数
+                    $(this).one('click', this, addChindList);
+
+                    //在每个span的单击事件上绑定切换树枝节点显示函数
+                    $(this).on('click', switchSubTree);
+
                     $(this).prev().bind('click', function () {
                         $(this).next().click();
                     });
@@ -139,6 +120,37 @@
                 }
                 t.find('.last').removeClass().addClass('last');
             }
+
+            //切换子类别树显示
+            function switchSubTree() {
+                var o = $(this).parent();
+                var $ul = o.find('>ul');
+                if ($ul.is(":visible")) {
+                    $ul.hide();
+                    if (o.hasClass('lastCollapsable')) {
+                        o.addClass('lastExpandable').removeClass('lastCollapsable');
+                    }
+                    else {
+                        o.addClass('expandable').removeClass('collapsable');
+                    }
+                }
+                else {
+                    $ul.show();
+                    if (o.hasClass('lastExpandable')) {
+                        o.addClass('lastCollapsable').removeClass('lastExpandable');
+                    }
+                    else {
+                        o.addClass('collapsable').removeClass('expandable');
+                    }
+                    o.siblings().each(function () {
+                        if ($(this).hasClass('collapsable') || $(this).hasClass('lastCollapsable')) {
+                            $(this).find('>span:first').click();
+                        }
+                    });
+                }
+            }
+
+            //添加树枝节点
             function addChindList(evt) {
                 if (callbackAny) {
                     fn(evt.data, _self);
@@ -151,10 +163,9 @@
                     }
                 });
                 if (str) {
-                    $(evt.data).parent().append('<ul>' + str + '</ul>');
+                    $(evt.data).parent().append('<ul style="display:none;">' + str + '</ul>');
                 }
                 $(evt.data).attr('loaded', 'true');
-                $(evt.data).unbind('click', addChindList);
                 initTree($(evt.data).parent());
             }
         }

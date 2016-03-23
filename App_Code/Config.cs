@@ -145,6 +145,16 @@ public static class Config
     /// </summary>
     public const string QQAppKey = "864b70ac0e208b75527191a9f69d0c0f";
 
+    /// <summary>
+    /// 管理员角色名称
+    /// </summary>
+    public const string AdminRoleName = "administrators";
+
+    /// <summary>
+    /// 访客角色名称
+    /// </summary>
+    public const string GuestRoleName = "guests";
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();

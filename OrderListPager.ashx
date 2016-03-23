@@ -52,35 +52,38 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 //把List<>对象集合转换成JSON数据格式，返回给前端展示
                 jOrderListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(orderListPerPage));
 
-                //处理JSON值，便于前端显示
+                //预处理JSON值，便于前端显示
                 for (int i = 0; i < jOrderListPerPage.Count; i++)
                 {
                     jOrderListPerPage[i]["OrderID"] = jOrderListPerPage[i]["OrderID"].ToString().Substring(18);
 
                     jOrderListPerPage[i]["OrderDate"] = jOrderListPerPage[i]["OrderDate"].ToString().ToString();
 
-                    switch (jOrderListPerPage[i]["TradeState"].ToString())
+                    switch ((TradeState)int.Parse(jOrderListPerPage[i]["TradeState"].ToString()))
                     {
-                        case "1":
+                        case TradeState.SUCCESS:
                             jOrderListPerPage[i]["TradeStateText"] = "支付成功";
                             break;
-                        case "2":
+                        case TradeState.REFUND:
                             jOrderListPerPage[i]["TradeStateText"] = "转入退款";
                             break;
-                        case "3":
+                        case TradeState.NOTPAY:
                             jOrderListPerPage[i]["TradeStateText"] = "未支付";
                             break;
-                        case "4":
+                        case TradeState.CLOSED:
                             jOrderListPerPage[i]["TradeStateText"] = "已关闭";
                             break;
-                        case "5":
+                        case TradeState.REVOKED:
                             jOrderListPerPage[i]["TradeStateText"] = "已撤销（刷卡支付）";
                             break;
-                        case "6":
+                        case TradeState.USERPAYING:
                             jOrderListPerPage[i]["TradeStateText"] = "用户支付中";
                             break;
-                        case "7":
+                        case TradeState.PAYERROR:
                             jOrderListPerPage[i]["TradeStateText"] = "支付失败";
+                            break;
+                        default:
+                            jOrderListPerPage[i]["TradeStateText"] = "未知状态";
                             break;
                     }
                 }
