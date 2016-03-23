@@ -10,21 +10,22 @@ public partial class admin_MasterPage : System.Web.UI.MasterPage
 {
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (HttpContext.Current.User.Identity.IsAuthenticated)
+        if (HttpContext.Current.User.Identity.IsAuthenticated && Roles.IsUserInRole(Config.AdminRoleName))
         {
-            this.lblNickName.Text = HttpContext.Current.User.Identity.Name;
+            Label lblNickName = this.LoginView1.FindControl("lblNickName") as Label;
+            Image imgQQImg = this.LoginView1.FindControl("imgQQImg") as Image;
 
-            if (Session["QQUserInfo"] != null)
+            if (lblNickName != null && imgQQImg != null && Session["QQUserInfo"] != null)
             {
-                JsonData jUserInfo = Session["QQUserInfo"] as JsonData;
-                this.imgQQImg.ImageUrl = jUserInfo["figureurl_qq_1"].ToString();
+                JsonData jQQUserInfo = Session["QQUserInfo"] as JsonData;
+                imgQQImg.ImageUrl = jQQUserInfo["figureurl_qq_1"].ToString();
+                lblNickName.Text = jQQUserInfo["nickname"].ToString();
             }
         }
         else
         {
             FormsAuthentication.RedirectToLoginPage();
         }
-
     }
 
     protected void lbLogout_Click(object sender, EventArgs e)

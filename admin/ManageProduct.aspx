@@ -78,7 +78,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" ClientIDMode="Static">
+                    <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated">
                         <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                         <Fields>
                             <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" ControlStyle-CssClass="form-control">
@@ -159,7 +159,7 @@
                                                         <div class="caption">
                                                             <div class="radio">
                                                                 <label>
-                                                                    <asp:RadioButton ID="rbMainImg" runat="server" Checked='<%# Eval("MainImg") %>' Text="主图" onclick="selectMainImg(this.id)" />
+                                                                    <asp:RadioButton ID="rbMainImg" runat="server" Checked='<%# Eval("MainImg") %>' Text="主图" onclick="selectMainImg()"/>
                                                                 </label>
                                                             </div>
                                                             <div class="checkbox">
@@ -248,25 +248,27 @@
                 </div>
             </div>
         </div>
-<script src="../Scripts/lodash.min.js"></script>
-<script src='//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.4/gridstack.min.js'></script>
 
 <script>
 
-    $(function () {
-        var options = {
-        };
-        $('.grid-stack').gridstack(options);
+    requirejs(['jquery', 'gridstack'], function ($) {
 
-        theForm.onsubmit = jumpToGrid;
+        $(function () {
+            var options = {
+            };
+            $('.grid-stack').gridstack(options);
 
+            theForm.onsubmit = jumpToGrid;
+
+        });
     });
 
     //点击新增商品或选择按钮时，页面跳到DetailView
     function jumpToGrid() {
 
         if (event && event.currentTarget && (event.currentTarget.value == '新增商品' || event.currentTarget.value == '选择')) {
-            theForm.action += "#dvFruit";
+            var dvFruitID = $("table[id*=dvFruit]").attr("id");
+            theForm.action += "#" + dvFruitID;
         }
 
         setImgSeq();
@@ -303,12 +305,10 @@
     }
 
     //遍历dlFruit中的主图单选按钮，确保唯一选择
-    function selectMainImg(currentImgID) {
-        $(":radio").each(function () {
-            if ($(this).prop("id") != currentImgID) {
-                $(this).removeAttr("checked");
-            }
-        });
+    function selectMainImg() {
+        $rb = $(event.currentTarget);
+        $(".grid-stack :radio").removeAttr("checked");
+        $rb.prop("checked", "checked");
     }
 
     //校验是否输入了查询条件

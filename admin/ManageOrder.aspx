@@ -153,27 +153,31 @@
 
 <script>
 
-    $(function () {
+    requirejs(['jquery', 'jqueryui'], function ($) {
 
-        //http://api.jqueryui.com/datepicker/
-        $.datepicker.setDefaults($.datepicker.regional["zh-TW"]);
+        $(function () {
+            
+            requirejs(['datepickerCN'], function () {
 
-        $("#txtStartOrderDate").datepicker({ dateFormat: 'yy-mm-dd' });
-        $("#txtEndOrderDate").datepicker({ dateFormat: 'yy-mm-dd' });
+                //http://api.jqueryui.com/datepicker/
+                $("#txtStartOrderDate").datepicker({ dateFormat: 'yy-mm-dd' });
+                $("#txtEndOrderDate").datepicker({ dateFormat: 'yy-mm-dd' });
 
-        $("#txtStartOrderDate").on("change", function () {
-            if ($(this).val() != "" && $("#txtEndOrderDate").val() != "")
-                if ($(this).val() > $("#txtEndOrderDate").val()) {
-                    alert("开始时间必须早于结束时间。");
-                    $(this).val("");
-                }
-        });
-        $("#txtEndOrderDate").on("change", function () {
-            if ($(this).val() != "" && $("#txtStartOrderDate").val() != "")
-                if ($(this).val() < $("#txtStartOrderDate").val()) {
-                    alert("结束时间必须晚于开始时间。");
-                    $(this).val("");
-                }
+                $("#txtStartOrderDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtEndOrderDate").val() != "")
+                        if ($(this).val() > $("#txtEndOrderDate").val()) {
+                            alert("开始时间必须早于结束时间。");
+                            $(this).val("");
+                        }
+                });
+                $("#txtEndOrderDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtStartOrderDate").val() != "")
+                        if ($(this).val() < $("#txtStartOrderDate").val()) {
+                            alert("结束时间必须晚于开始时间。");
+                            $(this).val("");
+                        }
+                });
+            });
         });
     });
 
