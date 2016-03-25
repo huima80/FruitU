@@ -16,7 +16,7 @@
                 <p id="SiteDesc" runat="server"></p>
                 <p>
                     <a href="qqauth.ashx">
-                        <img alt="" src="http://qzonestyle.gtimg.cn/qzone/vas/opensns/res/img/Connect_logo_5.png" /></a>
+                        <img alt="" src="images/Connect_logo_5.png" /></a>
                 </p>
             </div>
             <asp:Label ID="lblMsg" runat="server" Text="" class="alert alert-danger" role="alert" Visible="False"></asp:Label>

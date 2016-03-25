@@ -20,7 +20,7 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <div id="jssorSliderContainer" class="center-block" style="position: relative; top: 0px; left: 0px; min-width: 100%; height: 150px;">
+                <div id="jssorSliderContainer" class="center-block" style="position: relative; top: 0px; left: 0px; min-width: 100%; max-width:100%; height: 150px;">
                     <!-- Slides Container -->
                     <div id="divSlides" runat="server" u="slides" style="cursor: grab; position: absolute; overflow: hidden; left: 0px; top: 0px; min-width: 100%; height: 150px;"></div>
                 </div>
@@ -45,6 +45,10 @@
             </div>
         </div>
         <div id="divProdItems" class="row prod-item-row">
+        </div>
+        <div class="qq-login">
+            <a href="login.aspx"><img src="images/Connect_logo_7.png" /></a>
+            <div id="wb_connect_btn"></div>
         </div>
     </div>
 
@@ -75,6 +79,8 @@
         </div>
     </script>
 
+    <script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=3535172822" type="text/javascript" charset="utf-8"></script>
+
     <script>
 
         requirejs(['jquery', 'jssorslider'], function ($) {
@@ -100,6 +106,7 @@
                         pageQueryURL: 'ProdListPager.ashx',
                         pageTemplate: '#tmplProdPage',
                         pageContainer: '#divProdItems',
+                        isMasonry: true
                     });
 
                     $.pager.loadPage();
@@ -217,6 +224,20 @@
             });
         });
 
+        WB2.anyWhere(function (W) {
+            W.widget.connectButton({
+                id: "wb_connect_btn",
+                type: '3,2',
+                callback: {
+                    login: function (o) { //登录后的回调函数
+                        alert("login: " + o.screen_name)
+                    },
+                    logout: function () { //退出后的回调函数
+                        alert('logout');
+                    }
+                }
+            });
+        });
     </script>
 
 </asp:Content>
