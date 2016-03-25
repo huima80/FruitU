@@ -9,7 +9,7 @@
                 <ul id="ulCategoryTree" class="treeview filetree">
                 </ul>
             </div>
-            <div id="divCategoryManage" class="panel panel-info">
+            <div id="divCategoryManage" class="panel panel-info" style="display:none;">
                 <div class="panel-heading">
                     <h3 class="panel-title">商品类别</h3>
                 </div>
@@ -54,6 +54,7 @@
                             ismy: 1,
                             cb: function (t) {
                                 if ($(t).attr("val") != 0) {
+                                    $("#divCategoryManage").show();
                                     $("#divCategoryID").show();
                                     $("#lblCategoryID").text($(t).attr("val"));
                                     $("#hfCategoryID").val($(t).attr("val"));
@@ -91,6 +92,7 @@
                             val: '新增',
                             ismy: 1,
                             cb: function (t) {
+                                $("#divCategoryManage").show();
                                 $("#divCategoryID").hide();
 
                                 $("#divParentID").show();
