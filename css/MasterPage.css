@@ -1,0 +1,150 @@
+﻿html {
+    background-color: white;
+}
+
+body {
+    background-color: white;
+    padding-bottom: 60px;
+}
+
+a:link {
+    color: orange;
+    TEXT-DECORATION: none;
+}
+
+a:visited {
+    COLOR: orange;
+    TEXT-DECORATION: none;
+}
+
+a:hover {
+    COLOR: red;
+    text-decoration: none;
+}
+
+a:active {
+    COLOR: #ff7f24;
+    text-decoration: none;
+}
+
+ol, ul {
+    list-style: none;
+    padding: 0;
+}
+
+hr {
+    margin: 5px;
+}
+
+.footer {
+    display: block;
+    width: 100%;
+    height: 56px;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    -webkit-transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-50%, 0, 0);
+    background-color: #fff;
+    border-top: #eceded;
+    -webkit-box-shadow: 0 0 4px rgba(0, 0, 0, .2);
+    box-shadow: 0 0 4px rgba(0, 0, 0, .2);
+    cursor: pointer;
+    z-index: 99;
+}
+
+    .footer nav {
+        height: 56px;
+    }
+
+    .footer ul {
+        list-style: none;
+    }
+
+    .footer li {
+        float: left;
+        width: 25%;
+        text-align: center;
+        height: 100%;
+    }
+
+    .footer a {
+        color: #777;
+        font-size: 13px;
+        text-decoration: none;
+    }
+
+        .footer a:hover, .footer a:focus {
+            color: #777;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .footer a.active {
+            color: #DF2127;
+            text-decoration: none;
+        }
+
+    .footer .nav-controller {
+        position: relative;
+        height: 100%;
+        display: block;
+    }
+
+        .footer .nav-controller i {
+            display: block;
+            font-size: 1.5em;
+            margin-bottom: 3px;
+        }
+
+.cart-prod-hint {
+    position: absolute;
+    top: -10px;
+    z-index: 999;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    background-color: red;
+    border-radius: 50%;
+}
+
+.loading-text {
+    text-align: center;
+    font-size: 12px;
+    color: orange;
+    display: none;
+}
+
+.loading {
+    text-align: center;
+}
+
+    .loading img {
+        width: 16px;
+        height: 16px;
+    }
+
+.qq-login {
+    position: fixed;
+    top: 50px;
+    right: 5px;
+}
+
+.qr-code {
+    position: fixed;
+    width: 50%;
+    left: 25%;
+    top: 25%;
+    background-color: #FFF;
+    padding: 10px;
+    border-radius: 10px;
+    display: none;
+    box-shadow: 0 0 10px #9C9C9C;
+    text-align: center;
+}
+
+    .qr-code img {
+        width: 100%;
+        height: 100%;
+    }

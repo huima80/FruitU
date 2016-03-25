@@ -14,7 +14,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-xs-6" onclick="SelectDeliverAddress();">
+            <div class="col-xs-6" onclick="selectDeliverAddress();">
                 <div class="info-block">
                     <i class="fa fa-truck"></i>
                     <div>收货地址</div>
@@ -56,7 +56,7 @@
             </div>
         </div>
     </div>
-    <div class="qrcode">
+    <div class="qr-code">
         <img src="images/FruitUQRCode.jpg" />
         <h5>长按二维码关注我们</h5>
     </div>
@@ -86,7 +86,7 @@
               );
         }
 
-        function SelectDeliverAddress() {
+        function selectDeliverAddress() {
             if (typeof WeixinJSBridge == "undefined") {
                 if (document.addEventListener) {
                     document.addEventListener('WeixinJSBridgeReady', editAddress, false);
@@ -102,7 +102,7 @@
         }
 
         function switchQRCode() {
-            $("div.qrcode").slideToggle();
+            $("div.qr-code").slideToggle();
         }
 
     </script>

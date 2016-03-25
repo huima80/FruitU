@@ -13,7 +13,7 @@
             <div class="col-xs-12">
                 <div class="panel panel-info">
                     <div class="panel-heading" onclick="SelectDeliverAddress();">
-                        <i class="fa fa-map-marker"></i>  选择收货地址 >>
+                        <i class="fa fa-map-marker"></i>&nbsp;&nbsp;选择收货地址 >>
                     </div>
                     <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
                         <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>
@@ -55,10 +55,10 @@
         <div class="row pay-button">
             <div class="col-xs-12">
                 <p>
-                    <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="MakeOrder(true);"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
+                    <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="makeOrder(true);"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
                 </p>
                 <p>
-                    <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-info ladda-button" data-style="zoom-in" onclick="MakeOrder(false);"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
+                    <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-info ladda-button" data-style="zoom-in" onclick="makeOrder(false);"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
                 </p>
             </div>
         </div>
@@ -172,7 +172,7 @@
                          //订单提交成功后清空购物车，返回首页
                          $.cart.clearProdItems();
                          alert("付款成功！我们将为您送货上门。");
-                         location.href = "default.aspx";
+                         location.href = ".";
                      }
                      else {
                          if (res.err_msg.indexOf("cancel") != -1) {
@@ -203,7 +203,7 @@
         }
 
         //微信支付按钮单击事件
-        function MakeOrder(wxPay) {
+        function makeOrder(wxPay) {
 
             //JS支付参数不为空场景，则说明已经统一下单且获取到了prepay_id，可直接发起支付
             if (wxJsApiParam != "" && wxJsApiParam["package"] != undefined) {
@@ -213,8 +213,8 @@
                     lBtnWxPay.start();
                     JsApiPay();
                 } else {
-                    //用户点击过微信支付，但取消了输入密码，又点击了货到付款的场景，引导用户继续完成微信支付
-                    alert("请继续完成微信支付。");
+                    //用户点击过微信支付，订单已入库，且获取了prepay_id，但取消了输入密码，又点击了货到付款的场景，引导用户继续完成微信支付
+                    alert("您已微信下单，请继续完成微信支付。");
                 }
             }
             else {
@@ -223,17 +223,16 @@
                 //判断购物车里的商品项是否为空
                 if ($.cart != undefined && $.cart.prodAmount() != 0) {
 
-                    //处理收货人信息
+
+                    ////////////////处理订单收货人信息////////////////////
                     var txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
 
                     //判断是否选择了微信用户地址
                     if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
 
-                        //判断是否手工填写了地址
-                        if ($("#divCustomizeAddrInfo").css("display") == "none") {
-                            alert("请选择收货地址。");
-                            return false;
-                        } else {
+                        //判断是否弹出了手工地址栏
+                        if ($("#divCustomizeAddrInfo").is(":visible")) {
+                            //获取手工输入的地址信息
                             txtName = $("#txtDeliverName").val().trim();
                             txtPhone = $("#txtDeliverPhone").val().trim();
                             txtAddress = $("#txtDeliverAddress").val().trim();
@@ -252,51 +251,69 @@
                                 $("#txtDeliverAddress").focus();
                                 return false;
                             }
+                        } else {
+                            alert("请选择收货地址。");
+                            return false;
                         }
                     }
                     else {
+                        //获取微信地址信息
                         txtName = wxUserName;
                         txtPhone = wxTelNumber;
                         txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
                     }
-
                     //订单备注信息
                     txtMemo = $("#txtMemo").val().trim();
 
+                    ////////////////处理订单收货人信息////////////////////
+
+
+                    ////////////////提交订单////////////////////
                     var orderInfo;
                     if (wxPay)  //选择微信支付
                     {
                         lBtnWxPay.start();
 
+                        //使用订单收货人信息更新购物车
                         $.cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo, 1);
 
-                        //根据购物车生成JSON格式订单信息，包含订购人和商品项信息
+                        //根据购物车生成JSON格式订单信息，包含订单收货人和商品项信息
                         orderInfo = $.cart.makeOrderInfo();
 
-                        //提交购物车中的信息，获取prepay_id后前台发起微信支付
-                        $.post("JSAPIPay.ashx", orderInfo, function (jWxJsParam) {
-                            if (jWxJsParam["package"] != undefined)  //统一下单正常，取到了prepay_id，发起支付
-                            {
-                                wxJsApiParam = jWxJsParam;
-                                JsApiPay();
-                            }
-                            else {
-                                if (jWxJsParam["return_code"] != undefined)  //可能是签名错误或参数格式错误
+                        //提交订单，获取prepay_id后前台发起微信支付
+                        $.ajax({
+                            url: "JSAPIPay.ashx",
+                            data: orderInfo,
+                            type: "POST",
+                            dataType: "json",
+                            success: function (jWxJsParam) {
+                                if (jWxJsParam["package"] != undefined)  //统一下单正常，取到了prepay_id，发起支付
                                 {
-                                    alert(jWxJsParam["return_msg"]);
+                                    wxJsApiParam = jWxJsParam;
+                                    JsApiPay();
                                 }
                                 else {
-                                    if (jWxJsParam["result_code"] != undefined)  //可能是订单已支付、已关闭、订单号重复等错误
+                                    if (jWxJsParam["return_code"] != undefined)  //可能是签名错误或参数格式错误
                                     {
-                                        alert(jWxJsParam["err_code_des"]);
+                                        alert(jWxJsParam["return_msg"]);
                                     }
+                                    else {
+                                        if (jWxJsParam["result_code"] != undefined)  //可能是订单已支付、已关闭、订单号重复等错误
+                                        {
+                                            alert(jWxJsParam["err_code_des"]);
+                                        }
+                                    }
+
+                                    lBtnWxPay.stop();   //停止按钮loading动画
+
                                 }
 
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                alert(errorThrown + ":" + textStatus);
                                 lBtnWxPay.stop();   //停止按钮loading动画
-
                             }
-
-                        }, "json");
+                        });
                     }
                     else {  //选择货到付款
 
@@ -308,31 +325,42 @@
                         orderInfo = $.cart.makeOrderInfo();
 
                         //提交订单
-                        $.post("JSAPIPay.ashx", orderInfo, function (jPoID) {
-                            if (jPoID["NewPoID"] != undefined) {
-                                alert("下单成功！我们将为您送货上门收款。");
-                                $.cart.clearProdItems();
-                                location.href = "default.aspx";
-                            }
-                            else {
-                                if (jPoID["result_code"] != undefined)  //提交值校验错误
-                                {
-                                    alert(jPoID["err_code_des"]);
+                        $.ajax({
+                            url: "JSAPIPay.ashx",
+                            data: orderInfo,
+                            type: "POST",
+                            dataType: "json",
+                            success: function (jPoID) {
+                                if (jPoID["NewPoID"] != undefined) {
+                                    alert("下单成功！我们将为您送货上门收款。");
+                                    $.cart.clearProdItems();
+                                    location.href = ".";
                                 }
+                                else {
+                                    if (jPoID["result_code"] != undefined)  //提交值校验错误
+                                    {
+                                        alert(jPoID["err_code_des"]);
+                                    }
+                                }
+
+                                lBtnPayCash.stop();
+
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                alert(errorThrown + ":" + textStatus);
+                                lBtnPayCash.stop();
                             }
-
-                            lBtnPayCash.stop();
-
-                        }, "json");
-
+                        });
                     }
+                    ////////////////提交订单////////////////////
+
+
                 }
                 else {
                     alert("您的购物车里没有商品哦，请先选购吧。");
-                    location.href = "default.aspx";
+                    location.href = ".";
                 }
             }
-
         }
 
     </script>

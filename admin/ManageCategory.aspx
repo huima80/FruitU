@@ -1,8 +1,7 @@
 ﻿<%@ Page Title="商品类别管理" Language="C#" MasterPageFile="~/admin/MasterPage.master" AutoEventWireup="true" CodeFile="ManageCategory.aspx.cs" Inherits="ManageCategory" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
-    <link href="../Scripts/JTree/saas.css" rel="stylesheet" type="text/css" />
-    <link href="../Scripts/JTree/mask.css" rel="stylesheet" type="text/css" />
+    <link href="../Scripts/JTree/saas.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server" ClientIDMode="Static">
         <div id="divCategory" class="container">

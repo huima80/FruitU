@@ -11,6 +11,8 @@ public partial class ProductDetail : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
         int prodID;
+        string jsProdInfo;
+        FruitImg mainImg = null;
 
         try
         {
@@ -27,16 +29,15 @@ public partial class ProductDetail : System.Web.UI.Page
 
             if (fruit != null)
             {
-                this.hfProdID.Value = prodID.ToString();
-
-                HtmlGenericControl liFruitImg;
                 fruit.FruitImgList.ForEach(fi =>
                 {
-                    if (!fi.DetailImg)
+                    if (!fi.MainImg)
                     {
-                        liFruitImg = new HtmlGenericControl("li");
-                        liFruitImg.InnerHtml = string.Format("<img src=\"images/{0}\" />", fi.ImgName);
-                        this.ulFlexSlider.Controls.Add(liFruitImg);
+                        this.divSlides.InnerHtml += string.Format("<div><img u=\"image\" src=\"images/{0}\" alt=\"{1}:{2}\" /></div>", fi.ImgName, fruit.FruitName, fruit.FruitDesc);
+                    }
+                    else
+                    {
+                        mainImg = fi;
                     }
                 });
 
@@ -84,6 +85,10 @@ public partial class ProductDetail : System.Web.UI.Page
                         this.divDetailImg.Controls.Add(hiDetailImg);
                     }
                 });
+
+                //生成商品信息JS对象，用于前端JS操作
+                jsProdInfo = string.Format("var prodInfo={{prodID:{0},prodName:\"{1}\",prodDesc:\"{2}\",prodImg:\"{3}\",price:{4}}};", fruit.ID, fruit.FruitName, fruit.FruitDesc, (mainImg != null) ? mainImg.ImgName : "", fruit.FruitPrice);
+                ScriptManager.RegisterClientScriptBlock(Page, this.GetType(), "jsProdInfo", jsProdInfo, true);
 
                 //搜狐畅言所需的页面文章ID
                 //参考：http://changyan.kuaizhan.com/help/f-source-id.html

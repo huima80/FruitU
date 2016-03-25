@@ -136,7 +136,7 @@ public class Auth : IHttpHandler, System.Web.SessionState.IRequiresSessionState
                 }
                 else
                 {
-                    context.Response.Redirect("default.aspx");
+                    context.Response.Redirect(".");
                 }
             }
         }

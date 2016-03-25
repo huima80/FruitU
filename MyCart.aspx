@@ -24,12 +24,12 @@
                     displayCart();
 
                     //挂接购物车商品数量变动后事件处理函数
-                    $($.cart).on("onProdItemsChanged", refreshSubTotal);
+                    $($.cart).on("onProdItemUpdated onProdItemDeleted", refreshSubTotal);
                 });
             });
         });
 
-        //显示购物车里的总价
+        //刷新购物车里的商品总价、结算按钮状态
         function refreshSubTotal(event, data) {
 
             $("span.sub-total-price").text("￥" + data.subTotal);
@@ -121,7 +121,7 @@
             $("#ProdItem" + prodId).fadeOut("slow");
 
             //删除购物车里的商品项
-            $.cart.removeProdItem(prodId);
+            $.cart.deleteProdItem(prodId);
 
         }
 

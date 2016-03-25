@@ -49,7 +49,7 @@
         }
 
         //增加商品项
-        Cart.prototype.addProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty) {
+        Cart.prototype.insertProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty) {
             var cartInfo, exist = false;
             if (isNaN(prodID)) {
                 throw new TypeError("商品ID不正确");
@@ -62,7 +62,7 @@
             }
 
             //触发商品信息变动前事件
-            $(this).trigger("onProdItemsChanging");
+            $(this).trigger("onProdItemInserting");
 
             cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
             for (var i = 0; i < cartInfo.prodItems.length; i++) {
@@ -90,7 +90,7 @@
             _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
             //触发商品信息变动后事件
-            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            $(this).trigger("onProdItemInserted", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
         };
 
@@ -105,7 +105,7 @@
             }
 
             //触发商品信息变动前事件
-            $(this).trigger("onProdItemsChanging");
+            $(this).trigger("onProdItemUpdating");
 
             cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
             for (var i = 0; i < cartInfo.prodItems.length; i++) {
@@ -117,7 +117,7 @@
             _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
             //触发商品信息变动后事件
-            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            $(this).trigger("onProdItemUpdated", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
         };
 
@@ -135,14 +135,14 @@
         };
 
         //删除商品项
-        Cart.prototype.removeProdItem = function (prodID) {
+        Cart.prototype.deleteProdItem = function (prodID) {
             var cartInfo;
             if (isNaN(prodID)) {
                 throw new TypeError("商品ID不正确");
             }
 
             //触发商品信息变动前事件
-            $(this).trigger("onProdItemsChanging");
+            $(this).trigger("onProdItemDeleting");
 
             cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
             for (var i = 0; i < cartInfo.prodItems.length; i++) {
@@ -153,7 +153,7 @@
             _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
             //触发商品信息变动后事件
-            $(this).trigger("onProdItemsChanged", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
+            $(this).trigger("onProdItemDeleted", { prodQty: this.prodAmount(), subTotal: this.subTotal() });
 
         };
 
@@ -162,14 +162,14 @@
             var cartInfo;
 
             //触发商品信息变动前事件
-            $(this).trigger("onProdItemsChanging");
+            $(this).trigger("onProdItemsClearing");
 
             cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
             cartInfo.prodItems.length = 0;
             _storage.setItem(this.params.cartName, JSON.stringify(cartInfo));
 
             //触发商品信息变动后事件
-            $(this).trigger("onProdItemsChanged", { prodQty: 0, subTotal: 0 });
+            $(this).trigger("onProdItemsCleared", { prodQty: 0, subTotal: 0 });
 
         };
 

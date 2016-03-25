@@ -1,14 +1,13 @@
 ﻿<%@ Page Title="首页" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="Default.aspx.cs" Inherits="Default" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
-    <link href="css/flexslider.css" rel="stylesheet" media="screen" />
     <link href="css/default.css" rel="stylesheet" />
     <link href="css/loading.css" rel="stylesheet" />
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container">
-                <div class="row header">
+        <div class="row header">
             <div class="col-xs-2 logo">
                 <img src="images/FruitU.jpg" class="logo-img" />
             </div>
@@ -21,15 +20,9 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <div class="flexslider">
-                    <ul class="slides">
-                        <li>
-                            <img src="images/b2.jpg" />
-                        </li>
-                        <li>
-                            <img src="images/b3.jpg" />
-                        </li>
-                    </ul>
+                <div id="jssorSliderContainer" class="center-block" style="position: relative; top: 0px; left: 0px; min-width: 100%; height: 150px;">
+                    <!-- Slides Container -->
+                    <div id="divSlides" runat="server" u="slides" style="cursor: grab; position: absolute; overflow: hidden; left: 0px; top: 0px; min-width: 100%; height: 150px;"></div>
                 </div>
             </div>
         </div>
@@ -61,7 +54,7 @@
             <div class="prod-item">
                 {{for FruitImgList}}
                     {{if MainImg}}
-                        <img class="img-responsive img-circle main-img" src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
+                        <img class="img-responsive main-img" src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
                 {{/if}}   
                 {{/for}}            
                 <div class="prod-name">{{:FruitName}}</div>
@@ -84,16 +77,21 @@
 
     <script>
 
-        requirejs(['jquery'], function ($) {
+        requirejs(['jquery', 'jssorslider'], function ($) {
             $(function () {
 
                 //轮播图
-                requirejs(['flexslider'], function () {
-                    $('.flexslider').flexslider({
-                        animation: "slide"
+                var jssor_slider1 = new $JssorSlider$('jssorSliderContainer',
+                    {
+                        $AutoPlay: true,
+                        $ThumbnailNavigatorOptions: true,
+                        $FillMode: 2,
+                        $BulletNavigatorOptions:
+                        {
+                            $Class: '$JssorBulletNavigator$',
+                            $ChanceToShow: 2
+                        }
                     });
-
-                });
 
                 requirejs(['pager'], function () {
 
@@ -102,7 +100,6 @@
                         pageQueryURL: 'ProdListPager.ashx',
                         pageTemplate: '#tmplProdPage',
                         pageContainer: '#divProdItems',
-                        isMasonry: true
                     });
 
                     $.pager.loadPage();

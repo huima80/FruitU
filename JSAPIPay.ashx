@@ -38,7 +38,6 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                 poID = int.Parse(context.Request.QueryString["PoID"]);
             }
 
-
             JsonData jWxAuthInfo = new JsonData();
             jWxAuthInfo = context.Session["WxAuthInfo"] as JsonData;
 
@@ -68,29 +67,38 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     po.IsDelivered = false;
                     po.IsAccept = false;
 
-                    //订单商品信息
-                    OrderDetail od;
-                    for (int i = 0; i < jOrderInfo["prodItems"].Count; i++)
+                    if (jOrderInfo["prodItems"] != null)
                     {
-                        od = new OrderDetail();
+                        //订单商品信息
+                        OrderDetail od;
+                        int prodID, qty;
 
-                        int prodID = int.Parse(jOrderInfo["prodItems"][i]["prodID"].ToString());
-                        int qty = int.Parse(jOrderInfo["prodItems"][i]["qty"].ToString());
-
-                        //根据订单中每个商品ID查询其详细信息，并放入OrderDetail对象
-                        Fruit fruit = Fruit.FindFruitByID(prodID);
-
-                        if (fruit != null)
+                        for (int i = 0; i < jOrderInfo["prodItems"].Count; i++)
                         {
-                            od.ProductID = prodID;
-                            od.OrderProductName = fruit.FruitName;
-                            od.PurchasePrice = fruit.FruitPrice;
-                            od.PurchaseQty = qty;
-                            od.PurchaseUnit = fruit.FruitUnit;
+                            if (int.TryParse(jOrderInfo["prodItems"][i]["prodID"].ToString(), out prodID))
+                            {
+                                if (!int.TryParse(jOrderInfo["prodItems"][i]["qty"].ToString(), out qty))
+                                {
+                                    qty = 1;
+                                }
 
-                            po.OrderDetailList.Add(od);
+                                //根据订单中每个商品ID查询其详细信息，并放入OrderDetail对象
+                                Fruit fruit = Fruit.FindFruitByID(prodID);
+
+                                if (fruit != null)
+                                {
+                                    od = new OrderDetail();
+
+                                    od.ProductID = prodID;
+                                    od.OrderProductName = fruit.FruitName;
+                                    od.PurchasePrice = fruit.FruitPrice;
+                                    od.PurchaseQty = qty;
+                                    od.PurchaseUnit = fruit.FruitUnit;
+
+                                    po.OrderDetailList.Add(od);
+                                }
+                            }
                         }
-
                     }
                     //--------------生成订单业务对象END-----------------
 

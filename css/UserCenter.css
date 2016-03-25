@@ -24,10 +24,12 @@ img.user-portrait
     text-align:center;
     min-height:80px;
     margin:2px;
-    background-color:white;
     border-radius:8px;
     padding:8px;
     cursor:pointer;
+    border: dotted;
+    border-width: 1px;
+    border-color: lightgrey;
 }
 
 .info-block i{
@@ -57,4 +59,3 @@ img.user-portrait
 .info-block .fa-qq{
     color:darkred;
 }
-

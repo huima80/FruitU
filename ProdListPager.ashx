@@ -71,9 +71,6 @@ public class ProdListPager : IHttpHandler {
             //查询当月爆款商品
             int fruitTopSellingOnMonth = Fruit.FindTopSelling(DateTime.Now);
 
-            //查询年度爆款商品
-            //int fruitTopSellingOnYear = Fruit.FindTopSelling(DateTime.Parse(DateTime.Now.Year.ToString() + "-01"), DateTime.Now);
-
             //在JsonData中标记当月、当年销量最高的商品
             for (int i = 0; i < jProdListPerPage.Count; i++)
             {
@@ -82,11 +79,6 @@ public class ProdListPager : IHttpHandler {
                     jProdListPerPage[i]["TopSellingOnMonth"] = "1";
                     break;
                 }
-
-                //if(jProdListPerPage[i]["ID"].ToString() == fruitTopSellingOnYear.ToString())
-                //{
-                //    jProdListPerPage[i]["TopSellingOnYear"] = "1";
-                //}
             }
 
             //在JsonData中写入本次查询的全部记录数，用于前端分页

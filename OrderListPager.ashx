@@ -52,13 +52,29 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 //把List<>对象集合转换成JSON数据格式，返回给前端展示
                 jOrderListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(orderListPerPage));
 
-                //预处理JSON值，便于前端显示
+                //预处理订单数据，便于前端显示
                 for (int i = 0; i < jOrderListPerPage.Count; i++)
                 {
+                    //显示订单ID的后18位，代表时分秒，和3位随机数
                     jOrderListPerPage[i]["OrderID"] = jOrderListPerPage[i]["OrderID"].ToString().Substring(18);
+                    
+                    //显示下单时间、配送时间、签收时间的中文日期
+                    if(jOrderListPerPage[i]["OrderDate"] != null)
+                    {
+                        jOrderListPerPage[i]["OrderDate"] = DateTime.Parse(jOrderListPerPage[i]["OrderDate"].ToString()).ToLongDateString();
+                    }
 
-                    jOrderListPerPage[i]["OrderDate"] = jOrderListPerPage[i]["OrderDate"].ToString().ToString();
+                    if(jOrderListPerPage[i]["DeliverDate"] != null)
+                    {
+                        jOrderListPerPage[i]["DeliverDate"] = DateTime.Parse(jOrderListPerPage[i]["DeliverDate"].ToString()).ToLongDateString();
+                    }
 
+                    if(jOrderListPerPage[i]["AcceptDate"] != null)
+                    {
+                        jOrderListPerPage[i]["AcceptDate"] = DateTime.Parse(jOrderListPerPage[i]["AcceptDate"].ToString()).ToLongDateString();
+                    }
+
+                    //显示订单的微信支付状态
                     switch ((TradeState)int.Parse(jOrderListPerPage[i]["TradeState"].ToString()))
                     {
                         case TradeState.SUCCESS:
@@ -85,6 +101,18 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                         default:
                             jOrderListPerPage[i]["TradeStateText"] = "未知状态";
                             break;
+                    }
+
+                    //校验订单中每个订单项对应的商品项是否下架
+                    for (int j = 0; j < jOrderListPerPage[i]["OrderDetailList"].Count; j++)
+                    {
+                        if (string.IsNullOrEmpty(jOrderListPerPage[i]["OrderDetailList"][j]["FruitName"].ToString()))
+                        {
+                            jOrderListPerPage[i]["OrderDetailList"][j]["FruitName"] = "此商品已下架";
+                            JsonData jFruitImg = new JsonData();
+                            jFruitImg["ImgName"] = Config.DefaultImg;
+                            jOrderListPerPage[i]["OrderDetailList"][j]["FruitImgList"].Add(jFruitImg);
+                        }
                     }
                 }
 

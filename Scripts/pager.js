@@ -9,56 +9,135 @@
     else if (typeof define === 'function' && define.amd) {
         define(['jquery', 'jsrender'], factory(jQuery));
     }
-        // Browser global
+        // jquery plugin
     else {
-        root.pager = factory(jQuery);
+        factory(jQuery);
     }
 }
 (window, function ($) {
+
+    //分页类
     function Pager() {
 
         ///////////////////构造函数私有变量/////////////////////
 
-        var _totalRows = 0;     //总记录数
-        var _totalPages = 1;    //总页数
-        var _isPaging = false;   //是否正在分页处理
+        //总记录数
+        var _totalRows = 0;
+        //总页数
+        var _totalPages = 1;
+        //是否正在分页处理
+        var _isPaging = false;
+        //分页内容模板
         var _pageTemplate;
-        var _pageLoading = '<div id="divLoading" class="loading"></div>';
-        var _loadingImg = '<img class="loading-img" width="16px" height="16px" src="images/loading.gif" />';
-        var _loadingText = '<div class="loading-text">木有了噢，最后一页了！</div>';
-        var $_pageLoading, $_loadingImg, $_loadingText;
+        //分页页码模板
+        var _pagerTemplate;
+        //分页loadingHTML容器
+        var $_loadingContainer, _loadingContainer = '<div id="divLoading" class="loading"></div>';
+        //分页加载中提示
+        var $_loadingHints, _loadingHints = '<img class="loading-img" width="16px" height="16px" src="images/loading.gif" />';
+        //分页加载结束提示
+        var $_loadedHints, _loadedHints = '<div class="loading-text">木有了噢，最后一页了！</div>';
 
         //////////////////实例成员变量///////////////////////////
+
+        //分页参数
         this.settings = {
+            //分页模式：1-瀑布流分页；2-传统分页
+            pagerMode: 1,
+            //当前页码
             pageIndex: 1,
-            pageSize: this.setSuitablePageSize(),
+            //每页记录数，根据屏幕自适应：手机-10；平板-30；小PC-50；大PC-70
+            pageSize: 10,
+            //页面数据查询URL
             pageQueryURL: '',
+            //页面数据查询条件，object类型
             pageQueryCriteria: {},
+            //页面内容模板
             pageTemplate: '',
-            pageContainer: '',
+            //分页页码模板
+            pagerTemplate: '',
+            //页面内容HTML容器，默认body
+            pageContainer: 'body',
+            //页面内容淡入时间，默认1000毫秒
             pageItemFadeTimer: 1000,
+            //是否应用masonry，默认false
             isMasonry: false,
+            //分页页码参数
+            pagerSettings: {
+                //分页页码HTML容器
+                pagerContainer: '',
+                //第一页文本
+                firstPageText: '第一页',
+                //第一页图片
+                firstPageImageUrl: '',
+                //上一页文本
+                previousPageText: '上一页',
+                //上一页图片
+                previousPageImageUrl: '',
+                //下一页文本
+                nextPageText: '下一页',
+                //下一页图片
+                nextPageImageUrl: '',
+                //最后一页文本
+                lastPageText: '最后一页',
+                //最后一页图片
+                lastPageImageUrl: '',
+                //分页页码CSS样式类，默认使用bootstrap样式pagination
+                pagerCssClass: 'pagination',
+                //分页页码按钮数量
+                pagerButtonCount: 10,
+                //分页条显示位置：1-下方（默认）；2-上方；3-上下方
+                pagerPosition: 1
+            }
         };
 
         ////////////////原型成员对象/////////////////////
 
         //设置分页基本参数
         Pager.prototype.init = function (pageSettings) {
+            var _this = this;
+
             if (typeof pageSettings === "object") {
+                $.extend(true, _this.settings, pageSettings);
+            }
 
-                $.extend(this.settings, pageSettings);
+            //在分页内容后面附加分页Loading容器
+            $_loadingContainer = $(_loadingContainer).insertAfter(_this.settings.pageContainer);
+            $_loadingHints = $(_loadingHints).appendTo($_loadingContainer);
+            $_loadedHints = $(_loadedHints).appendTo($_loadingContainer);
 
-                if (!this.settings.pageContainer) {
-                    this.settings.pageContainer = "body";
-                }
+            _this.setSuitablePageSize();
 
-                //生成分页Loading容器
-                $_pageLoading = $(_pageLoading).insertAfter(this.settings.pageContainer);
-                $_loadingImg = $(_loadingImg).appendTo($_pageLoading);
-                $_loadingText = $(_loadingText).appendTo($_pageLoading);
+            if (_this.settings.pageTemplate) {
+                //生成页面内容模板对象
+                _pageTemplate = $.templates(_this.settings.pageTemplate);
+            }
+            else {
+                throw new Error("未指定页面内容模板")
+            }
 
-                //生成模板对象
-                _pageTemplate = $.templates(this.settings.pageTemplate);
+            switch (_this.settings.pagerMode) {
+                //瀑布流分页模式
+                case 1:
+                    //绑定浏览器：1，监听滚动事件进行分页。2，监听窗口大小变动事件调整PageSize
+                    $(window).on({
+                        "scroll": scrollUpEventHandler.bind(_this),
+                        "resize": _this.setSuitablePageSize.bind(_this)
+                    });
+
+                    break;
+
+                //传统分页模式
+                case 2:
+                    //如果设置了分页页码模板，则生成分页页码模板对象
+                    if (_this.settings.pagerTemplate) {
+                        _pagerTemplate = $.templates(_this.settings.pagerTemplate);
+                    }
+
+                    break;
+                default:
+                    throw new Error("未知分页模式。参数：pagerMode:1（瀑布流分页）; pagerMode:2（传统分页）");
+                    break;
             }
         };
 
@@ -72,8 +151,8 @@
             return _totalPages;
         };
 
-        //浏览器向上滑动分页
-        Pager.prototype.scrollUpPager = function () {
+        //页面向上滚动事件监听函数
+        function scrollUpEventHandler() {
             if (_isPaging) {
                 return;
             }
@@ -93,43 +172,59 @@
                     this.loadPage();
 
                 } else {
-                    $_loadingText.fadeIn("fast").fadeOut(2000);
+                    $_loadedHints.fadeIn("fast").fadeOut(2000);
                 }
             }
-        };
+        }
 
         //加载下一页数据
         Pager.prototype.loadPage = function (pageSettings) {
 
-            var thisObj = this;
+            var _this = this;
 
             if (typeof pageSettings === "object") {
-                $.extend(this.settings, pageSettings);
+                $.extend(true, _this.settings, pageSettings);
             }
+
+            // 显示加载进度条
+            $_loadingHints.fadeIn("fast");
 
             //触发分页前事件
             var pageLoadingEventArgs = { cancel: false };
-            $(thisObj).trigger("onPageLoading", pageLoadingEventArgs);
+            $(_this).trigger("onPageLoading", pageLoadingEventArgs);
             if (pageLoadingEventArgs.cancel) {
                 return false;
             }
 
-            // 显示加载进度条
-            $_loadingImg.fadeIn("fast");
+            //如果是传统分页模式，则从触发事件的HTML对象上获取页码
+            if (_this.settings.pagerMode == 2) {
+                var $li = $(event.target), piFromli;
+                if ($li && $li.attr("pi") != null && !isNaN($li.attr("pi"))) {
+                    piFromli = $li.attr("pi");
+                    if (piFromli >= 1 && piFromli <= _totalPages) {
+                        _this.settings.pageIndex = piFromli;
+                    }
+                    else {
+                        _this.settings.pageIndex = 1;
+                    }
+                }
+                else {
+                    _this.settings.pageIndex = 1;
+                }
+            }
 
-            var settings = thisObj.settings;
-
-            // ajax查询下一页数据并附加在底部
+            // ajax异步查询数据
             $.ajax({
-                url: settings.pageQueryURL,
-                data: $.extend({}, settings.pageQueryCriteria, { PageIndex: settings.pageIndex, PageSize: settings.pageSize, R: Math.random() }),
+                url: _this.settings.pageQueryURL,
+                data: $.extend({}, _this.settings.pageQueryCriteria, { PageIndex: _this.settings.pageIndex, PageSize: _this.settings.pageSize }),
                 type: "GET",
                 dataType: "json",
+                cache : false,
                 success: function (jDataPerPage) {
 
                     //当前页数据
                     var htmlItem = "";
-                    
+
                     //遍历展示当前页所有项数据，并使用模板渲染后加入HTML容器
                     $.each(jDataPerPage, function (i, n) {
 
@@ -142,101 +237,176 @@
                                 _totalRows = this["TotalRows"];
 
                                 //计算总页数
-                                if (_totalRows % settings.pageSize == 0) {
-                                    _totalPages = parseInt(_totalRows / settings.pageSize);
+                                if (_totalRows % _this.settings.pageSize == 0) {
+                                    _totalPages = parseInt(_totalRows / _this.settings.pageSize);
                                 }
                                 else {
-                                    _totalPages = parseInt(_totalRows / settings.pageSize) + 1;
+                                    _totalPages = parseInt(_totalRows / _this.settings.pageSize) + 1;
                                 }
                             }
                         }
                     });
 
-                    //如果是第一页则先清空HTML容器
-                    if (settings.pageIndex == 1) {
-                        $(settings.pageContainer).empty();
-                    }
+                    //判断分页模式
+                    switch (_this.settings.pagerMode) {
+                        //瀑布流分页模式
+                        case 1:
+                            //如果是第一页则先清空HTML容器
+                            if (_this.settings.pageIndex == 1) {
+                                $(_this.settings.pageContainer).empty();
+                            }
 
-                    if (htmlItem != "") {
-                        //追加并淡出新增的div
-                        $(htmlItem).appendTo(settings.pageContainer).css({ display: "none" }).fadeIn(settings.pageItemFadeTimer);
-                    }
+                            if (htmlItem != "") {
+                                //追加并淡出新增的div
+                                $(htmlItem).appendTo(_this.settings.pageContainer).css({ display: "none" }).fadeIn(_this.settings.pageItemFadeTimer);
+                            }
 
-                    //瀑布流布局
-                    if (settings.isMasonry) {
-                        requirejs(['masonry'],
-                            function (Masonry) {
-                                new Masonry(settings.pageContainer, { });
-                            });
+                            //应用masonry
+                            if (_this.settings.isMasonry) {
+                                requirejs(['masonry'],
+                                    function (Masonry) {
+                                        new Masonry(_this.settings.pageContainer, {});
+                                    });
+                            }
+
+                            break;
+
+                        //传统分页模式
+                        case 2:
+                            var strPager;
+
+                            //清空页容器
+                            $(_this.settings.pageContainer).empty();
+                            if (htmlItem != "") {
+                                //追加并淡出新增的div
+                                $(htmlItem).appendTo(_this.settings.pageContainer).css({ display: "none" }).fadeIn(_this.settings.pageItemFadeTimer);
+                            }
+
+                            //如果指定了分页页码模板，则渲染模板
+                            if (_pagerTemplate) {
+                                strPager = _pagerTemplate.render(_this.settings.pagerSettings);
+                            }
+                            else {
+                                //如果未指定分页页码，则生成默认分页页码HTML
+                                strPager = '<nav><ul class="' + _this.settings.pagerSettings.pagerCssClass + '">';
+                                if (1 == _this.settings.pageIndex) {
+                                    strPager += '<li class="disabled">';
+                                }
+                                else {
+                                    strPager += '<li>';
+                                }
+                                strPager += '<a href="#" aria-label="Previous"><span aria-hidden="true">' + _this.settings.pagerSettings.firstPageText + '</span></a></li>';
+                                for (var pi = 1; pi <= _totalPages; pi++) {
+                                    if (pi == _this.settings.pageIndex) {
+                                        strPager += '<li class="active"><a href="#">' + pi + '</a></li>';
+                                    }
+                                    else {
+                                        strPager += '<li pi="' + pi + '"><a href="#">' + pi + '</a></li>';
+                                    }
+                                }
+                                if (_totalPages == _this.settings.pageIndex) {
+                                    strPager += '<li class="disabled">';
+                                }
+                                else {
+                                    strPager += '<li>';
+                                }
+                                strPager += '<a href="#" aria-label="Next"><span aria-hidden="true">' + _this.settings.pagerSettings.lastPageText + '</span></a></li>';
+                                strPager += '</ul></nav>';
+                            }
+
+                            //如果设置了分页页码容器，则把分页页码加入容器。否则根据参数pagerPosition，确定加在page容器的位置。
+                            if (_this.settings.pagerSettings.pagerContainer != '') {
+                                $(_this.settings.pagerSettings.pagerContainer).append(strPager);
+                            }
+                            else {
+                                switch (_this.settings.pagerSettings.pagerPosition) {
+                                    case 1:
+                                        $(_this.settings.pageContainer).after(strPager);
+                                        break;
+                                    case 2:
+                                        $(_this.settings.pageContainer).before(strPager);
+                                        break;
+                                    case 3:
+                                        $(_this.settings.pageContainer).before(strPager);
+                                        $(_this.settings.pageContainer).after(strPager);
+                                        break;
+                                    default:
+                                        $(_this.settings.pageContainer).after(strPager);
+                                        break;
+                                }
+                            }
+
+                            //挂接分页按钮单击事件函数
+                            $(strPager).on("click", "li", _this.loadPage.bind(_this));
+
+                            break;
+                        default:
+                            throw new Error("未知分页模式。参数：pagerMode:1（瀑布流分页）; pagerMode:2（传统分页）");
+                            break;
                     }
 
                     //触发分页后事件
-                    var pageLoadedEventArgs = { pageIndex: settings.pageIndex, htmlResult: htmlItem };
-                    $(thisObj).trigger("onPageLoaded", pageLoadedEventArgs);
+                    var pageLoadedEventArgs = { pageIndex: _this.settings.pageIndex, htmlResult: htmlItem };
+                    $(_this).trigger("onPageLoaded", pageLoadedEventArgs);
 
                     //加载成功后，页数+1
-                    settings.pageIndex++;
+                    _this.settings.pageIndex++;
 
                     // 隐藏加载进度条
-                    $_loadingImg.fadeOut();
+                    $_loadingHints.fadeOut();
 
                     //标示已结束处理分页
                     _isPaging = false;
                 },
-                error: function (xhr, err_msg, e) {
-                    console.log(e + ":" + err_msg);
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.warn(errorThrown + ":" + textStatus);
 
                     // 隐藏加载进度条
-                    $_loadingImg.fadeOut();
+                    $_loadingHints.fadeOut();
 
                     //标示已结束处理分页
                     _isPaging = false;
                 }
             });
+
         };
-    }
 
-    //根据屏幕大小设置合适的分页记录数
-    Pager.prototype.setSuitablePageSize = function () {
-        var ps = 0, winWidth;
-        winWidth = $(document).width();
+        //根据屏幕大小设置合适的分页记录数
+        Pager.prototype.setSuitablePageSize = function () {
+            var ps, winWidth;
+            winWidth = $(document).width();
 
-        if (winWidth < 768) {
-            //手机屏幕
-            ps = 10;
-        }
-        else {
-            if (winWidth >= 768 && winWidth < 992) {
-                //平板屏幕
-                ps = 30;
+            if (winWidth < 768) {
+                //手机屏幕
+                ps = 10;
             }
             else {
-                if (winWidth >= 992 && winWidth < 1200) {
-                    //中等桌面显示器
-                    ps = 50;
+                if (winWidth >= 768 && winWidth < 992) {
+                    //平板屏幕
+                    ps = 30;
                 }
                 else {
-                    if (winWidth >= 1200) {
-                        //大型桌面显示器
-                        ps = 70;
+                    if (winWidth >= 992 && winWidth < 1200) {
+                        //中等桌面显示器
+                        ps = 50;
+                    }
+                    else {
+                        if (winWidth >= 1200) {
+                            //大型桌面显示器
+                            ps = 70;
+                        }
                     }
                 }
             }
-        }
 
-        return ps;
+            this.settings.pageSize = ps;
+        };
+
+
     }
 
     if (!$.pager) {
         $.pager = new Pager();
-
-        //绑定浏览器滑动事件
-        $(window).on("scroll", $.pager.scrollUpPager.bind($.pager));
-
-        //根据窗口大小变动，调整分页记录数
-        $(window).on("resize", function () {
-            $.pager.settings.pageSize = $.pager.setSuitablePageSize();
-        });
     }
 
     return $.pager;

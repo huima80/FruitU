@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wb="http://open.weibo.com/wb">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
@@ -17,8 +17,8 @@
     <meta property="wb:webmaster" content="db2652c9f08157d9" />
     <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
-    <link href="css/common.css" rel="stylesheet" />
-    <link href="css/footer.css" rel="stylesheet" />
+    <link href="css/MasterPage.css" rel="stylesheet" />
+    <link href="css/shake.css" rel="stylesheet" /> 
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <script src="Scripts/require.js"></script>
@@ -56,11 +56,13 @@
                 flexslider: 'jquery.flexslider-min',
                 cart: 'jquery.cart',
                 pager: 'pager',
-                webConfig: 'webConfig'
+                webConfig: 'webConfig',
+                jssorslider: 'jssor.slider.mini'
             },
             shim: {
+                'bootstrap': ['jquery'],
                 'flexslider': ['jquery'],
-                'bootstrap': ['jquery']
+                'jssorslider': ['jquery']
             }
         });
 
@@ -84,20 +86,13 @@
         <footer class="footer">
             <nav>
                 <ul>
-                    <li><a id="navHomeBtn" class="nav-controller" href="Default.aspx"><i class="fa fa-home"></i>首页</a></li>
+                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><i class="fa fa-home"></i>首页</a></li>
                     <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><i class="fa fa-shopping-cart"><span id="ProdAmountHints"></span></i>购物车</a></li>
                     <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><i class="fa fa-list"></i>我的订单</a></li>
                     <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><i class="fa fa-user"></i>个人中心</a></li>
                 </ul>
             </nav>
         </footer>
-        <div class="qq-login">
-            <a href="qqauth.ashx">
-                <img alt="" src="http://qzonestyle.gtimg.cn/qzone/vas/opensns/res/img/Connect_logo_7.png" />
-            </a>
-            <br />
-            <wb:share-button appkey="3535172822" addition="simple" type="button" language="zh_cn"></wb:share-button>
-        </div>
     </form>
 
     <script>
@@ -106,7 +101,7 @@
             $(function () {
 
                 //根据当前页面高亮菜单项
-                if (location.href.toLowerCase().indexOf("default") != -1) {
+                if (location.href.toLowerCase().indexOf("index") != -1) {
                     $("#navHomeBtn").addClass("active");
                 }
                 else {
@@ -128,13 +123,22 @@
                 requirejs(['cart'], function () {
                     refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
 
-                    //挂接购物车商品数量变动后事件处理函数
-                    $($.cart).on("onProdItemsChanged", refreshCartProdQty);
+                    //挂接购物车商品变动前事件处理函数
+                    $($.cart).on({
+                        "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemsClearing": shakeCart,
+                        "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemsCleared": refreshCartProdQty
+                    });
                 });
-
+                
             });
 
-            //刷新购物车小圆点
+            //购物车抖动
+            function shakeCart() {
+                $("#ProdAmountHints").addClass("shake shake-slow shake-constant");
+                setTimeout('$("#ProdAmountHints").removeClass("shake shake-slow shake-constant")', 300);
+            }
+
+            //刷新购物车数量
             function refreshCartProdQty(event, data) {
 
                 var $prodAmountHints = $("span#ProdAmountHints");
@@ -148,23 +152,6 @@
                 }
             }
 
-            function wblogin(o) {
-                alert(JSON.stringify(o));
-            }
-        });
-
-        WB2.anyWhere(function (W) {
-            W.widget.connectButton({
-                id: "wb_connect_btn",
-                type: "3,2",
-                callback: {
-                    wblogin: function (o) {
-                        JSON.stringify(o);
-                    },
-                    wblogout: function () {	//退出后的回调函数
-                    }
-                }
-            });
         });
 
     </script>

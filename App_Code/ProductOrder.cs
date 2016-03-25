@@ -1039,6 +1039,8 @@ public class ProductOrder
 
     /// <summary>
     /// 根据订单ID查询订单明细
+    /// 重要：如果订单项对应的商品项被删除，则会导致OrderDetail关联的Product和ProductImg表相关字段为null值。
+    /// 此时对应的业务场景为此订单项对应的商品已下架。
     /// </summary>
     /// <param name="conn"></param>
     /// <param name="poID"></param>

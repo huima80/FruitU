@@ -1,4 +1,4 @@
-﻿<%@ Page Title="新鲜水果切片" Language="C#" MasterPageFile="~/FruitU.master" AutoEventWireup="true" CodeFile="FruitList.aspx.cs" Inherits="FruitList" %>
+﻿<%@ Page Title="新鲜水果切片" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="FruitList.aspx.cs" Inherits="FruitList" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/FruitList.css" rel="stylesheet" />
@@ -34,6 +34,7 @@
                 requirejs(['pager'], function () {
 
                     $.pager.init({
+                        pagerMode: 1,
                         pageSize: 10,
                         pageQueryURL: 'ProdListPager.ashx',
                         pageQueryCriteria: { CategoryID: 28 },
@@ -48,13 +49,13 @@
             });
         });
 
-        function addToCart(id, fruitName, fruitDesc, fruitPrice) {
+        function addToCart(prodID, prodName, prodDesc, price) {
 
             var $div = $(event.currentTarget);
-            var imgName = $div.find("img").attr("src");
+            var prodImg = $div.find("img").attr("src");
 
             //购物车里添加商品
-            $.cart.addProdItem(id, fruitName, fruitDesc, imgName, fruitPrice, 1);
+            $.cart.insertProdItem(prodID, prodName, prodDesc, prodImg, price, 1);
 
         }
 

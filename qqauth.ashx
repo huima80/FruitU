@@ -60,7 +60,7 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         Config.QQAppID,
                         Config.QQAppKey,
                         code,
-                        redirectUri);
+                        HttpUtility.UrlEncode(redirectUri));
 
                     //返回数据包格式：access_token=FE04************************CCE2&expires_in=7776000&refresh_token=88E4************************BE14
                     //接口调用有错误时，会返回code和msg字段，以url参数对的形式返回，value部分会进行url编码（UTF-8）。
@@ -84,6 +84,12 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                         strOpenID = Regex.Match(strOpenID, @"\{.*\}").Value;
 
+                        if(string.IsNullOrEmpty(strOpenID))
+                        {
+                            //正则解析openid错误
+                            throw new Exception("正则解析openid错误");
+                        }
+
                         JsonData jOpenID = JsonMapper.ToObject(strOpenID);
 
                         if (jOpenID != null && jOpenID["openid"] != null)
@@ -92,7 +98,7 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         }
                         else
                         {
-                            //根据access_token获取openid错误
+                            //openid为空
                             throw new Exception(strOpenID);
                         }
 
@@ -132,6 +138,12 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         //    "is_yellow_year_vip": "0"
                         //}
 
+                        if(string.IsNullOrEmpty(strUserInfo))
+                        {
+                              //QQ用户信息为空
+                            throw new Exception("QQ用户信息为空");
+                        }
+
                         JsonData jUserInfo = JsonMapper.ToObject(strUserInfo);
 
                         if (jUserInfo != null && jUserInfo["ret"].ToString() == "0" && jUserInfo["nickname"] != null)
@@ -145,13 +157,15 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                             //如果此QQ用户未注册，则新建用户并设置角色
                             if (qqUser == null)
                             {
+                                //使用QQ用户的openid和随机密码新建用户
                                 qqUser = Membership.CreateUser(jAuthInfo["openid"].ToString(), Membership.GeneratePassword(10, 1));
+
                                 if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
                                 {
                                     //如果credentials中指定了此QQ用户，则加入管理员组，否则加入访客组
                                     Roles.AddUserToRole(jAuthInfo["openid"].ToString(), Config.AdminRoleName);
 
-                                    //为此QQ用户生成认证凭证和cookies，跳转到defaultUrl
+                                    //用QQ用户的openid生成认证凭证和cookies，跳转到defaultUrl
                                     FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
 
                                 }
@@ -167,18 +181,6 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                                 //此QQ用户已注册，则直接为此QQ用户生成认证凭证和cookies，跳转到defaultUrl
                                 FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
                             }
-
-                            ////验证是否credentials中指定的QQ用户
-                            //if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
-                            //{
-                            //    //如果credentials中指定了此QQ用户，则为其生成认证凭证和cookies，跳转到原请求页
-                            //    FormsAuthentication.RedirectFromLoginPage(jUserInfo["nickname"].ToString(), false);
-                            //}
-                            //else
-                            //{
-                            //    //如果此QQ用户没有认证，即跳回登录页
-                            //    context.Response.Redirect("login.aspx");
-                            //}
                         }
                         else
                         {
