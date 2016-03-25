@@ -1,5 +1,7 @@
-﻿body{
+﻿html, body{
+    background: #EDEDED;
     user-select: none;
+    padding-bottom:56px;
 }
 
 .header{
@@ -27,9 +29,7 @@ img.user-portrait
     border-radius:8px;
     padding:8px;
     cursor:pointer;
-    border: dotted;
-    border-width: 1px;
-    border-color: lightgrey;
+    background-color:white;
 }
 
 .info-block i{

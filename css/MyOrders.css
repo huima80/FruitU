@@ -1,4 +1,10 @@
-﻿.container {
+﻿html, body{
+    background: #EDEDED;
+    user-select: none;
+    padding-bottom:56px;
+}
+
+.container {
     padding: 0;
 }
 
@@ -16,9 +22,7 @@
     padding: 8px;
     border-radius: 8px;
     position: relative;
-    border: dotted;
-    border-width: 1px;
-    border-color: lightgrey;
+    background-color:white;
 }
 
 .order-id{
