@@ -26,6 +26,11 @@ public partial class ManageProduct : System.Web.UI.Page
     /// </summary>
     protected const int GRID_ITEM_HEIGHT = 4;
 
+    /// <summary>
+    /// 查询条件框的背景色
+    /// </summary>
+    protected static readonly System.Drawing.Color CRITERIA_BG_COLOR = System.Drawing.Color.Pink;
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if(!Page.IsPostBack)
@@ -50,6 +55,9 @@ public partial class ManageProduct : System.Web.UI.Page
         }
     }
 
+    /// <summary>
+    /// 绑定按类别查询下拉框数据源
+    /// </summary>
     protected void BindCategoryDDL()
     {
         this.ddlCategory.DataSource = MakeCategoryDataSource();
@@ -68,6 +76,7 @@ public partial class ManageProduct : System.Web.UI.Page
         this.dvFruit.AutoGenerateEditButton = true;
         
         this.dvFruit.DataBind();
+        this.gvFruitList.DataBind();
 
     }
 
@@ -640,7 +649,7 @@ public partial class ManageProduct : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlCategory.SelectedValue);
                 listWhere.Add(string.Format("CategoryID = {0}", this.ddlCategory.SelectedValue));
-                this.ddlCategory.Style.Add("background-color", "pink");
+                this.ddlCategory.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -652,7 +661,7 @@ public partial class ManageProduct : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlIsSticky.SelectedValue);
                 listWhere.Add(string.Format("IsSticky = {0}", this.ddlIsSticky.SelectedValue));
-                this.ddlIsSticky.Style.Add("background-color", "pink");
+                this.ddlIsSticky.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -664,7 +673,7 @@ public partial class ManageProduct : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlIsOnSale.SelectedValue);
                 listWhere.Add(string.Format("ProductOnSale = {0}", this.ddlIsOnSale.SelectedValue));
-                this.ddlIsOnSale.Style.Add("background-color", "pink");
+                this.ddlIsOnSale.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -676,7 +685,7 @@ public partial class ManageProduct : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtProdName.Text);
                 listWhere.Add(string.Format("ProductName like '%{0}%'", this.txtProdName.Text.Trim()));
-                this.txtProdName.Style.Add("background-color", "pink");
+                this.txtProdName.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -706,8 +715,6 @@ public partial class ManageProduct : System.Web.UI.Page
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWarn", string.Format("alert('{0}');", ex.Message), true);
         }
     }
-
-
 
     protected void btnShowAll_Click(object sender, EventArgs e)
     {
@@ -744,5 +751,10 @@ public partial class ManageProduct : System.Web.UI.Page
             divGridStackItem.Attributes["data-gs-width"] = GRID_ITEM_WIDTH.ToString();
             divGridStackItem.Attributes["data-gs-height"] = GRID_ITEM_HEIGHT.ToString();
         }
+    }
+
+    protected void dvFruit_ModeChanged(object sender, EventArgs e)
+    {
+        this.gvFruitList.DataBind();
     }
 }

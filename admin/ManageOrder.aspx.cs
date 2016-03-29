@@ -9,6 +9,11 @@ using System.Data;
 
 public partial class ManageOrder : System.Web.UI.Page
 {
+    /// <summary>
+    /// 查询条件框的背景色
+    /// </summary>
+    protected static readonly System.Drawing.Color CRITERIA_BG_COLOR = System.Drawing.Color.Pink;
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!Page.IsPostBack)
@@ -145,7 +150,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlPaymentTerm.SelectedValue);
                 listWhere.Add(string.Format("PaymentTerm = {0}", this.ddlPaymentTerm.SelectedValue));
-                this.ddlPaymentTerm.Style.Add("background-color", "pink");
+                this.ddlPaymentTerm.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -157,7 +162,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlTradeState.SelectedValue);
                 listWhere.Add(string.Format("TradeState = {0}", this.ddlTradeState.SelectedValue));
-                this.ddlTradeState.Style.Add("background-color", "pink");
+                this.ddlTradeState.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -169,7 +174,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlIsDelivery.SelectedValue);
                 listWhere.Add(string.Format("IsDelivered = {0}", this.ddlIsDelivery.SelectedValue));
-                this.ddlIsDelivery.Style.Add("background-color", "pink");
+                this.ddlIsDelivery.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -181,7 +186,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.ddlIsAccept.SelectedValue);
                 listWhere.Add(string.Format("IsAccept = {0}", this.ddlIsAccept.SelectedValue));
-                this.ddlIsAccept.Style.Add("background-color", "pink");
+                this.ddlIsAccept.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -193,7 +198,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtDeliverName.Text);
                 listWhere.Add(string.Format("DeliverName like '%{0}%'", this.txtDeliverName.Text.Trim()));
-                this.txtDeliverName.Style.Add("background-color", "pink");
+                this.txtDeliverName.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -205,7 +210,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtDeliverPhone.Text);
                 listWhere.Add(string.Format("DeliverPhone like '%{0}%'", this.txtDeliverPhone.Text.Trim()));
-                this.txtDeliverPhone.Style.Add("background-color", "pink");
+                this.txtDeliverPhone.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -217,7 +222,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtOrderID.Text);
                 listWhere.Add(string.Format("OrderID like '%{0}%'", this.txtOrderID.Text.Trim()));
-                this.txtOrderID.Style.Add("background-color", "pink");
+                this.txtOrderID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -229,7 +234,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtOrderDetail.Text);
                 listWhere.Add(string.Format("OrderDetail.OrderProductName like '%{0}%'", this.txtOrderDetail.Text.Trim()));
-                this.txtOrderDetail.Style.Add("background-color", "pink");
+                this.txtOrderDetail.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                 hasProductDetailCriteria = true;
             }
             else
@@ -242,7 +247,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtTransactionID.Text);
                 listWhere.Add(string.Format("TransactionID like '%{0}%'", this.txtTransactionID.Text.Trim()));
-                this.txtTransactionID.Style.Add("background-color", "pink");
+                this.txtTransactionID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -254,7 +259,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtStartOrderDate.Text);
                 listWhere.Add(string.Format("CONVERT(varchar(8), OrderDate, 112) >= '{0}'", this.txtStartOrderDate.Text.Trim().Replace("-", "")));
-                this.txtStartOrderDate.Style.Add("background-color", "pink");
+                this.txtStartOrderDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -266,7 +271,7 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 UtilityHelper.AntiSQLInjection(this.txtEndOrderDate.Text);
                 listWhere.Add(string.Format("CONVERT(varchar(8), OrderDate, 112) <= '{0}'", this.txtEndOrderDate.Text.Trim().Replace("-", "")));
-                this.txtEndOrderDate.Style.Add("background-color", "pink");
+                this.txtEndOrderDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
@@ -309,17 +314,17 @@ public partial class ManageOrder : System.Web.UI.Page
 
     protected void btnShowAll_Click(object sender, EventArgs e)
     {
-        this.ddlIsDelivery.SelectedIndex = 0;
-        this.ddlIsDelivery.Style.Clear();
-
-        this.ddlIsAccept.SelectedIndex = 0;
-        this.ddlIsAccept.Style.Clear();
-
         this.ddlPaymentTerm.SelectedIndex = 0;
         this.ddlPaymentTerm.Style.Clear();
 
         this.ddlTradeState.SelectedIndex = 0;
         this.ddlTradeState.Style.Clear();
+
+        this.ddlIsDelivery.SelectedIndex = 0;
+        this.ddlIsDelivery.Style.Clear();
+
+        this.ddlIsAccept.SelectedIndex = 0;
+        this.ddlIsAccept.Style.Clear();
 
         this.txtDeliverName.Text = string.Empty;
         this.txtDeliverName.Style.Clear();

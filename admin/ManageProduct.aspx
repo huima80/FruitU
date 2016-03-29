@@ -78,7 +78,7 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated">
+                <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
                         <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" ControlStyle-CssClass="form-control">
