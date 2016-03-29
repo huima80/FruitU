@@ -7,7 +7,7 @@
     }
         // AMD module
     else if (typeof define === 'function' && define.amd) {
-        define(factory(root));
+        define(factory());
     }
         // Browser global
     else {
@@ -21,7 +21,7 @@
         this.siteKeywords = 'fruit,slice,juice,水果,果汁,切片';
         this.siteIcon = 'images/FruitU.ico';
         this.siteCopyrights = 'FruitU';
-        this.defaultImg = 'images/FruitU.jpg';
+        this.defaultImg = 'FruitU.jpg';
     }
 
     //初始化网站配置
