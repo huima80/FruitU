@@ -54,10 +54,10 @@
             if (isNaN(prodID)) {
                 throw new TypeError("商品ID不正确");
             }
-            if (isNaN(price)) {
+            if (isNaN(price) || price < 0) {
                 throw new TypeError("商品价格不正确");
             }
-            if (isNaN(qty)) {
+            if (isNaN(qty) || qty < 0) {
                 throw new TypeError("商品数量不正确");
             }
 
@@ -100,7 +100,7 @@
             if (isNaN(prodID)) {
                 throw new TypeError("商品ID不正确");
             }
-            if (isNaN(qty)) {
+            if (isNaN(qty) || qty < 0) {
                 throw new TypeError("商品数量不正确");
             }
 

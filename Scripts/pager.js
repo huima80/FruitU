@@ -31,12 +31,8 @@
         var _pageTemplate;
         //分页页码模板
         var _pagerTemplate;
-        //分页loadingHTML容器
-        var $_loadingContainer, _loadingContainer = '<div id="divLoading" class="loading"></div>';
-        //分页加载中提示
-        var $_loadingHints, _loadingHints = '<img class="loading-img" width="16px" height="16px" src="images/loading.gif" />';
-        //分页加载结束提示
-        var $_loadedHints, _loadedHints = '<div class="loading-text">木有了噢，最后一页了！</div>';
+        //分页加载提示
+        var $_loadingHints, $_loadedHints;
 
         //////////////////实例成员变量///////////////////////////
 
@@ -62,6 +58,10 @@
             pageItemFadeTimer: 1000,
             //是否应用masonry，默认false
             isMasonry: false,
+            //加载时提示
+            loadingHints: '<img style="display:block;margin-left:auto;margin-right:auto;" width="16px" height="16px" src="images/loading.gif" />',
+            //加载完成后提示
+            loadedHints: '<div style="text-align:center;font-size:12px;color:orange;display:none;">木有了噢，最后一页了！</div>',
             //分页页码参数
             pagerSettings: {
                 //分页页码HTML容器
@@ -101,10 +101,14 @@
                 $.extend(true, _this.settings, pageSettings);
             }
 
-            //在分页内容后面附加分页Loading容器
-            $_loadingContainer = $(_loadingContainer).insertAfter(_this.settings.pageContainer);
-            $_loadingHints = $(_loadingHints).appendTo($_loadingContainer);
-            $_loadedHints = $(_loadedHints).appendTo($_loadingContainer);
+            if (_this.settings.pageContainer) {
+                //在分页内容后面附加分页Loading
+                $_loadingHints = $(_this.settings.loadingHints).insertAfter(_this.settings.pageContainer);
+                $_loadedHints = $(_this.settings.loadedHints).insertAfter(_this.settings.pageContainer);
+            }
+            else {
+                throw new Error("未指定页面内容容器");
+            }
 
             _this.setSuitablePageSize();
 
@@ -113,7 +117,7 @@
                 _pageTemplate = $.templates(_this.settings.pageTemplate);
             }
             else {
-                throw new Error("未指定页面内容模板")
+                throw new Error("未指定页面内容模板");
             }
 
             switch (_this.settings.pagerMode) {
@@ -139,6 +143,7 @@
                     throw new Error("未知分页模式。参数：pagerMode:1（瀑布流分页）; pagerMode:2（传统分页）");
                     break;
             }
+
         };
 
         //总记录数
@@ -346,7 +351,7 @@
                     }
 
                     //触发分页后事件
-                    var pageLoadedEventArgs = { pageIndex: _this.settings.pageIndex, htmlResult: htmlItem };
+                    var pageLoadedEventArgs = { pageIndex: _this.settings.pageIndex, originalDataPerPage: jDataPerPage };
                     $(_this).trigger("onPageLoaded", pageLoadedEventArgs);
 
                     //加载成功后，页数+1

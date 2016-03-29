@@ -1,3 +1,15 @@
 ﻿.random-category img{
     max-width:100%;
 }
+
+.input-group, .form-control {
+    float: left;
+    font-size: medium;
+    text-align: center;
+    width: 120px;
+}
+
+    .input-group span {
+        cursor: pointer;
+        font-size: large;
+    }

@@ -1,7 +1,5 @@
 ﻿html, body{
     background: #EDEDED;
-    user-select: none;
-    padding-bottom: 56px;
 }
 
 .container {
@@ -63,6 +61,9 @@
 }
 
 .prod-qty {
+    color: black;
+    font-size: 12px;
+    font-style: italic;
 }
 
 .panel{

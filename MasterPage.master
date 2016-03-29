@@ -54,10 +54,10 @@
                 respond: 'https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min',
                 jsrender: 'jsrender',
                 flexslider: 'jquery.flexslider-min',
+                jssorslider: 'jssor.slider.mini',
                 cart: 'jquery.cart',
                 pager: 'pager',
-                webConfig: 'webConfig',
-                jssorslider: 'jssor.slider.mini'
+                webConfig: 'webConfig'
             },
             shim: {
                 'bootstrap': ['jquery'],
@@ -96,7 +96,7 @@
 
     <script>
 
-        requirejs(['jquery', 'webConfig'], function ($) {
+        requirejs(['jquery'], function ($) {
             $(function () {
 
                 //根据当前页面高亮菜单项
