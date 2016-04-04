@@ -78,6 +78,16 @@ public class ProductOrder
     public string TradeStateDesc { get; set; }
 
     /// <summary>
+    /// 是否取消订单
+    /// </summary>
+    public bool IsCancel { get; set; }
+
+    /// <summary>
+    /// 订单取消时间
+    /// </summary>
+    public DateTime? CancelDate { get; set; }
+
+    /// <summary>
     /// 是否发货
     /// </summary>
     public bool IsDelivered { get; set; }
@@ -284,6 +294,18 @@ public class ProductOrder
                         paramClientIP.SqlValue = po.ClientIP;
                         cmdAddOrder.Parameters.Add(paramClientIP);
 
+                        SqlParameter paramIsCancel = cmdAddOrder.CreateParameter();
+                        paramIsCancel.ParameterName = "@IsCancel";
+                        paramIsCancel.SqlDbType = System.Data.SqlDbType.Bit;
+                        paramIsCancel.SqlValue = po.IsCancel;
+                        cmdAddOrder.Parameters.Add(paramIsCancel);
+
+                        SqlParameter paramCancelDate = cmdAddOrder.CreateParameter();
+                        paramCancelDate.ParameterName = "@CancelDate";
+                        paramCancelDate.SqlDbType = System.Data.SqlDbType.DateTime;
+                        paramCancelDate.SqlValue = po.CancelDate;
+                        cmdAddOrder.Parameters.Add(paramCancelDate);
+
                         foreach (SqlParameter param in cmdAddOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -293,7 +315,7 @@ public class ProductOrder
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -485,7 +507,8 @@ public class ProductOrder
                                 po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
-
+                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
                                 poList.Add(po);
@@ -661,6 +684,8 @@ public class ProductOrder
                                 po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -813,6 +838,8 @@ public class ProductOrder
                                 po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -907,6 +934,8 @@ public class ProductOrder
                                 po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -1004,6 +1033,8 @@ public class ProductOrder
                                 po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -1186,14 +1217,83 @@ public class ProductOrder
                         paramPaymentTerm.SqlValue = (int)PaymentTerm.WECHAT;
                         cmdOrderID.Parameters.Add(paramPaymentTerm);
 
-                        if (cmdOrderID.ExecuteNonQuery() == 1)
-                        {
-                            result = 1;
-                        }
-                        else
-                        {
-                            result = 0;
-                        }
+                        result = cmdOrderID.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("ProductOrder", ex.ToString());
+            throw ex;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 更新订单取消状态
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="openID"></param>
+    /// <param name="isCancel"></param>
+    /// <returns></returns>
+    public static int UpdateOrderCancel(int id, string openID, bool isCancel)
+    {
+        int result;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                try
+                {
+                    using (SqlCommand cmdOrderID = conn.CreateCommand())
+                    {
+
+                        cmdOrderID.CommandText = "update ProductOrder set IsCancel = @IsCancel, CancelDate = @CancelDate where Id=@Id and OpenID=@OpenID";
+
+                        SqlParameter paramId;
+                        paramId = cmdOrderID.CreateParameter();
+                        paramId.ParameterName = "@Id";
+                        paramId.SqlDbType = System.Data.SqlDbType.Int;
+                        paramId.SqlValue = id;
+                        cmdOrderID.Parameters.Add(paramId);
+
+                        SqlParameter paramOpenID;
+                        paramOpenID = cmdOrderID.CreateParameter();
+                        paramOpenID.ParameterName = "@OpenID";
+                        paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramOpenID.SqlValue = openID;
+                        cmdOrderID.Parameters.Add(paramOpenID);
+
+                        SqlParameter paramIsCancel;
+                        paramIsCancel = cmdOrderID.CreateParameter();
+                        paramIsCancel.ParameterName = "@IsCancel";
+                        paramIsCancel.SqlDbType = System.Data.SqlDbType.Bit;
+                        paramIsCancel.SqlValue = isCancel;
+                        cmdOrderID.Parameters.Add(paramIsCancel);
+
+                        SqlParameter paramCancelDate = cmdOrderID.CreateParameter();
+                        paramCancelDate.ParameterName = "@CancelDate";
+                        paramCancelDate.SqlDbType = System.Data.SqlDbType.DateTime;
+                        paramCancelDate.SqlValue = DateTime.Now;
+                        cmdOrderID.Parameters.Add(paramCancelDate);
+
+                        result = cmdOrderID.ExecuteNonQuery();
                     }
                 }
                 catch (Exception ex)
@@ -1261,14 +1361,7 @@ public class ProductOrder
                         paramDeliverDate.SqlValue = DateTime.Now;
                         cmdOrderID.Parameters.Add(paramDeliverDate);
 
-                        if (cmdOrderID.ExecuteNonQuery() == 1)
-                        {
-                            result = 1;
-                        }
-                        else
-                        {
-                            result = 0;
-                        }
+                        result = cmdOrderID.ExecuteNonQuery();
                     }
                 }
                 catch (Exception ex)
@@ -1297,9 +1390,10 @@ public class ProductOrder
     /// 更新订单签收状态和日期
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="openID"></param>
     /// <param name="isAccept"></param>
     /// <returns></returns>
-    public static int UpdateOrderAcceptance(int id, bool isAccept)
+    public static int UpdateOrderAcceptance(int id, string openID, bool isAccept)
     {
         int result;
 
@@ -1314,7 +1408,7 @@ public class ProductOrder
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
 
-                        cmdOrderID.CommandText = "update ProductOrder set IsAccept = @IsAccept, AcceptDate = @AcceptDate where Id=@Id";
+                        cmdOrderID.CommandText = "update ProductOrder set IsAccept = @IsAccept, AcceptDate = @AcceptDate where Id=@Id and OpenID=@OpenID";
 
                         SqlParameter paramId;
                         paramId = cmdOrderID.CreateParameter();
@@ -1322,6 +1416,13 @@ public class ProductOrder
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
                         paramId.SqlValue = id;
                         cmdOrderID.Parameters.Add(paramId);
+
+                        SqlParameter paramOpenID;
+                        paramOpenID = cmdOrderID.CreateParameter();
+                        paramOpenID.ParameterName = "@OpenID";
+                        paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramOpenID.SqlValue = openID;
+                        cmdOrderID.Parameters.Add(paramOpenID);
 
                         SqlParameter paramIsAccept;
                         paramIsAccept = cmdOrderID.CreateParameter();
@@ -1336,14 +1437,7 @@ public class ProductOrder
                         paramAcceptDate.SqlValue = DateTime.Now;
                         cmdOrderID.Parameters.Add(paramAcceptDate);
 
-                        if (cmdOrderID.ExecuteNonQuery() == 1)
-                        {
-                            result = 1;
-                        }
-                        else
-                        {
-                            result = 0;
-                        }
+                        result = cmdOrderID.ExecuteNonQuery();
                     }
                 }
                 catch (Exception ex)
@@ -1443,15 +1537,7 @@ public class ProductOrder
 
                         Log.Debug("根据微信支付通知，更新数据库中的订单支付状态", cmdTradeState.CommandText);
 
-                        if (cmdTradeState.ExecuteNonQuery() == 1)
-                        {
-                            result = 1;
-                        }
-                        else
-                        {
-                            result = 0;
-                        }
-
+                        result = cmdTradeState.ExecuteNonQuery();
                     }
                 }
                 catch (Exception ex)

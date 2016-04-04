@@ -125,6 +125,11 @@ public static class Config
     public static readonly int OrderListPageSize;
 
     /// <summary>
+    /// 用户列表PageSize
+    /// </summary>
+    public static readonly int UserListPageSize;
+
+    /// <summary>
     /// 允许上传的文件扩展名
     /// </summary>
     public static readonly string AllowedUploadFileExt;
@@ -133,6 +138,11 @@ public static class Config
     /// 默认图片
     /// </summary>
     public static readonly string DefaultImg;
+
+    /// <summary>
+    /// 微信模板消息接收者openid
+    /// </summary>
+    public static readonly List<string> WxTmplMsgReceiver;
 
     /////////////////////////// QQ互联平台：http://connect.qq.com
     /// <summary>
@@ -192,6 +202,17 @@ public static class Config
             Config.OrderListPageSize = orderListPageSize;
         }
 
+        int userListPageSize;
+        if (!int.TryParse(ConfigurationManager.AppSettings["UserListPageSize"].ToString(), out userListPageSize))
+        {
+            //默认pagesize
+            Config.UserListPageSize = 10;
+        }
+        else
+        {
+            Config.UserListPageSize = userListPageSize;
+        }
+
         int uoTimeout;
         if(!int.TryParse(ConfigurationManager.AppSettings["WeChatAPITimeout"].ToString(),out uoTimeout))
         {
@@ -223,6 +244,17 @@ public static class Config
         else
         {
             Config.LogLevel = logLevel;
+        }
+
+        Config.WxTmplMsgReceiver = new List<string>();
+        string strWxTmplMsgReceiver = ConfigurationManager.AppSettings["WxTmplMsgReceiver"].ToString();
+        if(!string.IsNullOrEmpty(strWxTmplMsgReceiver))
+        {
+            string[] arrWxTmplMsgReceiver = strWxTmplMsgReceiver.Split('|');
+            for (int i = 0; i < arrWxTmplMsgReceiver.Length; i++)
+            {
+                Config.WxTmplMsgReceiver.Add(arrWxTmplMsgReceiver[i]);
+            }
         }
 
     }

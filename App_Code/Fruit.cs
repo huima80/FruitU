@@ -75,7 +75,6 @@ public class Fruit : IComparable<Fruit>
     /// <returns></returns>
     public static List<Fruit> FindAllFruit()
     {
-
         List<Fruit> fruitList = new List<Fruit>();
         Fruit fruit;
 

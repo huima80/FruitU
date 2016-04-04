@@ -21,7 +21,7 @@ public class WxPayAPI
     /// 除被扫支付场景以外，商户系统先调用该接口在微信支付服务后台生成预支付交易单，返回正确的预支付交易回话标识prepay_id，有效期2小时，再按扫码、JSAPI、APP等不同场景生成交易串调起支付。
     /// </summary>
     /// <returns>正常返回prepay_id，stateCode为空；如果有错误发生，则prepay_id为空，stateCode有值</returns>
-    public static string CallUnifiedOrderAPI(JsonData jAuthInfo, ProductOrder po, out string stateCode)
+    public static string CallUnifiedOrderAPI(WeChatUser wxUser, ProductOrder po, out string stateCode)
     {
         string prepayID = string.Empty;
 
@@ -46,13 +46,13 @@ public class WxPayAPI
             sendPayData.SetValue("out_trade_no", po.OrderID);   //必填
             sendPayData.SetValue("fee_type", "CNY");
             sendPayData.SetValue("total_fee", (po.OrderPrice * 100).ToString("F0"));    //必填，单位为【分】
-            sendPayData.SetValue("spbill_create_ip", jAuthInfo["client_ip"].ToString());    //必填
+            sendPayData.SetValue("spbill_create_ip", wxUser.ClientIP);    //必填
             sendPayData.SetValue("time_start", DateTime.Now.ToString("yyyyMMddHHmmss"));
             sendPayData.SetValue("time_expire", DateTime.Now.AddMinutes(Config.WeChatOrderExpire).ToString("yyyyMMddHHmmss"));    //最短失效时间间隔必须大于5分钟，可为空，默认2小时，也即prepay_id有效期
             sendPayData.SetValue("goods_tag", "商品标记，代金券或立减优惠功能的参数");
             sendPayData.SetValue("notify_url", Config.PayNotifyUrl);   //必填，微信支付成功后异步通知url
             sendPayData.SetValue("trade_type", "JSAPI");    //必填
-            sendPayData.SetValue("openid", jAuthInfo["openid"].ToString()); //trade_type = JSAPI，此参数必传
+            sendPayData.SetValue("openid", wxUser.OpenID); //trade_type = JSAPI，此参数必传
 
             //生成报文签名
             sendPayData.SetValue("sign", sendPayData.MakeSign());   //必填
@@ -351,59 +351,6 @@ public class WxPayAPI
         }
 
         return recvPayData;
-    }
-
-    public static void NotifyOrderToAdmin(ProductOrder po, string[] openIDs)
-    {
-        try
-        {
-            string url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=ACCESS_TOKEN";
-
-            JsonData jdOrderNotifyInfo;
-
-            for (int i = 0; i < openIDs.Length; i++)
-            {
-                jdOrderNotifyInfo = new JsonData();
-                jdOrderNotifyInfo["touser"] = openIDs[i];
-                jdOrderNotifyInfo["template_id"] = "ngqIpbwh8bUfcSsECmogfXcV14J0tQlEpBO27izEYtY";
-                jdOrderNotifyInfo["url"] = "http://mahui.me";
-
-                JsonData jdFirst = new JsonData();
-                jdFirst["value"] = "恭喜您购买成功！";
-                jdFirst["color"] = "#173177";
-                JsonData jdKeynote1 = new JsonData();
-                jdKeynote1["value"] = po.ProductNames;
-                jdKeynote1["color"] = "#173177";
-                JsonData jdKeynote2 = new JsonData();
-                jdKeynote2["value"] = po.OrderPrice.ToString();
-                jdKeynote2["color"] = "#173177";
-                JsonData jdKeynote3 = new JsonData();
-                jdKeynote3["value"] = po.OrderDate.ToString();
-                jdKeynote3["color"] = "#173177";
-                JsonData jdRemark = new JsonData();
-                jdRemark["value"] = "欢迎再次购买！";
-                jdRemark["color"] = "#173177";
-                JsonData jdData = new JsonData();
-                jdData["data"].Add(jdFirst);
-                jdData["data"].Add(jdKeynote1);
-                jdData["data"].Add(jdKeynote2);
-                jdData["data"].Add(jdKeynote3);
-                jdData["data"].Add(jdRemark);
-
-                jdOrderNotifyInfo.Add(jdData);
-
-                string recvMsg = HttpService.Post(jdOrderNotifyInfo.ToString(), url, false, Config.WeChatAPITimeout);
-
-                WeChatPayData recvNotifyData = new WeChatPayData();
-                recvNotifyData.FromXml(recvMsg);
-
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("WxPayAPI", ex.Message);
-        }
-
     }
 
 }

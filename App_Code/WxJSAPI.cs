@@ -39,7 +39,6 @@ public class WxJSAPI
 
                 if (jToken["access_token"] != null)
                 {
-
                     //根据微信返回的token和有效期，存入Cache
                     double tokenExpiration = double.Parse(jToken["expires_in"].ToString());
                     HttpRuntime.Cache.Insert("AccessToken", jToken["access_token"].ToString(), null, DateTime.Now.AddSeconds(tokenExpiration), Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
