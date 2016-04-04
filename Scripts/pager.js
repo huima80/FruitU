@@ -58,8 +58,8 @@
             pageItemFadeTimer: 1000,
             //是否应用masonry，默认false
             isMasonry: false,
-            //加载时提示
-            loadingHints: '<img style="display:block;margin-left:auto;margin-right:auto;" width="16px" height="16px" src="images/loading.gif" />',
+            //加载时提示，默认使用Font-Awesome图标，CSS3动画，不支持IE8-IE9
+            loadingHints: '<div style="text-align:center;"><i class="fa fa-spinner fa-pulse"</i></div>',
             //加载完成后提示
             loadedHints: '<div style="text-align:center;font-size:12px;color:orange;display:none;">木有了噢，最后一页了！</div>',
             //分页页码参数
@@ -123,7 +123,7 @@
             switch (_this.settings.pagerMode) {
                 //瀑布流分页模式
                 case 1:
-                    //绑定浏览器：1，监听滚动事件进行分页。2，监听窗口大小变动事件调整PageSize
+                    //绑定浏览器事件：1，监听滚动事件进行分页。2，监听窗口大小变动事件调整PageSize
                     $(window).on({
                         "scroll": scrollUpEventHandler.bind(_this),
                         "resize": _this.setSuitablePageSize.bind(_this)

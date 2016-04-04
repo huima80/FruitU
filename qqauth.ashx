@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="qqauth" %>
+﻿<%@ WebHandler Language="C#" Class="QQAuth" %>
 
 using System;
 using System.Web;
@@ -11,9 +11,9 @@ using LitJson;
 /// 1，向QQ互联oauth认证接口发出CODE请求，QQ返回CODE回调本页面
 /// 2，使用CODE向QQ的access token接口发出请求，获取access token
 /// 3，使用access_token向QQ的openid接口发出请求，获取openid，把access_token, openid, client_id都存入session["QQAuthInfo"]
-/// 4，使用openid、access token和APP ID向QQ get_user_info接口发出请求，获取userinfo，存入session["QQUserInfo"]，使用ASP.NET表单认证，生成cookies，跳回请求页
+/// 4，使用openid、access token和APP ID向QQ get_user_info接口发出请求，获取userinfo，存入session["QQUser"]，使用ASP.NET表单认证，生成cookies，跳回请求页
 /// </summary>
-public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionState
+public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionState
 {
     public void ProcessRequest (HttpContext context) {
         string redirectUri, code, display, authUrl, strAccessToken, strOpenID, strUserInfo;
@@ -68,10 +68,12 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                     Log.Info("QQ AccessToken", strAccessToken);
 
-                    Match rxAccessToken = Regex.Match(strAccessToken, "access_token=([A-Za-z0-9]*)&", RegexOptions.IgnoreCase);
-                    if (rxAccessToken != null && rxAccessToken.Groups.Count == 2)
+                    Match rxAccessToken = Regex.Match(strAccessToken, "access_token=([A-Za-z0-9]*)&expires_in=([A-Za-z0-9]*)&refresh_token=([A-Za-z0-9]*)", RegexOptions.IgnoreCase);
+                    if (rxAccessToken != null && rxAccessToken.Groups.Count == 4)
                     {
                         jAuthInfo["access_token"] = rxAccessToken.Groups[1].Value;
+                        jAuthInfo["expires_in"] = rxAccessToken.Groups[2].Value;
+                        jAuthInfo["refresh_token"] = rxAccessToken.Groups[3].Value;
 
                         //根据access_token获取openid
                         authUrl = String.Format(@"https://graph.qq.com/oauth2.0/me?access_token={0}",
@@ -102,17 +104,11 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                             throw new Exception(strOpenID);
                         }
 
-                        //在json中添加用户的IP信息
-                        jAuthInfo["client_ip"] = context.Request.UserHostAddress;
-
-                        ////QQ用户的access_token、openid和客户端IP存入session
-                        //context.Session["QQAuthInfo"] = jAuthInfo;
-
                         //根据access_token和openid查询QQ用户信息
                         authUrl = String.Format(@"https://graph.qq.com/user/get_user_info?access_token={0}&oauth_consumer_key={1}&openid={2}",
-                        jAuthInfo["access_token"].ToString(),
-                        Config.QQAppID,
-                        jAuthInfo["openid"].ToString());
+                                            jAuthInfo["access_token"].ToString(),
+                                            Config.QQAppID,
+                                            jAuthInfo["openid"].ToString());
 
                         strUserInfo = HttpService.Get(authUrl);
                         Log.Info("QQ UserInfo", strUserInfo);
@@ -140,46 +136,87 @@ public class qqauth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                         if(string.IsNullOrEmpty(strUserInfo))
                         {
-                              //QQ用户信息为空
+                            //QQ用户信息为空
                             throw new Exception("QQ用户信息为空");
                         }
 
                         JsonData jUserInfo = JsonMapper.ToObject(strUserInfo);
 
-                        if (jUserInfo != null && jUserInfo["ret"].ToString() == "0" && jUserInfo["nickname"] != null)
+                        if (jUserInfo != null && jUserInfo["ret"] != null && jUserInfo["ret"].ToString() == "0" && jUserInfo["nickname"] != null)
                         {
-                            //QQ用户信息存入session
-                            context.Session["QQUserInfo"] = jUserInfo;
-
+                            bool isNewUser;
+                            QQUser qqUser;
                             //在成员资格数据库中查找此QQ用户信息
-                            MembershipUser qqUser = Membership.GetUser(jAuthInfo["openid"].ToString(), true);
-
-                            //如果此QQ用户未注册，则新建用户并设置角色
-                            if (qqUser == null)
+                            MembershipUser mUser = Membership.GetUser(jAuthInfo["openid"].ToString(), true);
+                            if (mUser == null)
                             {
+                                isNewUser = true;
                                 //使用QQ用户的openid和随机密码新建用户
-                                qqUser = Membership.CreateUser(jAuthInfo["openid"].ToString(), Membership.GeneratePassword(10, 1));
-
-                                if (FormsAuthentication.Authenticate(jAuthInfo["openid"].ToString(), jAuthInfo["openid"].ToString()))
+                                mUser = Membership.CreateUser(jAuthInfo["openid"].ToString(), Membership.GeneratePassword(10, 1));
+                                if (mUser != null)
                                 {
-                                    //如果credentials中指定了此QQ用户，则加入管理员组，否则加入访客组
-                                    Roles.AddUserToRole(jAuthInfo["openid"].ToString(), Config.AdminRoleName);
-
-                                    //用QQ用户的openid生成认证凭证和cookies，跳转到defaultUrl
-                                    FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
-
+                                    qqUser = new QQUser(mUser);
                                 }
                                 else
                                 {
-                                    //如果此QQ用户没有权限，则加入访客组，并跳转到登录页面
-                                    Roles.AddUserToRole(jAuthInfo["openid"].ToString(), Config.GuestRoleName);
+                                    qqUser = new QQUser();
+                                }
+                            }
+                            else
+                            {
+                                isNewUser = false;
+                                qqUser = new QQUser(mUser);
+                            }
+
+                            qqUser.OpenID = jAuthInfo["openid"].ToString();
+                            qqUser.NickName = jUserInfo["nickname"] != null ? jUserInfo["nickname"].ToString() : string.Empty;
+                            qqUser.Birthday = jUserInfo["year"] != null ? (DateTime?)DateTime.Parse(jUserInfo["year"].ToString() + "-1-1") : null;
+                            qqUser.Sex = jUserInfo["gender"] != null ? (jUserInfo["gender"].ToString() == "男" ? true : false) : true;
+                            qqUser.Province = jUserInfo["province"] != null ? jUserInfo["province"].ToString() : string.Empty;
+                            qqUser.City = jUserInfo["city"] != null ? jUserInfo["city"].ToString() : string.Empty;
+                            qqUser.FigureUrl = jUserInfo["figureurl"] != null ? jUserInfo["figureurl"].ToString() : string.Empty;
+                            qqUser.FigureUrl1 = jUserInfo["figureurl_1"] != null ? jUserInfo["figureurl_1"].ToString() : string.Empty;
+                            qqUser.FigureUrl2 = jUserInfo["figureurl_2"] != null ? jUserInfo["figureurl_2"].ToString() : string.Empty;
+                            qqUser.FigureUrlQQ1 = jUserInfo["figureurl_qq_1"] != null ? jUserInfo["figureurl_qq_1"].ToString() : string.Empty;
+                            qqUser.FigureUrlQQ2 = jUserInfo["figureurl_qq_2"] != null ? jUserInfo["figureurl_qq_2"].ToString() : string.Empty;
+                            qqUser.IsVip = jUserInfo["vip"] != null ? (jUserInfo["vip"].ToString() == "1" ? true : false) : false;
+                            qqUser.VipLevel = jUserInfo["level"] != null ? int.Parse(jUserInfo["level"].ToString()) : 0;
+                            qqUser.IsYellowVip = jUserInfo["is_yellow_vip"] != null ? (jUserInfo["is_yellow_vip"].ToString() == "1" ? true : false) : false;
+                            qqUser.YellowVipLevel = jUserInfo["yellow_vip_level"] != null ? int.Parse(jUserInfo["yellow_vip_level"].ToString()) : 0;
+                            qqUser.AccessToken = jAuthInfo["access_token"] != null ? jAuthInfo["access_token"].ToString() : string.Empty;
+                            qqUser.RefreshToken = jAuthInfo["refresh_token"] != null ? jAuthInfo["refresh_token"].ToString() : string.Empty;
+                            qqUser.ExpiresIn = jAuthInfo["expires_in"] != null ? DateTime.Now.AddMinutes(double.Parse(jAuthInfo["expires_in"].ToString())) : DateTime.Now;
+                            qqUser.ClientIP = context.Request.UserHostAddress;
+
+                            context.Session["QQUser"] = qqUser;
+
+                            //如果是新用户
+                            if (isNewUser)
+                            {
+                                //如果credentials中指定了此用户的QQ openid则加入管理员组，并设置认证凭据跳转
+                                if (FormsAuthentication.Authenticate(qqUser.OpenID, qqUser.OpenID))
+                                {
+                                    if (!Roles.IsUserInRole(qqUser.OpenID, Config.AdminRoleName))
+                                    {
+                                        Roles.AddUserToRole(qqUser.OpenID, Config.AdminRoleName);
+                                    }
+                                    //用QQ用户的openid生成认证凭证和cookies，跳转到defaultUrl
+                                    FormsAuthentication.RedirectFromLoginPage(qqUser.OpenID, false);
+                                }
+                                else
+                                {
+                                    //如果credentials中没有指定此QQ用户，则不做认证凭据，加入访客组，并跳转到登录页面
+                                    if (!Roles.IsUserInRole(qqUser.OpenID, Config.GuestRoleName))
+                                    {
+                                        Roles.AddUserToRole(qqUser.OpenID, Config.GuestRoleName);
+                                    }
                                     FormsAuthentication.RedirectToLoginPage();
                                 }
                             }
                             else
                             {
-                                //此QQ用户已注册，则直接为此QQ用户生成认证凭证和cookies，跳转到defaultUrl
-                                FormsAuthentication.RedirectFromLoginPage(jAuthInfo["openid"].ToString(), false);
+                                //如果是老用户，已有角色身份，则直接跳转到defaultUrl
+                                FormsAuthentication.RedirectFromLoginPage(qqUser.OpenID, false);
                             }
                         }
                         else

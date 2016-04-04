@@ -14,6 +14,10 @@
     padding: 0;
 }
 
+ul{
+    margin: 10px 5px;
+}
+
 .order-item {
     min-height: 100px;
     margin: 8px 8px 0;
@@ -23,14 +27,30 @@
     background-color:white;
 }
 
-.order-id{
+.order-state {
+    font-size: 12px;
+    color: lightgrey;
+}
+
+    .order-state .done {
+        color: green;
+    }
+
+    .order-state .doing {
+        color: grey;
+    }
+
+.cancel-order {
+    position:absolute;
+    bottom:15px;
+    left:8px;
     font-size:12px;
     color:lightgrey;
 }
 
-.order-state{
-    float:right;
+.order-id{
     font-size:12px;
+    color:lightgrey;
 }
 
 img.prod-img{
@@ -40,29 +60,30 @@ img.prod-img{
 }
 
 .order-product-name{
-    font-size:14px;
+    font-size:16px;
 }
 
 .purchase-price{
-    font-size:12px;
+    font-size:14px;
     color:orange;
 }
 
 .purchase-unit{
-    font-size:10px;
+    font-size:12px;
     color:darkgrey;
 }
 
 .purchase-qty{
-    font-size:10px;
+    font-size:12px;
     font-style:italic;
     color:lightgrey;
 }
 
-.order-date{
-    text-align:left;
-    font-size:12px;
-    color:lightgrey;
+.order-date {
+    float: right;
+    font-size: 12px;
+    color: lightgrey;
+    margin: 2px;
 }
 
 .deliver-date{
@@ -72,9 +93,13 @@ img.prod-img{
     width:100%;
 }
 
+span.order-total{
+    text-align:right;
+    font-size: 12px;
+}
+
 div.order-price{
     text-align:right;
-
 }
 
 span.order-price{

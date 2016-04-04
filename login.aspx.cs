@@ -16,10 +16,10 @@ public partial class login : System.Web.UI.Page
         //QQ用户已登录，但不是管理员
         if (User.Identity.IsAuthenticated &&
             !User.IsInRole(Config.AdminRoleName) &&
-            Session["QQUserInfo"] != null)
+            Session["QQUser"] != null)
         {
-            JsonData jQQUserInfo = Session["QQUserInfo"] as JsonData;
-            this.lblMsg.Text = jQQUserInfo["nickname"].ToString() + "，您没有权限登录，请联系管理员。";
+            QQUser qqUser = Session["QQUser"] as QQUser;
+            this.lblMsg.Text = qqUser.NickName + "，您没有权限登录，请联系管理员。";
             this.lblMsg.Visible = true;
         }
         else

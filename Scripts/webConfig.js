@@ -16,11 +16,11 @@
 }(window, function () {
     function WebConfig() {
         this.siteDomain = 'mahui.me';
-        this.siteTitle = 'FruitU';
+        this.siteTitle = 'Fruit U';
         this.siteDesc = '鲜果切';
         this.siteKeywords = 'fruit,slice,juice,水果,果汁,切片';
         this.siteIcon = 'images/FruitU.ico';
-        this.siteCopyrights = 'FruitU';
+        this.siteCopyrights = 'Fruit U';
         this.defaultImg = 'FruitU.jpg';
     }
 

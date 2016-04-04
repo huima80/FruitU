@@ -2,7 +2,6 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/default.css" rel="stylesheet" />
-    <link href="css/loading.css" rel="stylesheet" />
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -106,7 +105,6 @@
                         pageQueryURL: 'ProdListPager.ashx',
                         pageTemplate: '#tmplProdPage',
                         pageContainer: '#divProdItems',
-                        isMasonry: true
                     });
 
                     $.pager.loadPage();

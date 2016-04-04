@@ -226,6 +226,8 @@
                 alert("商品数据异常");
                 console.warn("var juiceList=" + juiceList);
             }
+
+            closeModal();
         }
 
     </script>

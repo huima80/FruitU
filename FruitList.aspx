@@ -218,6 +218,8 @@
                 alert("商品数据异常");
                 console.warn("var fruitList=" + fruitList);
             }
+
+            closeModal();
         }
 
     </script>

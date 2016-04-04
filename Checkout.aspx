@@ -12,15 +12,15 @@
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
-                    <div class="panel-heading" onclick="SelectDeliverAddress();">
-                        <i class="fa fa-map-marker"></i>&nbsp;&nbsp;选择收货地址 >>
+                    <div class="panel-heading" <%--onclick="selectWxAddress();"--%>>
+                        <i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货人信息 >>
                     </div>
-                    <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
+                    <%--                    <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
                         <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>
                         <br />
                         <span class="wx-user-address"></span>
-                    </div>
-                    <div id="divCustomizeAddrInfo" class="panel-body customize-addr-info">
+                    </div>--%>
+                    <div id="divCustomizeAddrInfo" class="panel-body">
                         <div class="form-group">
                             <label for="txtDeliverName" class="sr-only control-label">您的姓名</label>
                             <input type="text" class="form-control" id="txtDeliverName" required="required" placeholder="您的姓名" />
@@ -29,9 +29,33 @@
                             <label for="txtDeliverPhone" class="sr-only control-label">您的电话</label>
                             <input type="text" class="form-control" id="txtDeliverPhone" required="required" placeholder="您的电话" />
                         </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdAddr" id="rdAddr1" value="上海电影集团办公楼" />
+                                上海电影集团办公楼
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdAddr" id="rdAddr2" value="汇智大厦" />
+                                汇智大厦
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdAddr" id="rdAddr3" value="新东方（漕溪北路中心）" />
+                                新东方（漕溪北路中心）
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdAddr" id="rdAddr4" value="复旦大学附属肿瘤医院" />
+                                复旦大学附属肿瘤医院
+                            </label>
+                        </div>
                         <div class="form-group">
-                            <label for="txtDeliverAddress" class="sr-only control-label">收货地址</label>
-                            <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="收货地址"></textarea>
+                            <label for="txtDeliverAddress" class="sr-only control-label">详细收货地址</label>
+                            <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="详细收货地址"></textarea>
                         </div>
                     </div>
                 </div>
@@ -135,7 +159,7 @@
                                   alert("无法获取您的地址，请手工填写收货地址。");
                                   $("#divWxAddrInfo").hide();
                                   $("#divCustomizeAddrInfo").slideDown();
-                                  console.log(res.err_msg);
+                                  console.warn(res.err_msg);
                               }
                           }
                       }
@@ -143,7 +167,8 @@
               );
         }
 
-        function SelectDeliverAddress() {
+        //调用微信用户地址信息JS-SDK
+        function selectWxAddress() {
             if (typeof WeixinJSBridge == "undefined") {
                 if (document.addEventListener) {
                     document.addEventListener('WeixinJSBridgeReady', editAddress, false);
@@ -223,45 +248,54 @@
                 //判断购物车里的商品项是否为空
                 if ($.cart != undefined && $.cart.prodAmount() != 0) {
 
-
                     ////////////////处理订单收货人信息////////////////////
-                    var txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
+                    var rdAddr = "", txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
 
                     //判断是否选择了微信用户地址
-                    if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
-
+                    //if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
                         //判断是否弹出了手工地址栏
-                        if ($("#divCustomizeAddrInfo").is(":visible")) {
-                            //获取手工输入的地址信息
-                            txtName = $("#txtDeliverName").val().trim();
-                            txtPhone = $("#txtDeliverPhone").val().trim();
-                            txtAddress = $("#txtDeliverAddress").val().trim();
-                            if (txtName == "") {
-                                alert("请填写收货人姓名。");
-                                $("#txtDeliverName").focus();
-                                return false;
-                            }
-                            if (txtPhone == "") {
-                                alert("请填写收货人电话。");
-                                $("#txtDeliverPhone").focus();
-                                return false;
-                            }
-                            if (txtAddress == "") {
-                                alert("请填写收货人地址。");
-                                $("#txtDeliverAddress").focus();
-                                return false;
-                            }
-                        } else {
-                            alert("请选择收货地址。");
-                            return false;
-                        }
+                        //if ($("#divCustomizeAddrInfo").is(":visible")) {
+                        //} else {
+                        //    alert("请选择收货地址。");
+                        //    return false;
+                        //}
+                    //}
+                    //else {
+                    //    //获取微信地址信息
+                    //    txtName = wxUserName;
+                    //    txtPhone = wxTelNumber;
+                    //    txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
+                    //}
+
+                    //获取手工输入的地址信息
+                    rdAddr = $("#divCustomizeAddrInfo :radio:checked").val();
+                    txtName = $("#txtDeliverName").val().trim();
+                    txtPhone = $("#txtDeliverPhone").val().trim();
+                    txtAddress = $("#txtDeliverAddress").val().trim();
+                    if (!txtName) {
+                        alert("请填写收货人姓名。");
+                        $("#txtDeliverName").focus();
+                        return false;
+                    }
+                    if (!txtPhone) {
+                        alert("请填写收货人电话。");
+                        $("#txtDeliverPhone").focus();
+                        return false;
+                    }
+                    if (!rdAddr) {
+                        alert("请选择收货地点。");
+                        $("#divCustomizeAddrInfo :radio:first").focus();
+                        return false;
+                    }
+                    if (!txtAddress) {
+                        alert("请填写详细地址。");
+                        $("#txtDeliverAddress").focus();
+                        return false;
                     }
                     else {
-                        //获取微信地址信息
-                        txtName = wxUserName;
-                        txtPhone = wxTelNumber;
-                        txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
+                        txtAddress = rdAddr + "，" + txtAddress;
                     }
+
                     //订单备注信息
                     txtMemo = $("#txtMemo").val().trim();
 

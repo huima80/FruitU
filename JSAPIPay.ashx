@@ -3,6 +3,7 @@
 using System;
 using System.Web;
 using System.Globalization;
+using System.Collections.Generic;
 using LitJson;
 
 /// <summary>
@@ -30,6 +31,13 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
 
         try
         {
+            WeChatUser wxUser = context.Session["WxUser"] as WeChatUser;
+
+            if (wxUser == null || string.IsNullOrEmpty(wxUser.OpenID))
+            {
+                stateCode = "请登录";
+                throw new Exception(stateCode);
+            }
 
             int poID = 0;
 
@@ -37,9 +45,6 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
             {
                 poID = int.Parse(context.Request.QueryString["PoID"]);
             }
-
-            JsonData jWxAuthInfo = new JsonData();
-            jWxAuthInfo = context.Session["WxAuthInfo"] as JsonData;
 
             if (poID == 0)  //1，新订单处理流程
             {
@@ -50,11 +55,18 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     //订单信息转换成JSON对象
                     JsonData jOrderInfo = JsonMapper.ToObject(orderInfo);
 
+                    //校验订单JSON对象值
+                    if(jOrderInfo == null || jOrderInfo["name"] == null || jOrderInfo["phone"] == null || jOrderInfo["address"] == null || jOrderInfo["paymentTerm"] == null)
+                    {
+                        stateCode = "订单姓名、电话、地址、支付方式信息不完整。";
+                        throw new Exception(stateCode);
+                    }
+
                     //--------------生成订单业务对象START-----------------
                     ProductOrder po = new ProductOrder();
                     po.OrderID = ProductOrder.MakeOrderID();    //生成OrderID
-                    po.OpenID = jWxAuthInfo["openid"].ToString();
-                    po.ClientIP = jWxAuthInfo["client_ip"].ToString();
+                    po.OpenID = wxUser.OpenID;
+                    po.ClientIP = wxUser.ClientIP;
                     po.DeliverName = jOrderInfo["name"].ToString();
                     po.DeliverPhone = jOrderInfo["phone"].ToString();
                     po.DeliverAddress = jOrderInfo["address"].ToString();
@@ -66,6 +78,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     po.TradeState = TradeState.NOTPAY;
                     po.IsDelivered = false;
                     po.IsAccept = false;
+                    po.IsCancel = false;
 
                     if (jOrderInfo["prodItems"] != null)
                     {
@@ -99,6 +112,11 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        stateCode = "没有订单商品项信息。";
+                        throw new Exception(stateCode);
                     }
                     //--------------生成订单业务对象END-----------------
 
@@ -135,7 +153,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                         case PaymentTerm.WECHAT:    //付款方式为微信支付
 
                             //统一下单，获取prepay_id，如果有错误发生，则stateCode有返回值
-                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
+                            prepayID = WxPayAPI.CallUnifiedOrderAPI(wxUser, po, out stateCode);
 
                             if (!string.IsNullOrEmpty(prepayID))
                             {
@@ -147,6 +165,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                                 //根据prepay_id生成JS支付参数
                                 wxJsApiParam = WxPayAPI.MakeWXPayJsParam(prepayID);
                             }
+                            else
+                            {
+                                throw new Exception("未能获取微信支付统一下单prepay_id");
+                            }
                             break;
                         case PaymentTerm.CASH:  //付款方式为货到付款，不统一下单，直接入库
 
@@ -156,6 +178,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                         default:
                             throw new Exception("不支持的支付方式。");
                     }
+
+                    //向管理员通知新增订单消息
+                    WxTmplMsg.SendOrderMsg(Config.WxTmplMsgReceiver, po);
+
                     //--------------统一下单、订单入库END-----------------
                 }
                 else
@@ -190,16 +216,16 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                         if (DateTime.Now >= timeOfPrepayID.AddMinutes(Config.WeChatOrderExpire))
                         {
                             //重新发起统一下单，获取新的prepay_id
-                            prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
+                            prepayID = WxPayAPI.CallUnifiedOrderAPI(wxUser, po, out stateCode);
 
-                            //使用刷新的PrepayID更新数据库
+                            //使用新获取的PrepayID更新数据库
                             ProductOrder.UpdatePrepayID(po.ID, prepayID);
                         }
                     }
                     else
                     {
                         //如果PrepayID为空（上次下单时选择的货到付款），这里使用OrderID发起统一下单，首次获取prepay_id
-                        prepayID = WxPayAPI.CallUnifiedOrderAPI(jWxAuthInfo, po, out stateCode);
+                        prepayID = WxPayAPI.CallUnifiedOrderAPI(wxUser, po, out stateCode);
 
                         //使用首次获得的PrepayID更新数据库
                         ProductOrder.UpdatePrepayID(po.ID, prepayID);
@@ -209,6 +235,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
                     {
                         //根据新的prepay_id生成前端JS支付参数
                         wxJsApiParam = WxPayAPI.MakeWXPayJsParam(prepayID);
+                    }
+                    else
+                    {
+                        throw new Exception("未能获取微信支付统一下单prepay_id");
                     }
                 }
                 else
@@ -233,7 +263,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IRequiresSessionSt
             }
             else
             {
-                if (!string.IsNullOrEmpty(wxJsApiParam)) //wxJsApiParam不为空，则统一下单成功，获取到了prepay_id
+                if (!string.IsNullOrEmpty(wxJsApiParam)) //wxJsApiParam不为空，则统一下单成功，获取到了prepay_id，生成了JS支付参数
                 {
                     context.Response.Write(wxJsApiParam);
                 }

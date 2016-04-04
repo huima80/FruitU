@@ -13,16 +13,8 @@ public partial class MyOrders : System.Web.UI.Page
     {
         try
         {
-            if (Session["WxUserInfo"] != null && Session["WxUserInfo"] is JsonData)
-            {
-
-                //在前端页面定义pageSize变量用于分页操作
-                ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPager", string.Format("var pageSize={0}, defaultImg='{1}';", Config.OrderListPageSize, Config.DefaultImg), true);
-            }
-            else
-            {
-                Response.Redirect("wxauth.ashx");
-            }
+            //在前端页面定义pageSize变量用于分页操作
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPager", string.Format("var pageSize={0}, defaultImg='{1}';", Config.OrderListPageSize, Config.DefaultImg), true);
         }
         catch (Exception ex)
         {

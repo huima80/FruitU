@@ -9,14 +9,14 @@ public class RefreshWebPageToken : IHttpHandler, System.Web.SessionState.IRequir
 
     public void ProcessRequest(HttpContext context)
     {
-        if (context.Session["AuthInfo"] != null)
+        if (context.Session["WxUser"] != null)
         {
             string url, strAuthInfo;
+            WeChatUser wxUser = context.Session["WxUser"] as WeChatUser;
 
-            JsonData jAuthInfo = (JsonData)context.Session["AuthInfo"];
             url = String.Format(@"https://api.weixin.qq.com/sns/oauth2/refresh_token?appid={0}&grant_type=refresh_token&refresh_token={1}",
                 Config.APPID,
-                jAuthInfo["refresh_token"].ToString());
+                wxUser.RefreshTokenForUserInfo);
 
             strAuthInfo = HttpService.Get(url);
 
@@ -28,16 +28,17 @@ public class RefreshWebPageToken : IHttpHandler, System.Web.SessionState.IRequir
             //"openid":"OPENID",
             //"scope":"SCOPE"
             //}
-            jAuthInfo = JsonMapper.ToObject(strAuthInfo);
+            JsonData jAuthInfo = JsonMapper.ToObject(strAuthInfo);
             if (jAuthInfo["access_token"] != null)
             {
-                //刷新后的access_token更新session
-                context.Session["AuthInfo"] = jAuthInfo;
+                wxUser.AccessTokenForUserInfo = jAuthInfo["access_token"].ToString();
 
-                if (jAuthInfo["scope"].ToString() == "snsapi_userinfo")
+                if (wxUser.Scope == WeChatAuthScope.snsapi_userinfo)
                 {
                     //进一步刷新用户信息
                 }
+
+                context.Session["WxUser"] = wxUser;
             }
             else
             {

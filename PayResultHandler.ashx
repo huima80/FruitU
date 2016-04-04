@@ -3,6 +3,7 @@
 using System;
 using System.Web;
 using System.Text;
+using System.Collections.Generic;
 
 /// <summary>
 /// 微信支付结果通用通知，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7
@@ -152,6 +153,10 @@ public class PayResultHandler : IHttpHandler {
                 respPayData.SetValue("return_code", "SUCCESS");
                 respPayData.SetValue("return_msg", "OK");
                 Log.Info(this.GetType().ToString(), "向微信支付通知返回成功: " + respPayData.ToXml());
+
+                //向管理员通知微信支付消息
+                WxTmplMsg.SendWxPayMsg(Config.WxTmplMsgReceiver, ProductOrder.FindOrderByOrderID(orderID));
+
             }
             else
             {
