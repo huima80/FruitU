@@ -15,91 +15,53 @@ public partial class UserCenter : System.Web.UI.Page
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
 
-            if (Session["WxAuthInfo"] != null && Session["WxAuthInfo"] is JsonData)
+            //当前session中的认证信息
+            WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+
+            //如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
+            if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
             {
-                JsonData jWxAuthInfo = Session["WxAuthInfo"] as JsonData;
-
-                //如果Session["AuthInfo"]中不包含snsapi_base模式授权的token，则发起授权，并存入session键access_token_base，并记录获取的时间
-                if (!jWxAuthInfo.Keys.Contains("access_token_base") || string.IsNullOrEmpty(jWxAuthInfo["access_token_base"].ToString()))
+                if (Request.QueryString["CODE"] == null)
                 {
-                    ////开始：鉴权获取微信用户地址编辑JS参数
-                    if (Request.QueryString["CODE"] == null)
-                    {
-                        authUrl = String.Format(@"https://open.weixin.qq.com/connect/oauth2/authorize?appid={0}&redirect_uri={1}&response_type=code&scope={2}&state=STATE#wechat_redirect",
-                            Config.APPID,
-                            HttpUtility.UrlEncode(redirectUri),
-                            "snsapi_base");
+                    authUrl = String.Format(@"https://open.weixin.qq.com/connect/oauth2/authorize?appid={0}&redirect_uri={1}&response_type=code&scope={2}&state=STATE#wechat_redirect",
+                        Config.APPID,
+                        HttpUtility.UrlEncode(redirectUri),
+                        "snsapi_base");
 
-                        Response.Redirect(authUrl);
-                    }
-                    else
-                    {
-                        authUrl = String.Format(@"https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&grant_type=authorization_code",
-                            Config.APPID,
-                            Config.APPSECRET,
-                            Request.QueryString["CODE"]);
-
-                        string strAuth = HttpService.Get(authUrl);
-                        JsonData jAccessToken = JsonMapper.ToObject(strAuth);
-
-                        if (jAccessToken != null && jAccessToken is JsonData && jAccessToken["access_token"] != null)
-                        {
-                            jWxAuthInfo["access_token_base"] = jAccessToken["access_token"].ToString();
-                            jWxAuthInfo["token_base_time"] = DateTime.Now.ToString("yyyyMMddHHmmss");
-                        }
-                        else
-                        {
-                            throw new Exception("snsapi_base模式认证失败");
-                        }
-
-                    }
-                    ////结束：鉴权获取微信用户地址编辑JS参数////
-                }
-
-                //校验session中的access_token_base是否超时
-                double tokenExpire = double.Parse(jWxAuthInfo["expires_in"].ToString());
-                DateTime tokenTime = DateTime.ParseExact(jWxAuthInfo["token_base_time"].ToString(), "yyyyMMddHHmmss", null);
-                if (DateTime.Now >= tokenTime.AddSeconds(tokenExpire))
-                {
-                    //如果token超时，则清除token，重定向到本页，授权获取新的token
-                    jWxAuthInfo["access_token_base"] = string.Empty;
-                    Response.Redirect(Request.Url.ToString());
+                    Response.Redirect(authUrl);
                 }
                 else
                 {
-                    //如果session中的token有效，生成“收货地址共享接口参数”，传给前端JS
-                    string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(jWxAuthInfo["access_token_base"].ToString(), redirectUri);
+                    authUrl = String.Format(@"https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&grant_type=authorization_code",
+                        Config.APPID,
+                        Config.APPSECRET,
+                        Request.QueryString["CODE"]);
 
-                    ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
-                }
-            }
-            else
-            {
-                Response.Redirect("wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
-            }
+                    string strAuth = HttpService.Get(authUrl);
+                    JsonData jAccessToken = JsonMapper.ToObject(strAuth);
 
-            ////开始：显示auth.ashx鉴权获取的微信用户信息
-            if (Session["WxUserInfo"] != null && Session["WxUserInfo"] is JsonData)
-            {
-                JsonData jWxUserInfo = Session["WxUserInfo"] as JsonData;
-
-                //显示用户头像、昵称、特权
-                this.imgPortrait.ImageUrl = jWxUserInfo["headimgurl"].ToString();
-                this.lblNickName.Text = jWxUserInfo["nickname"].ToString();
-                if (jWxUserInfo["privilege"].IsArray && jWxUserInfo["privilege"].Count != 0)
-                {
-                    string privilege = "";
-                    for (int i = 0; i < jWxUserInfo["privilege"].Count; i++)
+                    if (jAccessToken != null && jAccessToken is JsonData && jAccessToken["access_token"] != null)
                     {
-                        privilege += jWxUserInfo["privilege"][i] + ",";
+                        wxUser.AccessTokenForBase = jAccessToken["access_token"].ToString();
+                        wxUser.RefreshTokenForBase = jAccessToken["refresh_token"].ToString();
+                        wxUser.ExpireOfAccessTokenForBase = DateTime.Now.AddSeconds(double.Parse(jAccessToken["expires_in"].ToString()));
                     }
-                    this.lblPrivilege.Text = "【" + privilege.TrimEnd(',') + "】";
+                    else
+                    {
+                        throw new Exception("snsapi_base模式认证失败");
+                    }
+
                 }
             }
-            else
-            {
-                Response.Redirect("wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
-            }
+
+            //获取“收货地址共享接口参数”，传给前端JS
+            string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
+
+            ////开始：显示当前微信用户信息：用户头像、昵称、特权
+            this.imgPortrait.ImageUrl = wxUser.HeadImgUrl;
+            this.lblNickName.Text = wxUser.NickName;
+            this.lblPrivilege.Text = wxUser.Privilege;
             ////结束：显示auth.ashx鉴权获取的微信用户信息
 
         }
