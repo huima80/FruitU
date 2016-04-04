@@ -15,11 +15,14 @@ public partial class admin_MasterPage : System.Web.UI.MasterPage
             Label lblNickName = this.LoginView1.FindControl("lblNickName") as Label;
             Image imgQQImg = this.LoginView1.FindControl("imgQQImg") as Image;
 
-            if (lblNickName != null && imgQQImg != null && Session["QQUserInfo"] != null)
+            if (lblNickName != null && imgQQImg != null && Session["QQUser"] != null)
             {
-                JsonData jQQUserInfo = Session["QQUserInfo"] as JsonData;
-                imgQQImg.ImageUrl = jQQUserInfo["figureurl_qq_1"].ToString();
-                lblNickName.Text = jQQUserInfo["nickname"].ToString();
+                QQUser qqUser = Session["QQUser"] as QQUser;
+                if (qqUser != null)
+                {
+                    imgQQImg.ImageUrl = qqUser.FigureUrlQQ1;
+                    lblNickName.Text = qqUser.NickName;
+                }
             }
         }
         else
@@ -30,7 +33,7 @@ public partial class admin_MasterPage : System.Web.UI.MasterPage
 
     protected void lbLogout_Click(object sender, EventArgs e)
     {
-        Session["QQUserInfo"] = null;
+        Session["QQUser"] = null;
         FormsAuthentication.SignOut();
         FormsAuthentication.RedirectToLoginPage();
     }

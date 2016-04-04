@@ -18,20 +18,37 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         if (!Page.IsPostBack)
         {
-            this.odsOrderList.TypeName = "ProductOrder";
-            this.odsOrderList.EnablePaging = true;
+            try
+            {
+                string openID, strWhere = string.Empty;
 
-            this.odsOrderList.SelectParameters.Add("tableName", DbType.String, "ProductOrder");
-            this.odsOrderList.SelectParameters.Add("pk", DbType.String, "ProductOrder.Id");
-            this.odsOrderList.SelectParameters.Add("fieldsName", DbType.String, "ProductOrder.*");
-            this.odsOrderList.SelectParameters.Add("strWhere", DbType.String, string.Empty);
-            this.odsOrderList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
-            this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("totalRows", DbType.String, string.Empty)].Direction = ParameterDirection.Output;
+                if (Request.QueryString["OpenID"] != null)
+                {
+                    UtilityHelper.AntiSQLInjection(Request.QueryString["OpenID"]);
+                    openID = Request.QueryString["OpenID"];
+                    strWhere = string.Format("OpenID='{0}'", openID);
+                }
 
-            this.gvOrderList.AllowPaging = true;
-            this.gvOrderList.AllowCustomPaging = true;
-            this.gvOrderList.PageIndex = 0;
-            this.gvOrderList.PageSize = Config.OrderListPageSize;
+                this.odsOrderList.TypeName = "ProductOrder";
+                this.odsOrderList.EnablePaging = true;
+
+                this.odsOrderList.SelectParameters.Add("tableName", DbType.String, "ProductOrder");
+                this.odsOrderList.SelectParameters.Add("pk", DbType.String, "ProductOrder.Id");
+                this.odsOrderList.SelectParameters.Add("fieldsName", DbType.String, "ProductOrder.*");
+                this.odsOrderList.SelectParameters.Add("strWhere", DbType.String, strWhere);
+                this.odsOrderList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+
+                this.gvOrderList.AllowPaging = true;
+                this.gvOrderList.AllowCustomPaging = true;
+                this.gvOrderList.PageIndex = 0;
+                this.gvOrderList.PageSize = Config.OrderListPageSize;
+            }
+            catch(Exception ex)
+            {
+                Response.Write(string.Format("<script>alert('{0}');history.back();</script>", ex.Message));
+                Response.End();
+            }
         }
     }
 
@@ -49,7 +66,6 @@ public partial class ManageOrder : System.Web.UI.Page
 
     protected void odsOrderList_Selected(object sender, ObjectDataSourceStatusEventArgs e)
     {
-        //this.totalRows = int.Parse(e.OutputParameters["totalRows"].ToString());
         if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRows"] != null)
         {
             this.lblSearchResult.Text = e.OutputParameters["totalRows"].ToString();
@@ -129,7 +145,8 @@ public partial class ManageOrder : System.Web.UI.Page
     protected void cbIsDelivery_CheckedChanged(object sender, EventArgs e)
     {
         CheckBox cbIsDelivery = sender as CheckBox;
-        this.odsOrderList.UpdateParameters.Add("id", DbType.Int32, cbIsDelivery.ToolTip);
+        int poID = int.Parse(cbIsDelivery.Attributes["POID"]);
+        this.odsOrderList.UpdateParameters.Add("id", DbType.Int32, poID.ToString());
         this.odsOrderList.UpdateParameters.Add("isDelivered", DbType.Boolean, cbIsDelivery.Checked ? "true" : "false");
         this.odsOrderList.Update();
         this.gvOrderList.DataBind();
@@ -141,7 +158,7 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         string strWhere = string.Empty, tableName = string.Empty;
         List<string> listWhere = new List<string>();
-        bool hasProductDetailCriteria = false;
+        bool joinProductDetailCriteria = false;
 
         try
         {
@@ -193,6 +210,18 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.ddlIsAccept.Style.Clear();
             }
 
+            //查询条件：撤单状态
+            if (this.ddlIsCancel.SelectedIndex != 0)
+            {
+                UtilityHelper.AntiSQLInjection(this.ddlIsCancel.SelectedValue);
+                listWhere.Add(string.Format("IsCancel = {0}", this.ddlIsCancel.SelectedValue));
+                this.ddlIsCancel.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+            }
+            else
+            {
+                this.ddlIsCancel.Style.Clear();
+            }
+
             //查询条件：收货人姓名
             if (!string.IsNullOrEmpty(this.txtDeliverName.Text.Trim()))
             {
@@ -235,7 +264,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(this.txtOrderDetail.Text);
                 listWhere.Add(string.Format("OrderDetail.OrderProductName like '%{0}%'", this.txtOrderDetail.Text.Trim()));
                 this.txtOrderDetail.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                hasProductDetailCriteria = true;
+                joinProductDetailCriteria = true;
             }
             else
             {
@@ -278,23 +307,13 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.txtEndOrderDate.Style.Clear();
             }
 
-            listWhere.ForEach(w =>
-            {
-                if (string.IsNullOrEmpty(strWhere))
-                {
-                    strWhere = w;
-                }
-                else
-                {
-                    strWhere += " and " + w;
-                }
-            });
+            strWhere = string.Join<string>(" and ", listWhere);
 
             this.gvOrderList.PageIndex = 0;
             this.odsOrderList.SelectParameters["strWhere"].DefaultValue = strWhere;
 
             //如果查询涉及到订单商品详情，则需要关联表OrderDetail
-            if (hasProductDetailCriteria)
+            if (joinProductDetailCriteria)
             {
                 this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID";
             }
@@ -326,6 +345,9 @@ public partial class ManageOrder : System.Web.UI.Page
         this.ddlIsAccept.SelectedIndex = 0;
         this.ddlIsAccept.Style.Clear();
 
+        this.ddlIsCancel.SelectedIndex = 0;
+        this.ddlIsCancel.Style.Clear();
+
         this.txtDeliverName.Text = string.Empty;
         this.txtDeliverName.Style.Clear();
 
@@ -346,9 +368,9 @@ public partial class ManageOrder : System.Web.UI.Page
         this.txtStartOrderDate.Style.Clear();
         this.txtEndOrderDate.Style.Clear();
 
-        this.gvOrderList.PageIndex = 0;
         this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder";
         this.odsOrderList.SelectParameters["strWhere"].DefaultValue = string.Empty;
+        this.gvOrderList.PageIndex = 0;
         this.gvOrderList.DataBind();
     }
 }

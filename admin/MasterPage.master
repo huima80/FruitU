@@ -24,8 +24,16 @@
         .navbar-brand {
             padding: 5px;
         }
+
+        .form-group {
+            padding: 4px;
+        }
+
+        input[type=checkbox] {
+            cursor: pointer;
+        }
     </style>
-        <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
+    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
     <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
          <script src="http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min.js"></script>
@@ -100,6 +108,11 @@
                             if (location.href.toLowerCase().indexOf("webconfig") != -1) {
                                 $("#liWebConfig").addClass("active");
                             }
+                            else {
+                                if (location.href.toLowerCase().indexOf("user") != -1) {
+                                    $("#liUser").addClass("active");
+                                }
+                            }
                         }
                     }
                 }
@@ -127,6 +140,7 @@
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
+                        <li id="liUser"><a href="ManageUser.aspx">用户管理</a></li>
                         <li id="liCategory"><a href="ManageCategory.aspx">商品类别管理</a></li>
                         <li id="liProduct"><a href="ManageProduct.aspx">商品管理</a></li>
                         <li id="liOrder"><a href="ManageOrder.aspx">订单管理</a></li>
@@ -138,7 +152,7 @@
                                 <li role="separator" class="divider"></li>
                                 <li><a href="#">订单统计</a></li>
                                 <li role="separator" class="divider"></li>
-                                <li><a href="http://www.cnzz.com/" target="_blank">CNZZ统计</a></li>
+                                <li><a href="http://new.cnzz.com/v1/login.php?siteid=1257060290" target="_blank">CNZZ统计</a></li>
                                 <li><a href="http://zhanzhang.baidu.com/" target="_blank">百度统计</a></li>
                             </ul>
                         </li>
@@ -155,7 +169,9 @@
                     </ul>
                     <div class="navbar-header navbar-right">
                         <asp:LoginView ID="LoginView1" runat="server">
-                            <AnonymousTemplate><p class="navbar-text"><a href="../login.aspx" class="navbar-link">请登录</a></p></AnonymousTemplate>
+                            <AnonymousTemplate>
+                                <p class="navbar-text"><a href="../login.aspx" class="navbar-link">请登录</a></p>
+                            </AnonymousTemplate>
                             <LoggedInTemplate>
                                 <a class="navbar-brand" href="#">
                                     <asp:Label ID="lblNickName" runat="server" CssClass="navbar-text"></asp:Label><asp:Image ID="imgQQImg" runat="server" ImageAlign="AbsMiddle" CssClass="img-rounded" /></a>

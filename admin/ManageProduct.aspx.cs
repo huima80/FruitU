@@ -43,7 +43,7 @@ public partial class ManageProduct : System.Web.UI.Page
             this.odsFruitList.SelectParameters.Add("fieldsName", DbType.String, "Product.*");
             this.odsFruitList.SelectParameters.Add("strWhere", DbType.String, string.Empty);
             this.odsFruitList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
-            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("totalRows", DbType.String, string.Empty)].Direction = ParameterDirection.Output;
+            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
 
             this.gvFruitList.AllowPaging = true;
             this.gvFruitList.AllowCustomPaging = true;
@@ -692,17 +692,7 @@ public partial class ManageProduct : System.Web.UI.Page
                 this.txtProdName.Style.Clear();
             }
 
-            listWhere.ForEach(w =>
-            {
-                if (string.IsNullOrEmpty(strWhere))
-                {
-                    strWhere = w;
-                }
-                else
-                {
-                    strWhere += " and " + w;
-                }
-            });
+            strWhere = string.Join<string>(" and ", listWhere);
 
             this.gvFruitList.PageIndex = 0;
             this.odsFruitList.SelectParameters["strWhere"].DefaultValue = strWhere;
