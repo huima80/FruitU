@@ -25,7 +25,7 @@
                                 <div class="form-group">
                                     <label for="ddlTradeState" class="sr-only">支付状态</label>
                                     <asp:DropDownList ID="ddlTradeState" runat="server" CssClass="form-control">
-                                        <asp:ListItem Selected="True" Value="-1">===支付状态===</asp:ListItem>
+                                        <asp:ListItem Selected="True" Value="-1">===微信支付状态===</asp:ListItem>
                                         <asp:ListItem Value="1">支付成功</asp:ListItem>
                                         <asp:ListItem Value="2">转入退款</asp:ListItem>
                                         <asp:ListItem Value="3">未支付</asp:ListItem>
@@ -33,6 +33,9 @@
                                         <asp:ListItem Value="5">已撤销（刷卡支付）</asp:ListItem>
                                         <asp:ListItem Value="6">用户支付中</asp:ListItem>
                                         <asp:ListItem Value="7">支付失败</asp:ListItem>
+                                        <asp:ListItem Value="-1">===货到付款状态===</asp:ListItem>
+                                        <asp:ListItem Value="8">已付现金</asp:ListItem>
+                                        <asp:ListItem Value="9">未付现金</asp:ListItem>
                                     </asp:DropDownList>
                                 </div>
                                 <div class="form-group">
@@ -92,20 +95,34 @@
                             <div class="col-lg-2 center-block">
                                 <asp:Button ID="btnSearch" runat="server" Text="查询" CssClass="btn btn-info" OnClick="btnSearch_Click" OnClientClick="return verifyCriteria();" />
                                 <asp:Button ID="btnShowAll" runat="server" Text="全部订单" CssClass="btn btn-warning" OnClick="btnShowAll_Click" />
-                                <div class="search-result" id="divSearchResult">查询订单数量：<asp:Label ID="lblSearchResult" runat="server" CssClass="badge" Text=""></asp:Label></div>
                             </div>
                         </div>
+                    </div>
+                    <div class="panel-footer">
+                        查询订单总数：<asp:Label ID="lblTotalRows" runat="server" CssClass="badge" Text=""></asp:Label>
+                        待支付：<asp:Label ID="lblPayingOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
+                        待发货：<asp:Label ID="lblDeliveringOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
+                        待签收：<asp:Label ID="lblAcceptingOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-striped table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True">
+                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowUpdating="gvOrderList_RowUpdating">
                     <Columns>
-                        <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" />
-                        <asp:BoundField DataField="OrderID" HeaderText="订单ID" SortExpression="OrderID" ReadOnly="True" />
-                        <asp:BoundField DataField="OrderDate" HeaderText="订单日期" SortExpression="OrderDate" ReadOnly="True" />
+                        <asp:TemplateField HeaderText="订单ID" SortExpression="OrderID">
+                            <ItemTemplate>
+                                <p title="订单编号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="Label1" runat="server" Text='<%# Eval("OrderID") %>'></asp:Label></p>
+                                <p title="下单时间"><i class="fa fa-calendar"></i>&nbsp;<asp:Label ID="Label4" runat="server" Text='<%# Eval("OrderDate") %>'></asp:Label></p>
+                                <p id="pCancelDate" runat="server" title="撤单时间"><i class="fa fa-close"></i>&nbsp;<asp:Label ID="Label2" runat="server" Text='<%# Eval("CancelDate") %>'></asp:Label></p>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="收货人信息" SortExpression="DeliverName">
+                            <ItemTemplate>
+                                <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-pencil-square-o\"></i>&nbsp;"+Server.HtmlEncode(Eval("OrderMemo").ToString())+"</p>" %>'></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:TemplateField ConvertEmptyStringToNull="False" HeaderText="订单商品详情" SortExpression="OrderDetailList">
                             <ItemTemplate>
                                 <asp:DataList ID="dlOrderDetail" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow" ShowFooter="False" DataSource='<%# Eval("OrderDetailList") %>'>
@@ -123,43 +140,46 @@
                         <asp:BoundField DataField="OrderPrice" DataFormatString="{0:c}" HeaderText="订单金额" ReadOnly="True" SortExpression="OrderPrice" ItemStyle-CssClass="order-price">
                             <ItemStyle CssClass="order-price"></ItemStyle>
                         </asp:BoundField>
-                        <asp:TemplateField HeaderText="收货人名称" SortExpression="DeliverName">
+                        <asp:TemplateField HeaderText="支付状态" SortExpression="PaymentTerm">
                             <ItemTemplate>
-                                <asp:Label ID="Label3" runat="server" Text='<%# Eval("DeliverName") %>' ToolTip='<%# Server.HtmlEncode(Eval("DeliverPhone").ToString())+"\n"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"\n备注："+Server.HtmlEncode(Eval("OrderMemo").ToString()) %>'></asp:Label>
+                                <p>
+                                    <asp:Label ID="lblPaymentTerm" runat="server"></asp:Label>：<asp:Label ID="lblWxTradeState" runat="server" ToolTip='<%# Eval("TradeStateDesc") %>'></asp:Label>
+                                    <span id="divCashTradeState" runat="server" class="checkbox">
+                                        <label>
+                                            <asp:CheckBox ID="cbCashTradeState" runat="server" OnCheckedChanged="cbCashTradeState_CheckedChanged" AutoPostBack="True" onclick="if(!confirm('是否改变此用户的现金收讫状态？')){return false;}" />
+                                            <asp:Label ID="lblCashTradeState" runat="server"></asp:Label>
+                                        </label>
+                                    </span>
+                                </p>
+                                <p id="pTransactionID" runat="server" title="微信支付订单号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
+                                <p id="pTransactionTime" runat="server" title="微信支付时间"><i class="fa fa-calendar"></i>&nbsp;<asp:Label ID="lblTransactionTime" runat="server" Text='<%# Eval("TransactionTime") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="支付方式" SortExpression="PaymentTerm">
-                            <ItemTemplate>
-                                <asp:Label ID="lblPaymentTerm" runat="server" Text='<%# paymentTerm((PaymentTerm)Eval("PaymentTerm")) %>'></asp:Label>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:TemplateField HeaderText="支付状态" SortExpression="TradeState">
-                            <ItemTemplate>
-                                <asp:Label ID="lblTradeState" runat="server" Text='<%# tradeState((TradeState)Eval("TradeState")) %>' ToolTip='<%# Eval("TradeStateDesc") %>'></asp:Label>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:BoundField DataField="TransactionID" HeaderText="微信支付流水号" SortExpression="TransactionID" ReadOnly="True" />
-                        <asp:BoundField DataField="TransactionTime" HeaderText="微信支付交易日期" SortExpression="TransactionTime" ReadOnly="True" />
-                        <asp:CheckBoxField DataField="IsCancel" HeaderText="是否撤单" ReadOnly="True" SortExpression="IsCancel" />
                         <asp:TemplateField HeaderText="是否发货" SortExpression="IsDelivered">
                             <ItemTemplate>
-                                <div class="radio">
+                                <div class="checkbox">
                                     <label>
                                         <asp:CheckBox ID="cbIsDelivery" runat="server" Checked='<%# Bind("IsDelivered") %>' AutoPostBack="True" onclick="if(!confirm('点击发货后将不能修改，确认发货吗？')){return false;}" OnCheckedChanged="cbIsDelivery_CheckedChanged" POID='<%# Eval("ID") %>' />
                                     </label>
                                 </div>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="DeliverDate" HeaderText="发货日期" SortExpression="DeliverDate" ReadOnly="True" />
-                        <asp:CheckBoxField DataField="IsAccept" HeaderText="是否签收" ReadOnly="True" SortExpression="IsAccept" />
-                        <asp:BoundField DataField="AcceptDate" HeaderText="签收日期" ReadOnly="True" SortExpression="AcceptDate" />
+                        <asp:TemplateField HeaderText="是否签收" SortExpression="IsAccept">
+                            <ItemTemplate>
+                                <div class="checkbox">
+                                    <label>
+                                        <asp:CheckBox ID="cbIsAccept" runat="server" Checked='<%# Bind("IsAccept") %>' AutoPostBack="True" onclick="if(!confirm('点击签收后将不能修改，确认签收吗？')){return false;}" POID='<%# Eval("ID") %>' OnCheckedChanged="cbIsAccept_CheckedChanged" />
+                                    </label>
+                                </div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                     </Columns>
                     <PagerSettings Mode="NumericFirstLast"></PagerSettings>
                     <PagerStyle CssClass="pager" />
                 </asp:GridView>
             </div>
         </div>
-        <asp:ObjectDataSource ID="odsOrderList" runat="server" SelectMethod="FindProductOrderPager" TypeName="ProductOrder" EnablePaging="True" OnSelecting="odsOrderList_Selecting" OnSelected="odsOrderList_Selected" SelectCountMethod="FindProductOrderCount" UpdateMethod="UpdateOrderDeliver"></asp:ObjectDataSource>
+        <asp:ObjectDataSource ID="odsOrderList" runat="server" SelectMethod="FindProductOrderPager" TypeName="ProductOrder" EnablePaging="True" OnSelecting="odsOrderList_Selecting" OnSelected="odsOrderList_Selected" SelectCountMethod="FindProductOrderCount" UpdateMethod="UpdateOrderDeliver" DataObjectTypeName="ProductOrder" OnUpdating="odsOrderList_Updating"></asp:ObjectDataSource>
     </div>
 
     <script>

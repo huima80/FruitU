@@ -89,6 +89,8 @@ public partial class ManageProduct : System.Web.UI.Page
         this.dvFruit.ChangeMode(DetailsViewMode.Insert);
         this.dvFruit.AutoGenerateInsertButton = true;
         this.dvFruit.AutoGenerateEditButton = false;
+
+        this.gvFruitList.DataBind();
     }
 
     protected void odsFruitList_Selecting(object sender, ObjectDataSourceSelectingEventArgs e)

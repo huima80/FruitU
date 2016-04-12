@@ -196,9 +196,11 @@
                                                 text = text.replace("。", "").substr(text.indexOf("吃") + 1);
                                                 $("#searchInput").val(text);
 
-                                                $($.pager).one("onPageLoaded", function (event, data) {
-                                                    //模糊搜索结果后给出提示信息，回到首页展示全部商品
-                                                    $($.pager.settings.pageContainer).append('<h5 class="text-center"><a href="default.aspx" class="text-danger">不是您想找的？点我看看其他的。</a></h5>');
+                                                $($.pager).on("onPageLoaded", function (event, data) {
+                                                    if (data.pageIndex == $.pager.totalPages()) {
+                                                        //模糊搜索结果后给出提示信息，回到首页展示全部商品
+                                                        $($.pager.settings.pageContainer).append('<h5 class="text-center"><a href="default.aspx" class="text-danger">不是您想找的？点我看看其他的。</a></h5>');
+                                                    }
                                                 });
 
                                                 $.pager.loadPage({ pageQueryCriteria: { ProdName: text }, pageIndex: 1 });

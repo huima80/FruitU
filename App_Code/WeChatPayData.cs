@@ -11,31 +11,42 @@ using LitJson;
 /// </summary>
 public class WeChatPayData
 {
-    public WeChatPayData()
-    {
-
-    }
-
     /// <summary>
     /// 微信支付报文数据包，符合微信对报文参数进行字典排序的签名要求
     /// </summary>
-    private SortedDictionary<string, object> m_values = new SortedDictionary<string, object>();
+    private SortedDictionary<string, object> m_values;
 
-    /**
-    * 设置某个字段的值
-    * @param key 字段名
-     * @param value 字段值
-    */
+    /// <summary>
+    /// 内部数据项数量
+    /// </summary>
+    public int Count
+    {
+        get
+        {
+            return this.m_values.Count;
+        }
+    }
+
+    public WeChatPayData()
+    {
+        this.m_values = new SortedDictionary<string, object>();
+    }
+
+    /// <summary>
+    /// 设置某个字段的值
+    /// </summary>
+    /// <param name="key">字段名</param>
+    /// <param name="value">字段值</param>
     public void SetValue(string key, object value)
     {
         m_values[key] = value;
     }
 
-    /**
-    * 根据字段名获取某个字段的值
-    * @param key 字段名
-     * @return key对应的字段值
-    */
+    /// <summary>
+    /// 根据字段名获取某个字段的值
+    /// </summary>
+    /// <param name="key">字段名</param>
+    /// <returns>key对应的字段值</returns>
     public object GetValue(string key)
     {
         object o = null;
@@ -43,11 +54,11 @@ public class WeChatPayData
         return o;
     }
 
-    /**
-     * 判断某个字段是否已设置
-     * @param key 字段名
-     * @return 若字段key已被设置，则返回true，否则返回false
-     */
+    /// <summary>
+    ///  判断某个字段是否已设置
+    /// </summary>
+    /// <param name="key">字段名</param>
+    /// <returns>若字段key已被设置，则返回true，否则返回false</returns>
     public bool IsSet(string key)
     {
         object o = null;
@@ -58,9 +69,10 @@ public class WeChatPayData
             return false;
     }
 
-    /**
-* @获取Dictionary
-*/
+    /// <summary>
+    /// 获取Dictionary
+    /// </summary>
+    /// <returns></returns>
     public SortedDictionary<string, object> GetValues()
     {
         return m_values;
@@ -167,9 +179,10 @@ public class WeChatPayData
         return jsonStr;
     }
 
-    /**
-    * @values格式化成能在Web页面上显示的结果（因为web页面上不能直接输出xml格式的字符串）
-    */
+    /// <summary>
+    /// 格式化成能在Web页面上显示的结果（因为web页面上不能直接输出xml格式的字符串）
+    /// </summary>
+    /// <returns></returns>
     public string ToPrintStr()
     {
         string str = "";
@@ -209,7 +222,6 @@ public class WeChatPayData
         //所有字符转为大写
         return sb.ToString().ToUpper();
     }
-
 
     /// <summary>
     /// sign签名验证

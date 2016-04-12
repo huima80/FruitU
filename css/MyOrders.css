@@ -1,5 +1,5 @@
-﻿html, body{
-    background: #EDEDED;
+﻿html, body {
+    padding-top: 25px;
 }
 
 .container {
@@ -22,9 +22,11 @@ ul{
     min-height: 100px;
     margin: 8px 8px 0;
     padding: 8px;
-    border-radius: 8px;
     position: relative;
     background-color:white;
+    border:groove;
+    border-width:1px;
+    border-radius: 8px;
 }
 
 .order-state {
@@ -39,14 +41,6 @@ ul{
     .order-state .doing {
         color: grey;
     }
-
-.cancel-order {
-    position:absolute;
-    bottom:15px;
-    left:8px;
-    font-size:12px;
-    color:lightgrey;
-}
 
 .order-id{
     font-size:12px;
@@ -127,3 +121,15 @@ span.order-price{
     color:orange;
 }
 
+.form-control, #btnSearch{
+    margin:8px 0;
+}
+
+.navbar-text{
+    margin-left:4px;
+    font-size:11px;
+}
+
+.navbar-text span{
+    color:orange;
+}

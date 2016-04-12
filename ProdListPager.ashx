@@ -5,14 +5,18 @@ using System.Web;
 using System.Collections.Generic;
 using LitJson;
 
-public class ProdListPager : IHttpHandler {
+public class ProdListPager : IHttpHandler
+{
 
-    public void ProcessRequest (HttpContext context) {
+    public void ProcessRequest(HttpContext context)
+    {
 
         string strWhere, strOrder;
         int pageIndex, pageSize, totalRows;
         List<Fruit> prodListPerPage;
         JsonData jProdListPerPage;
+        List<string> listWhere = new List<string>();
+        int categoryID = 0;
 
         try
         {
@@ -36,24 +40,25 @@ public class ProdListPager : IHttpHandler {
                 pageSize = int.Parse(context.Request.QueryString["PageSize"]);
             }
 
-            //选择条件：上架的商品
-            strWhere = "ProductOnSale=1";
+            //查询条件：上架的商品
+            listWhere.Add("ProductOnSale=1");
 
-            //选择条件：商品类别
+            //查询条件：商品类别
             if (!string.IsNullOrEmpty(context.Request.QueryString["CategoryID"]))
             {
                 UtilityHelper.AntiSQLInjection(context.Request.QueryString["CategoryID"]);
-
-                strWhere += string.Format(" and CategoryID={0}", context.Request.QueryString["CategoryID"]);
+                categoryID = int.Parse(context.Request.QueryString["CategoryID"]);
+                listWhere.Add(string.Format("CategoryID={0}", categoryID));
             }
 
-            //选择条件：商品名称模糊查询
+            //查询条件：商品名称模糊查询
             if (!string.IsNullOrEmpty(context.Request.QueryString["ProdName"]))
             {
                 UtilityHelper.AntiSQLInjection(context.Request.QueryString["ProdName"]);
-
-                strWhere += string.Format(" and ProductName like '%{0}%'", context.Request.QueryString["ProdName"].Trim());
+                listWhere.Add(string.Format("ProductName like '%{0}%'", context.Request.QueryString["ProdName"].Trim()));
             }
+
+            strWhere = string.Join<string>(" and ", listWhere);
 
             //排序条件：是否置顶、优先级、商品ID
             strOrder = "IsSticky desc, Priority desc";
@@ -69,12 +74,12 @@ public class ProdListPager : IHttpHandler {
             jProdListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(prodListPerPage));
 
             //查询当月爆款商品
-            int fruitTopSellingOnMonth = Fruit.FindTopSelling(DateTime.Now);
+            int topSellingOnMonth = Fruit.FindTopSelling(categoryID, DateTime.Now);
 
             //在JsonData中标记当月、当年销量最高的商品
             for (int i = 0; i < jProdListPerPage.Count; i++)
             {
-                if (jProdListPerPage[i]["ID"].ToString() == fruitTopSellingOnMonth.ToString())
+                if (jProdListPerPage[i]["ID"].ToString() == topSellingOnMonth.ToString())
                 {
                     jProdListPerPage[i]["TopSellingOnMonth"] = "1";
                     break;
@@ -101,8 +106,10 @@ public class ProdListPager : IHttpHandler {
 
     }
 
-    public bool IsReusable {
-        get {
+    public bool IsReusable
+    {
+        get
+        {
             return false;
         }
     }

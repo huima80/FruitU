@@ -4,17 +4,20 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="progress text-center">
-        <div class="progress-bar progress-bar-info" style="width: 25%">
-            <span class="sr-only">25% Complete (success)</span><i class="fa fa-file-o"></i>&nbsp;下单
+        <div class="progress-bar" style="width: 20%">
+            <span class="sr-only">20% Complete (success)</span><i class="fa fa-file-o"></i>&nbsp;下单
         </div>
-        <div class="progress-bar progress-bar-success progress-bar-striped" style="width: 25%">
-            <span class="sr-only">25% Complete (success)</span><i class="fa fa-credit-card"></i>&nbsp;支付
+        <div class="progress-bar progress-bar-info" style="width: 20%">
+            <span class="sr-only">20% Complete (success)</span><i class="fa fa-close"></i>&nbsp;撤单
         </div>
-        <div class="progress-bar progress-bar-warning" style="width: 25%">
-            <span class="sr-only">25% Complete (success)</span><i class="fa fa-truck"></i>&nbsp;配送
+        <div class="progress-bar progress-bar-success progress-bar-striped" style="width: 20%">
+            <span class="sr-only">20% Complete (success)</span><i class="fa fa-credit-card"></i>&nbsp;支付
         </div>
-        <div class="progress-bar progress-bar-danger" style="width: 25%">
-            <span class="sr-only">25% Complete (success)</span><i class="fa fa-pencil-square-o"></i>&nbsp;签收
+        <div class="progress-bar progress-bar-warning" style="width: 20%">
+            <span class="sr-only">20% Complete (success)</span><i class="fa fa-truck"></i>&nbsp;配送
+        </div>
+        <div class="progress-bar progress-bar-danger" style="width: 20%">
+            <span class="sr-only">20% Complete (success)</span><i class="fa fa-pencil-square-o"></i>&nbsp;签收
         </div>
     </div>
     <div class="row">

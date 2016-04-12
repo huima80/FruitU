@@ -2,9 +2,9 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <style>
-        .head-img img{
-            width:64px;
-            height:64px;
+        .head-img img {
+            width: 64px;
+            height: 64px;
         }
     </style>
 </asp:Content>
@@ -75,6 +75,14 @@
                                     <label for="txtEndCreationDate" class="sr-only">结束注册时间</label>
                                     <asp:TextBox ID="txtEndCreationDate" runat="server" placeholder="结束注册时间" CssClass="form-control" Width="150"></asp:TextBox>
                                 </div>
+                                <div class="form-group">
+                                    <label for="txtStartLastActivityDate" class="sr-only">开始活跃时间</label>
+                                    <asp:TextBox ID="txtStartLastActivityDate" runat="server" placeholder="开始活跃时间" CssClass="form-control" Width="150"></asp:TextBox>
+                                </div>
+                                <div class="form-group">
+                                    <label for="txtEndLastActivityDate" class="sr-only">结束活跃时间</label>
+                                    <asp:TextBox ID="txtEndLastActivityDate" runat="server" placeholder="结束活跃时间" CssClass="form-control" Width="150"></asp:TextBox>
+                                </div>
                             </div>
                             <div class="col-lg-2 center-block">
                                 <asp:Button ID="btnSearch" runat="server" Text="查询" CssClass="btn btn-info" OnClick="btnSearch_Click" OnClientClick="return verifyCriteria();" />
@@ -88,44 +96,54 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:GridView ID="gvUserList" runat="server" AllowCustomPaging="True" AllowPaging="True" AutoGenerateColumns="False" CssClass="table table-striped table-hover table-responsive" DataKeyNames="ProviderUserKey" DataSourceID="odsUserList" OnRowDataBound="gvUserList_RowDataBound">
+                <asp:GridView ID="gvUserList" runat="server" AllowCustomPaging="True" AllowPaging="True" AutoGenerateColumns="False" CssClass="table table-striped table-hover table-responsive" DataKeyNames="ProviderUserKey" DataSourceID="odsUserList" OnRowDataBound="gvUserList_RowDataBound" PagerSettings-Mode="NumericFirstLast" PagerStyle-CssClass="pager">
                     <Columns>
-                        <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" />
-                        <asp:ImageField DataImageUrlField="HeadImgUrl" HeaderText="头像" ReadOnly="True" ItemStyle-CssClass="head-img">
-                        </asp:ImageField>
+                        <asp:TemplateField HeaderText="微信头像">
+                            <ItemTemplate>
+                                <asp:HyperLink ID="HyperLink1" runat="server" ImageUrl='<%# Eval("HeadImgUrl") %>' NavigateUrl='<%# Eval("HeadImgUrl") %>' Target="_blank" CssClass="head-img"></asp:HyperLink>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="微信昵称" SortExpression="NickName">
                             <ItemTemplate>
-                                <asp:Label ID="lblNickName" runat="server" Text='<%# Eval("NickName") %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label>
+                                <asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="性别" SortExpression="Sex">
+                        <asp:TemplateField HeaderText="地区" SortExpression="Country">
                             <ItemTemplate>
-                                <asp:Label ID="lblSex" runat="server" Text='<%# (bool)Eval("Sex")?"男":"女" %>'></asp:Label>
+                                <p title='<%# Eval("ClientIP") %>'>
+                                    <asp:Label ID="Label1" runat="server" Text='<%# Eval("Country") %>'></asp:Label>
+                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("Province") %>'></asp:Label>
+                                    <asp:Label ID="Label4" runat="server" Text='<%# Eval("City") %>'></asp:Label>
+                                </p>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="Country" HeaderText="国家" SortExpression="Country" ReadOnly="True" />
-                        <asp:BoundField DataField="Province" HeaderText="省份" SortExpression="Province" ReadOnly="True" />
-                        <asp:BoundField DataField="City" HeaderText="城市" SortExpression="City" ReadOnly="True" />
-                        <asp:BoundField DataField="Privilege" HeaderText="特权" SortExpression="Privilege" ReadOnly="True" />
-                        <asp:BoundField DataField="ClientIP" HeaderText="登录IP" SortExpression="ClientIP" ReadOnly="True" />
-                        <asp:BoundField DataField="CreationDate" HeaderText="注册时间" ReadOnly="True" SortExpression="CreationDate" />
-                        <asp:BoundField DataField="LastLoginDate" HeaderText="最近登录时间" SortExpression="LastLoginDate" ReadOnly="True" />
-                        <asp:BoundField DataField="LastActivityDate" HeaderText="最近活跃时间" SortExpression="LastActivityDate" ReadOnly="True" />
+                        <asp:TemplateField HeaderText="注册时间/活跃时间" SortExpression="CreationDate">
+                            <ItemTemplate>
+                                <p title="注册时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label2" runat="server" Text='<%# Eval("CreationDate") %>'></asp:Label></p>
+                                <p title="最近活跃时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# Eval("LastActivityDate") %>'></asp:Label></p>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:CheckBoxField DataField="IsOnline" HeaderText="是否在线" ReadOnly="True" SortExpression="IsOnline" />
                         <asp:CheckBoxField DataField="IsSubscribe" HeaderText="是否关注公众号" SortExpression="IsSubscribe" ReadOnly="True" />
                         <asp:TemplateField HeaderText="是否允许登录" SortExpression="IsApproved">
                             <ItemTemplate>
-                                <asp:CheckBox ID="cbIsApproved" runat="server" Checked='<%# Bind("IsApproved") %>' AutoPostBack="True" OnCheckedChanged="cbIsApproved_CheckedChanged" />
+                                <div class="checkbox">
+                                    <label>
+                                        <asp:CheckBox ID="cbIsApproved" runat="server" Checked='<%# Bind("IsApproved") %>' AutoPostBack="True" OnCheckedChanged="cbIsApproved_CheckedChanged" />
+                                    </label>
+                                </div>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:HyperLinkField DataNavigateUrlFields="OpenID" DataNavigateUrlFormatString="ManageOrder.aspx?OpenID={0}" DataTextField="OrderCount" HeaderText="订单数" />
                         <asp:TemplateField HeaderText="发送微信模板消息">
                             <ItemTemplate>
-                                <asp:TextBox ID="tbTmplMsg" runat="server" Rows="3"></asp:TextBox>
+                                <asp:TextBox CssClass="form-control" ID="tbTmplMsg" runat="server" Rows="3"></asp:TextBox>
                                 <asp:Button ID="btnTmplMsg" runat="server" Text="发送" CssClass="btn btn-default btn-sm" />
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
+
+                    <PagerStyle CssClass="pager"></PagerStyle>
                 </asp:GridView>
                 <asp:ObjectDataSource ID="odsUserList" runat="server" DataObjectTypeName="WeChatUser" SelectMethod="FindUsersPager" TypeName="WeChatUserDAO" EnablePaging="True" OnSelecting="odsUserList_Selecting" SelectCountMethod="FindUserCount" OnSelected="odsUserList_Selected"></asp:ObjectDataSource>
             </div>
@@ -143,6 +161,8 @@
                     //http://api.jqueryui.com/datepicker/
                     $("#txtStartCreationDate").datepicker({ dateFormat: 'yy-mm-dd' });
                     $("#txtEndCreationDate").datepicker({ dateFormat: 'yy-mm-dd' });
+                    $("#txtStartLastActivityDate").datepicker({ dateFormat: 'yy-mm-dd' });
+                    $("#txtEndLastActivityDate").datepicker({ dateFormat: 'yy-mm-dd' });
 
                     $("#txtStartCreationDate").on("change", function () {
                         if ($(this).val() != "" && $("#txtEndCreationDate").val() != "")
@@ -158,6 +178,23 @@
                                 $(this).val("");
                             }
                     });
+
+                    $("#txtStartLastActivityDate").on("change", function () {
+                        if ($(this).val() != "" && $("#txtEndLastActivityDate").val() != "")
+                            if ($(this).val() > $("#txtEndLastActivityDate").val()) {
+                                alert("开始时间必须早于结束时间。");
+                                $(this).val("");
+                            }
+                    });
+
+                    $("#txtEndLastActivityDate").on("change", function () {
+                        if ($(this).val() != "" && $("#txtStartLastActivityDate").val() != "")
+                            if ($(this).val() < $("#txtStartLastActivityDate").val()) {
+                                alert("结束时间必须晚于开始时间。");
+                                $(this).val("");
+                            }
+                    });
+
                 });
             });
         });

@@ -1,9 +1,8 @@
 ﻿html, body{
-    background: #EDEDED;
 }
 
 .header{
-    background-color:orange;
+    background-color:lightgrey;
     min-height:100px;
     padding:20px;
 }
@@ -22,12 +21,13 @@ img.user-portrait
 
 .info-block{
     text-align:center;
-    min-height:80px;
-    margin:2px;
+    min-height:40px;
+    margin:20px;
     border-radius:8px;
-    padding:8px;
+    padding:20px;
     cursor:pointer;
     background-color:white;
+    font-size:20px;
 }
 
 .info-block i{
@@ -56,4 +56,16 @@ img.user-portrait
 
 .info-block .fa-qq{
     color:darkred;
+}
+
+.myorders-block{
+    background-color:rgb(202,97,97);
+}
+
+.deliver-addr-block{
+    background-color:rgb(97,163,202);
+}
+
+.wx-qrcode-block{
+    background-color:#00CD00;
 }

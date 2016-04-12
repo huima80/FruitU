@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Web;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
+using LitJson;
 
 /// <summary>
 /// ProductOrder 的摘要说明
 /// </summary>
-public class ProductOrder
+public class ProductOrder : IComparable<ProductOrder>
 {
     public int ID { get; set; }
 
@@ -17,7 +19,7 @@ public class ProductOrder
     public string OrderID { get; set; }
 
     /// <summary>
-    /// 收货人微信OpenID
+    /// 下单人微信OpenID
     /// </summary>
     public string OpenID { get; set; }
 
@@ -25,22 +27,6 @@ public class ProductOrder
     /// 订单商品明细
     /// </summary>
     public List<OrderDetail> OrderDetailList { get; set; }
-
-    /// <summary>
-    /// 根据订单明细，计算总价格
-    /// </summary>
-    public decimal OrderPrice
-    {
-        get
-        {
-            decimal sum = 0;
-            this.OrderDetailList.ForEach(f =>
-            {
-                sum += f.PurchasePrice * f.PurchaseQty;
-            });
-            return sum;
-        }
-    }
 
     /// <summary>
     /// 收货人姓名
@@ -128,37 +114,262 @@ public class ProductOrder
     public string ClientIP { get; set; }
 
     /// <summary>
+    /// 微信支付统一下单API返回的预支付回话标示，有效期由统一下单时的参数start_time和end_time决定
+    /// </summary>
+    public string PrepayID { get; set; }
+
+    /// <summary>
     /// 订单中的所有商品名称
     /// </summary>
     public string ProductNames
     {
         get
         {
-            string prodNames = "";
+            string strProdNames;
+            List<string> listProdNames = new List<string>();
             this.OrderDetailList.ForEach(od =>
             {
-                prodNames += od.OrderProductName + ",";
+                listProdNames.Add(od.OrderProductName);
             });
 
-            prodNames = prodNames.Trim(',');
+            strProdNames = string.Join<string>(",", listProdNames);
 
             //微信的统一下单API的body参数必填，且要求字符串长度不超过128
-            if (prodNames.Length > 128) prodNames = prodNames.Substring(0, 128);
+            if (strProdNames.Length > 128) strProdNames = strProdNames.Substring(0, 125) + "...";
 
-            if (string.IsNullOrEmpty(prodNames)) prodNames = "FruitU商品";
+            if (string.IsNullOrEmpty(strProdNames)) strProdNames = "FruitU商品";
 
-            return prodNames;
+            return strProdNames;
         }
     }
 
     /// <summary>
-    /// 微信支付统一下单API返回的预支付回话标示，有效期由统一下单时的参数start_time和end_time决定
+    /// 根据订单明细，计算总价格
     /// </summary>
-    public string PrepayID { get; set; }
+    public decimal OrderPrice
+    {
+        get
+        {
+            decimal sum = 0;
+            this.OrderDetailList.ForEach(od =>
+            {
+                sum += od.PurchasePrice * od.PurchaseQty;
+            });
+            return sum;
+        }
+    }
+
+    /// <summary>
+    /// 订单商品总数量
+    /// </summary>
+    public int OrderDetailCount
+    {
+        get
+        {
+            int count = 0;
+            this.OrderDetailList.ForEach(od =>
+            {
+                count += od.PurchaseQty;
+            });
+            return count;
+        }
+    }
+
+    /// <summary>
+    /// 订单商品详情
+    /// </summary>
+    public string OrderDetails
+    {
+        get
+        {
+            List<string> ods = new List<string>();
+            this.OrderDetailList.ForEach(od =>
+            {
+                ods.Add(string.Format("{0} x{1}", od.OrderProductName, od.PurchaseQty));
+            });
+            return string.Join<string>(",", ods);
+        }
+    }
 
     public ProductOrder()
     {
         this.OrderDetailList = new List<OrderDetail>();
+    }
+
+    public ProductOrder(int poID)
+    {
+        this.FindOrderByID(poID);
+    }
+
+    public ProductOrder(string orderID)
+    {
+        this.FindOrderByOrderID(orderID);
+    }
+
+    public delegate JsonData OrderStateChangedEventHandler(ProductOrder sender, OrderStateEventArgs e);
+
+    /// <summary>
+    /// 订单状态变动事件
+    /// </summary>
+    public event OrderStateChangedEventHandler OrderStateChanged;
+
+    /// <summary>
+    /// 订单状态变动事件参数类
+    /// </summary>
+    public class OrderStateEventArgs : EventArgs
+    {
+        /// <summary>
+        /// 订单当前状态
+        /// </summary>
+        public OrderState OrderState;
+
+        public OrderStateEventArgs()
+        {
+
+        }
+
+        public OrderStateEventArgs(OrderState os)
+        {
+            this.OrderState = os;
+        }
+    }
+
+    /// <summary>
+    /// 提交新订单
+    /// 1，如果付款方式是微信支付，则调用微信支付统一下单API、获取prepay_id，订单入库，生成JS支付参数
+    /// 2，如果付款方式是货到付款，则直接订单入库
+    /// </summary>
+    /// <param name="po">待处理订单</param>
+    /// <param name="wxJsApiParam">根据prepay_id生成的JS支付参数</param>
+    /// <param name="jStateCode">微信支付返回的错误码</param>
+    /// <returns>处理后的订单</returns>
+    public static ProductOrder SubmitOrder(ProductOrder po, out string wxJsApiParam, out WeChatPayData stateCode)
+    {
+        if (po == null)
+        {
+            throw new ArgumentNullException("ProductOrder对象不能为null");
+        }
+
+        //根据prepay_id生成的JS支付参数
+        wxJsApiParam = string.Empty;
+
+        //微信统一下单API返回的错误码
+        stateCode = new WeChatPayData();
+
+        switch (po.PaymentTerm)
+        {
+            case PaymentTerm.WECHAT:    //付款方式为微信支付，先统一下单、再订单入库
+
+                //统一下单，获取prepay_id，如果有错误发生，则jStateCode有返回值
+                po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
+
+                if (stateCode.Count == 0)
+                {
+                    if (!string.IsNullOrEmpty(po.PrepayID))
+                    {
+                        //订单入库
+                        ProductOrder.AddOrder(po);
+
+                        //根据prepay_id生成JS支付参数
+                        wxJsApiParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
+                    }
+                    else
+                    {
+                        throw new Exception("未能获取微信支付统一下单prepay_id");
+                    }
+                }
+
+                break;
+            case PaymentTerm.CASH:  //付款方式为货到付款，不统一下单，直接入库
+
+                //订单入库
+                ProductOrder.AddOrder(po);
+                break;
+            default:
+                throw new Exception("不支持的支付方式。");
+        }
+
+        po.OnOrderStateChanged(OrderState.Submitted);
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 处理已有订单
+    /// 1，根据订单ID查询订单，如果prepay_id有值，则校验其有效期，如果过期则重新发起统一下单获取prepay_id，并生成JS支付参数
+    /// 2，如果没有prepay_id值，则上次下单时为货到付款，则重新发起微信支付统一下单并获取JS支付参数
+    /// </summary>
+    /// <param name="poID">订单ID</param>
+    /// <param name="wxJsApiParam">JS支付参数</param>
+    /// <param name="jStateCode">微信支付返回的错误码</param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrder(int poID, out string wxJsApiParam, out WeChatPayData stateCode)
+    {
+        //根据prepay_id生成的JS支付参数
+        wxJsApiParam = string.Empty;
+
+        //微信统一下单API返回的错误码
+        stateCode = new WeChatPayData();
+
+        //加载完整的订单信息
+        ProductOrder po = new ProductOrder(poID);
+
+        if (!string.IsNullOrEmpty(po.OrderID))
+        {
+            //如果此订单的PrepayID不为空（下单时选择的微信支付）
+            if (!string.IsNullOrEmpty(po.PrepayID))
+            {
+                //根据PrepayID中的时间段，计算最近一次获取PrepayID到现在的时间间隔，以此判断PrepayID是否过期。因为OrderDate是下单时间，不会变化，所以不能用其判断。
+                DateTime timeOfPrepayID;
+                if (!DateTime.TryParseExact(po.PrepayID.Substring(2, 14), "yyyyMMddHHmmss", null, DateTimeStyles.None, out timeOfPrepayID))
+                {
+                    //如果PrepayID时间截取转换失败，则依据订单时间计算
+                    timeOfPrepayID = po.OrderDate;
+                }
+
+                //如果上次获取的PrepayID已超过有效期，需要重新统一下单，获取新的prepay_id
+                if (DateTime.Now >= timeOfPrepayID.AddMinutes(Config.WeChatOrderExpire))
+                {
+                    //重新发起统一下单，获取新的prepay_id
+                    po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
+
+                    if (!string.IsNullOrEmpty(po.PrepayID) && stateCode.Count == 0)
+                    {
+                        //使用新获取的PrepayID更新数据库
+                        ProductOrder.UpdatePrepayID(po);
+                    }
+                }
+            }
+            else
+            {
+                //如果PrepayID为空（上次下单时选择的货到付款），这里使用OrderID发起统一下单，首次获取prepay_id
+                po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
+
+                if (!string.IsNullOrEmpty(po.PrepayID) && stateCode.Count == 0)
+                {
+                    //使用首次获得的PrepayID更新数据库
+                    ProductOrder.UpdatePrepayID(po);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(po.PrepayID))
+            {
+                //根据新的prepay_id生成前端JS支付参数
+                wxJsApiParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
+            }
+            else
+            {
+                throw new Exception("未能获取微信支付统一下单prepay_id");
+            }
+        }
+        else
+        {
+            throw new Exception(string.Format("订单“{0}”不存在", poID));
+        }
+
+        return po;
+
     }
 
     /// <summary>
@@ -408,7 +619,7 @@ public class ProductOrder
                 }
                 finally
                 {
-                    if(conn.State == ConnectionState.Open)
+                    if (conn.State == ConnectionState.Open)
                     {
                         conn.Close();
                     }
@@ -586,7 +797,7 @@ public class ProductOrder
                 {
                     using (SqlCommand cmdOrder = conn.CreateCommand())
                     {
-                        cmdOrder.CommandText = "spSqlPageByRowNum";
+                        cmdOrder.CommandText = "spOrderQuery";
                         cmdOrder.CommandType = CommandType.StoredProcedure;
 
                         SqlParameter paramTableName = cmdOrder.CreateParameter();
@@ -668,22 +879,22 @@ public class ProductOrder
                                 po.ID = int.Parse(sdrOrder["Id"].ToString());
                                 po.OrderID = sdrOrder["OrderID"].ToString();
                                 po.OpenID = sdrOrder["OpenID"].ToString();
+                                po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.DeliverName = sdrOrder["DeliverName"].ToString();
                                 po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
                                 po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
                                 po.OrderMemo = sdrOrder["OrderMemo"].ToString();
                                 po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
+                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
                                 po.TradeState = (TradeState)sdrOrder["TradeState"];
                                 po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
+                                po.PrepayID = sdrOrder["PrepayID"].ToString();
                                 po.TransactionID = sdrOrder["TransactionID"].ToString();
                                 po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.IsDelivered = sdrOrder["IsDelivered"] != DBNull.Value ? bool.Parse(sdrOrder["IsDelivered"].ToString()) : false;
+                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
+                                po.IsAccept = sdrOrder["IsAccept"] != DBNull.Value ? bool.Parse(sdrOrder["IsAccept"].ToString()) : false;
+                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
                                 po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
@@ -698,6 +909,213 @@ public class ProductOrder
                         if (!int.TryParse(paramTotalRows.SqlValue.ToString(), out totalRows))
                         {
                             totalRows = 0;
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error("分页查询指定订单", ex.ToString());
+            throw ex;
+        }
+
+        return poPerPage;
+    }
+
+    /// <summary>
+    /// 分页查询订单
+    /// </summary>
+    /// <param name="tableName">待查询表名，可关联</param>
+    /// <param name="pk">主键</param>
+    /// <param name="fieldsName">待查询字段名</param>
+    /// <param name="strWhere">条件SQL字句</param>
+    /// <param name="strOrder">排序SQL字句</param>
+    /// <param name="totalRows">总记录数</param>
+    /// <param name="payingOrderCount">未支付订单数</param>
+    /// <param name="deliveringOrderCount">未配送订单数</param>
+    /// <param name="acceptingOrderCount">未签收订单数</param>
+    /// <param name="startRowIndex">每页开始行号</param>
+    /// <param name="maximumRows">每页行数</param>
+    /// <returns></returns>
+    public static List<ProductOrder> FindProductOrderPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
+    {
+        List<ProductOrder> poPerPage = new List<ProductOrder>();
+        ProductOrder po;
+
+        totalRows = 0;
+        payingOrderCount = 0;
+        deliveringOrderCount = 0;
+        acceptingOrderCount = 0;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                try
+                {
+                    using (SqlCommand cmdOrder = conn.CreateCommand())
+                    {
+                        cmdOrder.CommandText = "spOrderQuery";
+                        cmdOrder.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter paramTableName = cmdOrder.CreateParameter();
+                        paramTableName.ParameterName = "@tbName";
+                        paramTableName.SqlDbType = SqlDbType.VarChar;
+                        paramTableName.Size = 255;
+                        paramTableName.Direction = ParameterDirection.Input;
+                        paramTableName.SqlValue = tableName;
+                        cmdOrder.Parameters.Add(paramTableName);
+
+                        SqlParameter paramPK = cmdOrder.CreateParameter();
+                        paramPK.ParameterName = "@PK";
+                        paramPK.SqlDbType = SqlDbType.VarChar;
+                        paramPK.Size = 50;
+                        paramPK.Direction = ParameterDirection.Input;
+                        paramPK.SqlValue = pk;
+                        cmdOrder.Parameters.Add(paramPK);
+
+                        SqlParameter paramFields = cmdOrder.CreateParameter();
+                        paramFields.ParameterName = "@tbFields";
+                        paramFields.SqlDbType = SqlDbType.VarChar;
+                        paramFields.Size = 1000;
+                        paramFields.Direction = ParameterDirection.Input;
+                        paramFields.SqlValue = fieldsName;
+                        cmdOrder.Parameters.Add(paramFields);
+
+                        SqlParameter paramMaximumRows = cmdOrder.CreateParameter();
+                        paramMaximumRows.ParameterName = "@MaximumRows";
+                        paramMaximumRows.SqlDbType = SqlDbType.Int;
+                        paramMaximumRows.Direction = ParameterDirection.Input;
+                        paramMaximumRows.SqlValue = maximumRows;
+                        cmdOrder.Parameters.Add(paramMaximumRows);
+
+                        SqlParameter paramStartRowIndex = cmdOrder.CreateParameter();
+                        paramStartRowIndex.ParameterName = "@StartRowIndex";
+                        paramStartRowIndex.SqlDbType = SqlDbType.Int;
+                        paramStartRowIndex.Direction = ParameterDirection.Input;
+                        paramStartRowIndex.SqlValue = startRowIndex;
+                        cmdOrder.Parameters.Add(paramStartRowIndex);
+
+                        SqlParameter paramWhere = cmdOrder.CreateParameter();
+                        paramWhere.ParameterName = "@strWhere";
+                        paramWhere.SqlDbType = SqlDbType.VarChar;
+                        paramWhere.Size = 1000;
+                        paramWhere.Direction = ParameterDirection.Input;
+                        paramWhere.SqlValue = strWhere;
+                        cmdOrder.Parameters.Add(paramWhere);
+
+                        SqlParameter paramOrder = cmdOrder.CreateParameter();
+                        paramOrder.ParameterName = "@strOrder";
+                        paramOrder.SqlDbType = SqlDbType.VarChar;
+                        paramOrder.Size = 1000;
+                        paramOrder.Direction = ParameterDirection.Input;
+                        paramOrder.SqlValue = strOrder;
+                        cmdOrder.Parameters.Add(paramOrder);
+
+                        SqlParameter paramTotalRows = cmdOrder.CreateParameter();
+                        paramTotalRows.ParameterName = "@TotalRows";
+                        paramTotalRows.SqlDbType = SqlDbType.Int;
+                        paramTotalRows.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramTotalRows);
+
+                        SqlParameter paramPayingOrderCount = cmdOrder.CreateParameter();
+                        paramPayingOrderCount.ParameterName = "@PayingOrderCount";
+                        paramPayingOrderCount.SqlDbType = SqlDbType.Int;
+                        paramPayingOrderCount.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramPayingOrderCount);
+
+                        SqlParameter paramDeliveringOrderCount = cmdOrder.CreateParameter();
+                        paramDeliveringOrderCount.ParameterName = "@DeliveringOrderCount";
+                        paramDeliveringOrderCount.SqlDbType = SqlDbType.Int;
+                        paramDeliveringOrderCount.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramDeliveringOrderCount);
+
+                        SqlParameter paramAcceptingOrderCount = cmdOrder.CreateParameter();
+                        paramAcceptingOrderCount.ParameterName = "@AcceptingOrderCount";
+                        paramAcceptingOrderCount.SqlDbType = SqlDbType.Int;
+                        paramAcceptingOrderCount.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramAcceptingOrderCount);
+
+                        foreach (SqlParameter param in cmdOrder.Parameters)
+                        {
+                            if (param.Value == null)
+                            {
+                                param.Value = DBNull.Value;
+                            }
+                        }
+
+                        Log.Debug("分页查询订单", cmdOrder.CommandText);
+
+                        using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
+                        {
+                            while (sdrOrder.Read())
+                            {
+                                po = new ProductOrder();
+
+                                po.ID = int.Parse(sdrOrder["Id"].ToString());
+                                po.OrderID = sdrOrder["OrderID"].ToString();
+                                po.OpenID = sdrOrder["OpenID"].ToString();
+                                po.ClientIP = sdrOrder["ClientIP"].ToString();
+                                po.DeliverName = sdrOrder["DeliverName"].ToString();
+                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
+                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
+                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
+                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
+                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
+                                po.TradeState = (TradeState)sdrOrder["TradeState"];
+                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
+                                po.PrepayID = sdrOrder["PrepayID"].ToString();
+                                po.TransactionID = sdrOrder["TransactionID"].ToString();
+                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
+                                po.IsDelivered = sdrOrder["IsDelivered"] != DBNull.Value ? bool.Parse(sdrOrder["IsDelivered"].ToString()) : false;
+                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
+                                po.IsAccept = sdrOrder["IsAccept"] != DBNull.Value ? bool.Parse(sdrOrder["IsAccept"].ToString()) : false;
+                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
+                                po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
+                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+
+                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
+
+                                poPerPage.Add(po);
+
+                            }
+                            sdrOrder.Close();
+                        }
+
+                        if (!int.TryParse(paramTotalRows.SqlValue.ToString(), out totalRows))
+                        {
+                            totalRows = 0;
+                        }
+
+                        if (!int.TryParse(paramPayingOrderCount.SqlValue.ToString(), out payingOrderCount))
+                        {
+                            payingOrderCount = 0;
+                        }
+
+                        if (!int.TryParse(paramDeliveringOrderCount.SqlValue.ToString(), out deliveringOrderCount))
+                        {
+                            deliveringOrderCount = 0;
+                        }
+
+                        if (!int.TryParse(paramAcceptingOrderCount.SqlValue.ToString(), out acceptingOrderCount))
+                        {
+                            acceptingOrderCount = 0;
                         }
                     }
                 }
@@ -728,6 +1146,7 @@ public class ProductOrder
     /// <summary>
     /// 查询订单表记录数
     /// </summary>
+    /// <param name="tableName"></param>
     /// <param name="strWhere"></param>
     /// <returns></returns>
     public static int FindProductOrderCount(string tableName, string strWhere)
@@ -783,16 +1202,13 @@ public class ProductOrder
 
     }
 
-
     /// <summary>
     /// 根据订单ID查询订单
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public static ProductOrder FindOrderByID(int id)
+    public ProductOrder FindOrderByID(int id)
     {
-        ProductOrder po = null;
-
         try
         {
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))
@@ -817,31 +1233,29 @@ public class ProductOrder
                         {
                             while (sdrOrder.Read())
                             {
-                                po = new ProductOrder();
+                                this.ID = int.Parse(sdrOrder["Id"].ToString());
+                                this.OrderID = sdrOrder["OrderID"].ToString();
+                                this.OpenID = sdrOrder["OpenID"].ToString();
+                                this.DeliverName = sdrOrder["DeliverName"].ToString();
+                                this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
+                                this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
+                                this.OrderMemo = sdrOrder["OrderMemo"].ToString();
+                                this.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
+                                this.TradeState = (TradeState)sdrOrder["TradeState"];
+                                this.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
+                                this.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
+                                this.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
+                                this.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
+                                this.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
+                                this.TransactionID = sdrOrder["TransactionID"].ToString();
+                                this.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
+                                this.PrepayID = sdrOrder["PrepayID"].ToString();
+                                this.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
+                                this.ClientIP = sdrOrder["ClientIP"].ToString();
+                                this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-
-                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
+                                this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
                             }
                             sdrOrder.Close();
@@ -869,24 +1283,21 @@ public class ProductOrder
             throw ex;
         }
 
-        return po;
+        return this;
 
     }
-
 
     /// <summary>
     /// 根据订单OrderID查询特定订单
     /// </summary>
     /// <param name="orderID"></param>
     /// <returns></returns>
-    public static ProductOrder FindOrderByOrderID(string orderID)
+    public ProductOrder FindOrderByOrderID(string orderID)
     {
         if (string.IsNullOrEmpty(orderID))
         {
             throw new ArgumentException("缺少参数OrderID");
         }
-
-        ProductOrder po = null;
 
         try
         {
@@ -913,32 +1324,29 @@ public class ProductOrder
                         {
                             while (sdrOrder.Read())
                             {
-                                po = new ProductOrder();
+                                this.ID = int.Parse(sdrOrder["Id"].ToString());
+                                this.OrderID = sdrOrder["OrderID"].ToString();
+                                this.OpenID = sdrOrder["OpenID"].ToString();
+                                this.DeliverName = sdrOrder["DeliverName"].ToString();
+                                this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
+                                this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
+                                this.OrderMemo = sdrOrder["OrderMemo"].ToString();
+                                this.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
+                                this.TradeState = (TradeState)sdrOrder["TradeState"];
+                                this.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
+                                this.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
+                                this.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
+                                this.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
+                                this.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
+                                this.TransactionID = sdrOrder["TransactionID"].ToString();
+                                this.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
+                                this.PrepayID = sdrOrder["PrepayID"].ToString();
+                                this.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
+                                this.ClientIP = sdrOrder["ClientIP"].ToString();
+                                this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
+                                this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-
-                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
-
+                                this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
                             }
                             sdrOrder.Close();
@@ -966,7 +1374,7 @@ public class ProductOrder
             throw ex;
         }
 
-        return po;
+        return this;
 
     }
 
@@ -1175,10 +1583,9 @@ public class ProductOrder
     /// <summary>
     /// PrepayID超时后，需要重新发起统一下单，得到新的PrepayID，并更新数据库的“PrepayID、微信支付方式”字段
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="prepayID"></param>
+    /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdatePrepayID(int id, string prepayID)
+    public static int UpdatePrepayID(ProductOrder po)
     {
         int result;
 
@@ -1199,7 +1606,7 @@ public class ProductOrder
                         paramId = cmdOrderID.CreateParameter();
                         paramId.ParameterName = "@Id";
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
-                        paramId.SqlValue = id;
+                        paramId.SqlValue = po.ID;
                         cmdOrderID.Parameters.Add(paramId);
 
                         SqlParameter paramPrepayID;
@@ -1207,7 +1614,7 @@ public class ProductOrder
                         paramPrepayID.ParameterName = "@PrepayID";
                         paramPrepayID.SqlDbType = System.Data.SqlDbType.VarChar;
                         paramPrepayID.Size = 100;
-                        paramPrepayID.SqlValue = prepayID;
+                        paramPrepayID.SqlValue = po.PrepayID;
                         cmdOrderID.Parameters.Add(paramPrepayID);
 
                         SqlParameter paramPaymentTerm;
@@ -1216,6 +1623,14 @@ public class ProductOrder
                         paramPaymentTerm.SqlDbType = System.Data.SqlDbType.Int;
                         paramPaymentTerm.SqlValue = (int)PaymentTerm.WECHAT;
                         cmdOrderID.Parameters.Add(paramPaymentTerm);
+
+                        foreach (SqlParameter param in cmdOrderID.Parameters)
+                        {
+                            if (param.Value == null)
+                            {
+                                param.Value = DBNull.Value;
+                            }
+                        }
 
                         result = cmdOrderID.ExecuteNonQuery();
                     }
@@ -1243,13 +1658,11 @@ public class ProductOrder
     }
 
     /// <summary>
-    /// 更新订单取消状态
+    /// 更新订单撤单状态和撤单时间
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="openID"></param>
-    /// <param name="isCancel"></param>
+    /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderCancel(int id, string openID, bool isCancel)
+    public static int UpdateOrderCancel(ProductOrder po)
     {
         int result;
 
@@ -1263,35 +1676,42 @@ public class ProductOrder
                 {
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
-
                         cmdOrderID.CommandText = "update ProductOrder set IsCancel = @IsCancel, CancelDate = @CancelDate where Id=@Id and OpenID=@OpenID";
 
                         SqlParameter paramId;
                         paramId = cmdOrderID.CreateParameter();
                         paramId.ParameterName = "@Id";
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
-                        paramId.SqlValue = id;
+                        paramId.SqlValue = po.ID;
                         cmdOrderID.Parameters.Add(paramId);
 
                         SqlParameter paramOpenID;
                         paramOpenID = cmdOrderID.CreateParameter();
                         paramOpenID.ParameterName = "@OpenID";
                         paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
-                        paramOpenID.SqlValue = openID;
+                        paramOpenID.SqlValue = po.OpenID;
                         cmdOrderID.Parameters.Add(paramOpenID);
 
                         SqlParameter paramIsCancel;
                         paramIsCancel = cmdOrderID.CreateParameter();
                         paramIsCancel.ParameterName = "@IsCancel";
                         paramIsCancel.SqlDbType = System.Data.SqlDbType.Bit;
-                        paramIsCancel.SqlValue = isCancel;
+                        paramIsCancel.SqlValue = po.IsCancel;
                         cmdOrderID.Parameters.Add(paramIsCancel);
 
                         SqlParameter paramCancelDate = cmdOrderID.CreateParameter();
                         paramCancelDate.ParameterName = "@CancelDate";
                         paramCancelDate.SqlDbType = System.Data.SqlDbType.DateTime;
-                        paramCancelDate.SqlValue = DateTime.Now;
+                        paramCancelDate.SqlValue = po.CancelDate;
                         cmdOrderID.Parameters.Add(paramCancelDate);
+
+                        foreach (SqlParameter param in cmdOrderID.Parameters)
+                        {
+                            if (param.Value == null)
+                            {
+                                param.Value = DBNull.Value;
+                            }
+                        }
 
                         result = cmdOrderID.ExecuteNonQuery();
                     }
@@ -1308,6 +1728,12 @@ public class ProductOrder
                     }
                 }
             }
+
+            if (result == 1)
+            {
+                po.OnOrderStateChanged(OrderState.Cancelled);
+            }
+
         }
         catch (Exception ex)
         {
@@ -1319,12 +1745,11 @@ public class ProductOrder
     }
 
     /// <summary>
-    /// 设置订单的发货状态和日期
+    /// 更新订单发货状态和发货时间
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="isDelivered"></param>
+    /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderDeliver(int id, bool isDelivered)
+    public static int UpdateOrderDeliver(ProductOrder po)
     {
         int result;
 
@@ -1345,21 +1770,29 @@ public class ProductOrder
                         paramId = cmdOrderID.CreateParameter();
                         paramId.ParameterName = "@Id";
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
-                        paramId.SqlValue = id;
+                        paramId.SqlValue = po.ID;
                         cmdOrderID.Parameters.Add(paramId);
 
                         SqlParameter paramIsDelivered;
                         paramIsDelivered = cmdOrderID.CreateParameter();
                         paramIsDelivered.ParameterName = "@IsDelivered";
                         paramIsDelivered.SqlDbType = System.Data.SqlDbType.Bit;
-                        paramIsDelivered.SqlValue = isDelivered;
+                        paramIsDelivered.SqlValue = po.IsDelivered;
                         cmdOrderID.Parameters.Add(paramIsDelivered);
 
                         SqlParameter paramDeliverDate = cmdOrderID.CreateParameter();
                         paramDeliverDate.ParameterName = "@DeliverDate";
                         paramDeliverDate.SqlDbType = System.Data.SqlDbType.DateTime;
-                        paramDeliverDate.SqlValue = DateTime.Now;
+                        paramDeliverDate.SqlValue = po.DeliverDate;
                         cmdOrderID.Parameters.Add(paramDeliverDate);
+
+                        foreach (SqlParameter param in cmdOrderID.Parameters)
+                        {
+                            if (param.Value == null)
+                            {
+                                param.Value = DBNull.Value;
+                            }
+                        }
 
                         result = cmdOrderID.ExecuteNonQuery();
                     }
@@ -1376,6 +1809,12 @@ public class ProductOrder
                     }
                 }
             }
+
+            if (result == 1)
+            {
+                po.OnOrderStateChanged(OrderState.Delivered);
+            }
+
         }
         catch (Exception ex)
         {
@@ -1387,13 +1826,11 @@ public class ProductOrder
     }
 
     /// <summary>
-    /// 更新订单签收状态和日期
+    /// 更新订单签收状态和签收日期
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="openID"></param>
-    /// <param name="isAccept"></param>
+    /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderAcceptance(int id, string openID, bool isAccept)
+    public static int UpdateOrderAccept(ProductOrder po)
     {
         int result;
 
@@ -1414,28 +1851,36 @@ public class ProductOrder
                         paramId = cmdOrderID.CreateParameter();
                         paramId.ParameterName = "@Id";
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
-                        paramId.SqlValue = id;
+                        paramId.SqlValue = po.ID;
                         cmdOrderID.Parameters.Add(paramId);
 
                         SqlParameter paramOpenID;
                         paramOpenID = cmdOrderID.CreateParameter();
                         paramOpenID.ParameterName = "@OpenID";
                         paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
-                        paramOpenID.SqlValue = openID;
+                        paramOpenID.SqlValue = po.OpenID;
                         cmdOrderID.Parameters.Add(paramOpenID);
 
                         SqlParameter paramIsAccept;
                         paramIsAccept = cmdOrderID.CreateParameter();
                         paramIsAccept.ParameterName = "@IsAccept";
                         paramIsAccept.SqlDbType = System.Data.SqlDbType.Bit;
-                        paramIsAccept.SqlValue = isAccept;
+                        paramIsAccept.SqlValue = po.IsAccept;
                         cmdOrderID.Parameters.Add(paramIsAccept);
 
                         SqlParameter paramAcceptDate = cmdOrderID.CreateParameter();
                         paramAcceptDate.ParameterName = "@AcceptDate";
                         paramAcceptDate.SqlDbType = System.Data.SqlDbType.DateTime;
-                        paramAcceptDate.SqlValue = DateTime.Now;
+                        paramAcceptDate.SqlValue = po.AcceptDate;
                         cmdOrderID.Parameters.Add(paramAcceptDate);
+
+                        foreach (SqlParameter param in cmdOrderID.Parameters)
+                        {
+                            if (param.Value == null)
+                            {
+                                param.Value = DBNull.Value;
+                            }
+                        }
 
                         result = cmdOrderID.ExecuteNonQuery();
                     }
@@ -1452,6 +1897,12 @@ public class ProductOrder
                     }
                 }
             }
+
+            if (result == 1)
+            {
+                po.OnOrderStateChanged(OrderState.Accepted);
+            }
+
         }
         catch (Exception ex)
         {
@@ -1464,17 +1915,12 @@ public class ProductOrder
 
 
     /// <summary>
-    /// 根据订单号更新订单支付状态
+    /// 更新订单的微信支付状态
     /// </summary>
-    /// <param name="orderID"></param>
-    /// <param name="tradeState"></param>
-    /// <param name="tradeStateDesc"></param>
-    /// <param name="transactionID"></param>
-    /// <param name="transactionTime"></param>
+    /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateTradeState(string orderID, TradeState tradeState, string tradeStateDesc, string transactionID, DateTime? transactionTime)
+    public static int UpdateTradeState(ProductOrder po)
     {
-
         int result = 0;
 
         try
@@ -1487,45 +1933,66 @@ public class ProductOrder
                 {
                     using (SqlCommand cmdTradeState = conn.CreateCommand())
                     {
-                        cmdTradeState.CommandText = "update ProductOrder set TradeState = @TradeState, TradeStateDesc=@TradeStateDesc, TransactionID = @TransactionID, TransactionTime=@TransactionTime where OrderID=@OrderID";
-
                         SqlParameter paramOrderID;
                         paramOrderID = cmdTradeState.CreateParameter();
                         paramOrderID.ParameterName = "@OrderID";
                         paramOrderID.SqlDbType = System.Data.SqlDbType.VarChar;
                         paramOrderID.Size = 50;
-                        paramOrderID.SqlValue = orderID;
+                        paramOrderID.SqlValue = po.OrderID;
                         cmdTradeState.Parameters.Add(paramOrderID);
+
+                        SqlParameter paramPaymentTerm;
+                        paramPaymentTerm = cmdTradeState.CreateParameter();
+                        paramPaymentTerm.ParameterName = "@PaymentTerm";
+                        paramPaymentTerm.SqlDbType = System.Data.SqlDbType.Int;
+                        paramPaymentTerm.SqlValue = (int)po.PaymentTerm;
+                        cmdTradeState.Parameters.Add(paramPaymentTerm);
 
                         SqlParameter paramTradeState;
                         paramTradeState = cmdTradeState.CreateParameter();
                         paramTradeState.ParameterName = "@TradeState";
                         paramTradeState.SqlDbType = System.Data.SqlDbType.Int;
-                        paramTradeState.SqlValue = (int)tradeState;
+                        paramTradeState.SqlValue = (int)po.TradeState;
                         cmdTradeState.Parameters.Add(paramTradeState);
 
-                        SqlParameter paramTradeStateDesc;
-                        paramTradeStateDesc = cmdTradeState.CreateParameter();
-                        paramTradeStateDesc.ParameterName = "@TradeStateDesc";
-                        paramTradeStateDesc.SqlDbType = System.Data.SqlDbType.NVarChar;
-                        paramTradeStateDesc.Size = 1000;
-                        paramTradeStateDesc.SqlValue = tradeStateDesc;
-                        cmdTradeState.Parameters.Add(paramTradeStateDesc);
+                        //微信支付方式需要额外更新支付方式描述、交易ID、交易时间字段
+                        switch (po.PaymentTerm)
+                        {
+                            case PaymentTerm.WECHAT:
+                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, TradeStateDesc=@TradeStateDesc, TransactionID = @TransactionID, TransactionTime=@TransactionTime where OrderID=@OrderID";
 
-                        SqlParameter paramTransactionID;
-                        paramTransactionID = cmdTradeState.CreateParameter();
-                        paramTransactionID.ParameterName = "@TransactionID";
-                        paramTransactionID.SqlDbType = System.Data.SqlDbType.NVarChar;
-                        paramTransactionID.Size = 50;
-                        paramTransactionID.SqlValue = transactionID;
-                        cmdTradeState.Parameters.Add(paramTransactionID);
+                                SqlParameter paramTradeStateDesc;
+                                paramTradeStateDesc = cmdTradeState.CreateParameter();
+                                paramTradeStateDesc.ParameterName = "@TradeStateDesc";
+                                paramTradeStateDesc.SqlDbType = System.Data.SqlDbType.NVarChar;
+                                paramTradeStateDesc.Size = 1000;
+                                paramTradeStateDesc.SqlValue = po.TradeStateDesc;
+                                cmdTradeState.Parameters.Add(paramTradeStateDesc);
 
-                        SqlParameter paramTransactionTime;
-                        paramTransactionTime = cmdTradeState.CreateParameter();
-                        paramTransactionTime.ParameterName = "@TransactionTime";
-                        paramTransactionTime.SqlDbType = System.Data.SqlDbType.DateTime;
-                        paramTransactionTime.SqlValue = transactionTime;
-                        cmdTradeState.Parameters.Add(paramTransactionTime);
+                                SqlParameter paramTransactionID;
+                                paramTransactionID = cmdTradeState.CreateParameter();
+                                paramTransactionID.ParameterName = "@TransactionID";
+                                paramTransactionID.SqlDbType = System.Data.SqlDbType.NVarChar;
+                                paramTransactionID.Size = 50;
+                                paramTransactionID.SqlValue = po.TransactionID;
+                                cmdTradeState.Parameters.Add(paramTransactionID);
+
+                                SqlParameter paramTransactionTime;
+                                paramTransactionTime = cmdTradeState.CreateParameter();
+                                paramTransactionTime.ParameterName = "@TransactionTime";
+                                paramTransactionTime.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramTransactionTime.SqlValue = po.TransactionTime;
+                                cmdTradeState.Parameters.Add(paramTransactionTime);
+
+                                break;
+
+                            case PaymentTerm.CASH:
+                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState where OrderID=@OrderID";
+
+                                break;
+
+                        }
+
 
                         foreach (SqlParameter param in cmdTradeState.Parameters)
                         {
@@ -1552,6 +2019,11 @@ public class ProductOrder
                     }
                 }
             }
+
+            if (result == 1)
+            {
+                po.OnOrderStateChanged(OrderState.Paid);
+            }
         }
         catch (Exception ex)
         {
@@ -1561,7 +2033,52 @@ public class ProductOrder
 
         return result;
     }
+
+    /// <summary>
+    /// 订单状态变动事件
+    /// </summary>
+    /// <param name="os"></param>
+    protected void OnOrderStateChanged(OrderState os)
+    {
+        //订单状态变化事件异步回调函数，不阻塞主流程
+        if (this.OrderStateChanged != null)
+        {
+            OrderStateEventArgs ose = new OrderStateEventArgs(os);
+            IAsyncResult ar = this.OrderStateChanged.BeginInvoke(this, ose, OrderStateChangedComplete, this.OrderStateChanged);
+        }
+    }
+
+    /// <summary>
+    /// 事件完成异步回调
+    /// </summary>
+    /// <param name="ar"></param>
+    private void OrderStateChangedComplete(IAsyncResult ar)
+    {
+        if (ar != null)
+        {
+            JsonData jRet;
+            jRet = (ar.AsyncState as ProductOrder.OrderStateChangedEventHandler).EndInvoke(ar);
+            if (jRet != null)
+            {
+                Log.Info("event OrderStateChanged", jRet.ToJson());
+            }
+        }
+    }
+
+    public int CompareTo(ProductOrder other)
+    {
+        if (this.ID == other.ID && this.OrderID == other.OrderID)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
 }
+
 
 /// <summary>
 /// 订单状态
@@ -1569,12 +2086,12 @@ public class ProductOrder
 public enum OrderState
 {
     /// <summary>
-    /// 已下单
+    /// 买家已下单
     /// </summary>
-    Booked = 1,
+    Submitted = 1,
 
     /// <summary>
-    /// 已支付
+    /// 买家已支付
     /// </summary>
     Paid = 2,
 
@@ -1586,11 +2103,18 @@ public enum OrderState
     /// <summary>
     /// 买家已签收
     /// </summary>
-    Accepted = 4
+    Accepted = 4,
+
+    /// <summary>
+    /// 买家已撤单
+    /// </summary>
+    Cancelled = 5
 }
 
 /// <summary>
 /// 微信支付状态，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
+/// 1~7是微信支付状态
+/// 8~9是现金支付状态
 /// </summary>
 public enum TradeState
 {
@@ -1627,7 +2151,17 @@ public enum TradeState
     /// <summary>
     /// 支付失败(其他原因，如银行返回失败)
     /// </summary>
-    PAYERROR = 7
+    PAYERROR = 7,
+
+    /// <summary>
+    /// 已付现金
+    /// </summary>
+    CASHPAID = 8,
+
+    /// <summary>
+    /// 未付现金
+    /// </summary>
+    CASHNOTPAID = 9
 }
 
 /// <summary>

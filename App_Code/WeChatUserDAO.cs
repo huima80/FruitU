@@ -5,6 +5,7 @@ using System.Web;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web.Security;
+using LitJson;
 
 /// <summary>
 /// WeChatUserDAO 的摘要说明
@@ -65,7 +66,7 @@ public static class WeChatUserDAO
             Log.Error("FindUserCount", ex.ToString());
             throw ex;
         }
-        
+
         return totalRows;
     }
 
@@ -177,28 +178,23 @@ public static class WeChatUserDAO
                                 MembershipUser mUser = Membership.GetUser(sdrUser["OpenID"].ToString());
                                 if (mUser != null)
                                 {
-                                    //使用新建的成员资格对象初始化微信用户对象
+                                    //使用成员资格对象初始化微信用户对象，并追加微信用户信息表数据
                                     wxUser = new WeChatUser(mUser);
+                                    wxUser.ID = int.Parse(sdrUser["Id"].ToString());
+                                    wxUser.OpenID = sdrUser["OpenID"].ToString();
+                                    wxUser.NickName = sdrUser["NickName"].ToString();
+                                    wxUser.Sex = sdrUser["Sex"] != DBNull.Value ? bool.Parse(sdrUser["Sex"].ToString()) : true;
+                                    wxUser.Country = sdrUser["Country"].ToString();
+                                    wxUser.Province = sdrUser["Province"].ToString();
+                                    wxUser.City = sdrUser["City"].ToString();
+                                    wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
+                                    wxUser.Privilege = sdrUser["Privilege"].ToString();
+                                    wxUser.ClientIP = sdrUser["ClientIP"].ToString();
+                                    wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                                    wxUser.OrderCount = int.Parse(sdrUser["OrderCount"].ToString());
+
+                                    userPerPage.Add(wxUser);
                                 }
-                                else
-                                {
-                                    wxUser = new WeChatUser();
-                                }
-
-                                wxUser.ID = int.Parse(sdrUser["Id"].ToString());
-                                wxUser.OpenID = sdrUser["OpenID"].ToString();
-                                wxUser.NickName = sdrUser["NickName"].ToString();
-                                wxUser.Sex = sdrUser["Sex"] != DBNull.Value ? bool.Parse(sdrUser["Sex"].ToString()) : true;
-                                wxUser.Country = sdrUser["Country"].ToString();
-                                wxUser.Province = sdrUser["Province"].ToString();
-                                wxUser.City = sdrUser["City"].ToString();
-                                wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
-                                wxUser.Privilege = sdrUser["Privilege"].ToString();
-                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                wxUser.OrderCount = int.Parse(sdrUser["OrderCount"].ToString());
-
-                                userPerPage.Add(wxUser);
-
                             }
                             sdrUser.Close();
                         }
@@ -252,7 +248,7 @@ public static class WeChatUserDAO
                         paramUserID.SqlValue = userID;
                         cmdUser.Parameters.Add(paramUserID);
 
-                        cmdUser.CommandText = "select * from WeChatUsers where UserId = @UserId";
+                        cmdUser.CommandText = "select WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount from WeChatUsers where UserId = @UserId";
 
                         using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
                         {
@@ -279,6 +275,7 @@ public static class WeChatUserDAO
                                 wxUser.City = sdrUser["City"].ToString();
                                 wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                 wxUser.Privilege = sdrUser["Privilege"].ToString();
+                                wxUser.ClientIP = sdrUser["ClientIP"].ToString();
                                 wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
 
                             }
@@ -329,7 +326,7 @@ public static class WeChatUserDAO
                         paramUserID.SqlValue = openID;
                         cmdUser.Parameters.Add(paramUserID);
 
-                        cmdUser.CommandText = "select * from WeChatUsers where OpenID = @OpenID";
+                        cmdUser.CommandText = "select WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount from WeChatUsers where OpenID = @OpenID";
 
                         using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
                         {
@@ -356,7 +353,9 @@ public static class WeChatUserDAO
                                 wxUser.City = sdrUser["City"].ToString();
                                 wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                 wxUser.Privilege = sdrUser["Privilege"].ToString();
+                                wxUser.ClientIP = sdrUser["ClientIP"].ToString();
                                 wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                                wxUser.OrderCount = int.Parse(sdrUser["OrderCount"].ToString());
 
                             }
                             sdrUser.Close();
@@ -407,7 +406,7 @@ public static class WeChatUserDAO
                         paramNickName.SqlValue = nickName;
                         cmdUser.Parameters.Add(paramNickName);
 
-                        cmdUser.CommandText = "select * from WeChatUsers where NickName like '%@NickName%'";
+                        cmdUser.CommandText = "select WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount from WeChatUsers where NickName like '%@NickName%'";
 
                         using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
                         {
@@ -434,6 +433,7 @@ public static class WeChatUserDAO
                                 wxUser.City = sdrUser["City"].ToString();
                                 wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                 wxUser.Privilege = sdrUser["Privilege"].ToString();
+                                wxUser.ClientIP = sdrUser["ClientIP"].ToString();
                                 wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
 
                                 userList.Add(wxUser);
@@ -823,6 +823,77 @@ public static class WeChatUserDAO
         }
 
         return isDel;
+    }
+
+    /// <summary>
+    /// 获取微信用户基本信息
+    /// API参考：https://mp.weixin.qq.com/wiki/14/bb5031008f1494a59c6f71fa0f319c66.html
+    /// </summary>
+    /// <param name="wxUsers"></param>
+    public static void RefreshWxUserInfo(List<WeChatUser> wxUsers)
+    {
+        string wxUserInfoAPI = string.Format(@"https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token={0}", WxJSAPI.GetAccessToken());
+        string recvMsg;
+        JsonData jUserList = new JsonData(), jUserInfoList = new JsonData(), jUser;
+
+        jUserList["user_list"] = new JsonData();
+        for (int i = 0; i < wxUsers.Count; i++)
+        {
+            jUser = new JsonData();
+            jUser["openid"] = wxUsers[i].OpenID;
+            jUserList["user_list"].Add(jUser);
+
+            //一次最多拉取100个用户的微信信息
+            if (jUserList["user_list"].Count == 100 || i == (wxUsers.Count - 1))
+            {
+                recvMsg = HttpService.Post(jUserList.ToJson(), wxUserInfoAPI, false, Config.WeChatAPITimeout);
+                jUserInfoList = JsonMapper.ToObject(recvMsg);
+
+                //用获取的信息刷新形参
+                if (jUserInfoList != null && jUserInfoList.Keys.Contains("user_info_list") && jUserInfoList["user_info_list"].IsArray)
+                {
+                    //遍历拉取的微信用户JSON消息包，并刷新形参
+                    for (int j = 0; j < jUserInfoList["user_info_list"].Count; j++)
+                    {
+                        if (jUserInfoList["user_info_list"][j].Keys.Contains("subscribe") && jUserInfoList["user_info_list"][j].Keys.Contains("openid"))
+                        {
+                            WeChatUser user = wxUsers.Find(delegate (WeChatUser wxUser)
+                            {
+                                if (wxUser.OpenID == jUserInfoList["user_info_list"][j]["openid"].ToString())
+                                {
+                                    return true;
+                                }
+                                return false;
+                            });
+
+                            if (user != default(WeChatUser))
+                            {
+                                //此用户关注公众号，则返回详细信息
+                                if (jUserInfoList["user_info_list"][j]["subscribe"].ToString() == "1")
+                                {
+                                    user.IsSubscribe = true;
+                                    user.NickName = jUserInfoList["user_info_list"][j].Keys.Contains("nickname") ? jUserInfoList["user_info_list"][j]["nickname"].ToString() : user.NickName;
+                                    user.Sex = jUserInfoList["user_info_list"][j].Keys.Contains("sex") ? (jUserInfoList["user_info_list"][j]["sex"].ToString() == "1" ? true : false) : user.Sex;
+                                    user.Country = jUserInfoList["user_info_list"][j].Keys.Contains("country") ? jUserInfoList["user_info_list"][j]["country"].ToString() : user.Country;
+                                    user.Province = jUserInfoList["user_info_list"][j].Keys.Contains("province") ? jUserInfoList["user_info_list"][j]["province"].ToString() : user.Province;
+                                    user.City = jUserInfoList["user_info_list"][j].Keys.Contains("city") ? jUserInfoList["user_info_list"][j]["city"].ToString() : user.City;
+                                    user.HeadImgUrl = jUserInfoList["user_info_list"][j].Keys.Contains("headimgurl") ? jUserInfoList["user_info_list"][j]["headimgurl"].ToString() : user.HeadImgUrl;
+                                    user.UnionID = jUserInfoList["user_info_list"][j].Keys.Contains("unionid") ? jUserInfoList["user_info_list"][j]["unionid"].ToString() : user.UnionID;
+                                }
+                                else
+                                {
+                                    user.IsSubscribe = false;
+                                    user.UnionID = jUserInfoList["user_info_list"][j].Keys.Contains("unionid") ? jUserInfoList["user_info_list"][j]["unionid"].ToString() : user.UnionID;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                jUserList.Clear();
+            }
+        }
+
     }
 
 }

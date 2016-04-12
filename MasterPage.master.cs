@@ -8,8 +8,10 @@ using LitJson;
 
 public partial class MasterPage : System.Web.UI.MasterPage
 {
-    protected void Page_Load(object sender, EventArgs e)
+    protected override void OnInit(EventArgs e)
     {
+        base.OnInit(e);
+
         //引导用户进行微信登录授权
         if (Session["WxUser"] == null)
         {
@@ -32,9 +34,9 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 wxUser.Privilege = jUserInfo["privilege"].ToString();
                 wxUser.ClientIP = "127.0.0.1";
 
-                wxUser.AccessTokenForBase = jAuthInfo["access_token"].ToString();
-                wxUser.RefreshTokenForBase = jAuthInfo["refresh_token"].ToString();
-                wxUser.ExpireOfAccessTokenForBase = DateTime.Now.AddSeconds(double.Parse(jAuthInfo["expires_in"].ToString()));
+                wxUser.AccessTokenForUserInfo = jAuthInfo["access_token"].ToString();
+                wxUser.RefreshTokenForUserInfo = jAuthInfo["refresh_token"].ToString();
+                wxUser.ExpireOfAccessTokenForUserInfo = DateTime.Now.AddSeconds(double.Parse(jAuthInfo["expires_in"].ToString()));
                 wxUser.Scope = WeChatAuthScope.snsapi_userinfo;
 
                 Session["WxUser"] = wxUser;
@@ -44,6 +46,5 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 Response.Redirect("~/wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
             }
         }
-
     }
 }

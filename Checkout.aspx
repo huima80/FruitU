@@ -3,6 +3,7 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/Checkout.css" rel="stylesheet" />
     <link href="css/ladda-themeless.min.css" rel="stylesheet" />
+    <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container">
@@ -87,6 +88,14 @@
             </div>
         </div>
     </div>
+    <div class="md-modal md-effect-9" id="divModal">
+        <div class="md-content">
+            <img id="imgDetailImg" src="images/SubmitOrderCompleteTip.gif" />
+        </div>
+    </div>
+
+    <div class="md-overlay"></div>
+    <!-- the overlay element -->
 
     <script>
 
@@ -99,10 +108,46 @@
 
                 requirejs(['cart'], function () {
                     displayCart();
+
+                    //加载显示购物车里的收货人信息
+                    if ($.cart) {
+                        var deliverInfo = $.cart.getDeliverInfo();
+                        $("#txtDeliverName").val(deliverInfo.name);
+                        $("#txtDeliverPhone").val(deliverInfo.phone);
+                        if (!!deliverInfo.address) {
+                            if (deliverInfo.address.indexOf("上海电影集团办公楼") != -1) {
+                                $("#rdAddr1").prop("checked", "checked");
+                                deliverInfo.address = deliverInfo.address.replace("上海电影集团办公楼，", "");
+                            }
+                            else {
+                                if (deliverInfo.address.indexOf("汇智大厦") != -1) {
+                                    $("#rdAddr2").prop("checked", "checked");
+                                    deliverInfo.address = deliverInfo.address.replace("汇智大厦，", "");
+                                }
+                                else {
+                                    if (deliverInfo.address.indexOf("新东方（漕溪北路中心）") != -1) {
+                                        $("#rdAddr3").prop("checked", "checked");
+                                        deliverInfo.address = deliverInfo.address.replace("新东方（漕溪北路中心），", "");
+                                    }
+                                    else {
+                                        if (deliverInfo.address.indexOf("复旦大学附属肿瘤医院") != -1) {
+                                            $("#rdAddr4").prop("checked", "checked");
+                                            deliverInfo.address = deliverInfo.address.replace("复旦大学附属肿瘤医院，", "");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        $("#txtDeliverAddress").val(deliverInfo.address);
+                        $("#txtMemo").val(deliverInfo.memo);
+                    }
                 });
 
                 lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
                 lBtnPayCash = ladda.create(document.querySelector('#btnPayCash'));
+
+                //点击遮罩层关闭模式窗口
+                $(".md-overlay").on("click", closeModal);
 
             });
         });
@@ -194,10 +239,12 @@
                      WeixinJSBridge.log(res.err_msg);
                      //alert(res.err_code + res.err_desc + res.err_msg);
                      if (res.err_msg.indexOf("ok") != -1) {
-                         //订单提交成功后清空购物车，返回首页
+                         //订单提交成功后清空购物车
                          $.cart.clearProdItems();
-                         alert("付款成功！我们将为您送货上门。");
-                         location.href = ".";
+                         //alert("付款成功！我们将为您送货上门。");
+                         //打开模式窗口，3秒后关闭
+                         openModal();
+                         setTimeout("closeModal();", 3000);
                      }
                      else {
                          if (res.err_msg.indexOf("cancel") != -1) {
@@ -207,7 +254,9 @@
                              alert("支付失败，请重新下单。");
                          }
                      }
-                     lBtnWxPay.stop();   //停止按钮loading动画
+
+                     //停止按钮loading动画
+                     lBtnWxPay.stop();   
 
                  });
         }
@@ -253,12 +302,12 @@
 
                     //判断是否选择了微信用户地址
                     //if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
-                        //判断是否弹出了手工地址栏
-                        //if ($("#divCustomizeAddrInfo").is(":visible")) {
-                        //} else {
-                        //    alert("请选择收货地址。");
-                        //    return false;
-                        //}
+                    //判断是否弹出了手工地址栏
+                    //if ($("#divCustomizeAddrInfo").is(":visible")) {
+                    //} else {
+                    //    alert("请选择收货地址。");
+                    //    return false;
+                    //}
                     //}
                     //else {
                     //    //获取微信地址信息
@@ -365,10 +414,11 @@
                             type: "POST",
                             dataType: "json",
                             success: function (jPoID) {
-                                if (jPoID["NewPoID"] != undefined) {
-                                    alert("下单成功！我们将为您送货上门收款。");
+                                if (jPoID["NewPOID"] != undefined) {
                                     $.cart.clearProdItems();
-                                    location.href = ".";
+                                    //打开模式窗口，3秒后关闭
+                                    openModal();
+                                    setTimeout("closeModal();", 3000);
                                 }
                                 else {
                                     if (jPoID["result_code"] != undefined)  //提交值校验错误
@@ -395,6 +445,18 @@
                     location.href = ".";
                 }
             }
+        }
+
+        //显示模式窗口
+        function openModal() {
+            $("#divModal").addClass("md-show");
+        }
+
+        //关闭模式对话框
+        function closeModal() {
+            $("#divModal").removeClass("md-show");
+
+            location.href = ".";
         }
 
     </script>

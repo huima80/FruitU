@@ -52,11 +52,17 @@
                 <asp:GridView ID="gvFruitList" runat="server" AutoGenerateColumns="False" DataSourceID="odsFruitList" DataKeyNames="ID" AllowPaging="True" OnSelectedIndexChanged="gvFruitList_SelectedIndexChanged" OnRowDataBound="gvFruitList_RowDataBound" OnRowDeleted="gvFruitList_RowDeleted" OnRowDeleting="gvFruitList_RowDeleting" CssClass="table table-striped table-hover table-responsive" AllowCustomPaging="True" PagerStyle-CssClass="pager">
                     <Columns>
                         <asp:CommandField ShowDeleteButton="True" />
-                        <asp:BoundField DataField="FruitName" HeaderText="商品名称" SortExpression="FruitName" />
-                        <asp:BoundField DataField="Category.CategoryName" HeaderText="商品类别" SortExpression="Category" />
-                        <asp:BoundField DataField="FruitPrice" HeaderText="商品价格" SortExpression="FruitPrice" DataFormatString="{0:c2}" />
-                        <asp:BoundField DataField="FruitUnit" HeaderText="商品单位" SortExpression="FruitUnit" />
+                        <asp:TemplateField HeaderText="商品名称" SortExpression="FruitName">
+                            <ItemTemplate>
+                                <asp:Label ID="Label1" runat="server" Text='<%# "【"+ Eval("Category.CategoryName")+"】"+Eval("FruitName") %>'></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" />
+                        <asp:TemplateField HeaderText="商品价格" SortExpression="FruitPrice">
+                            <ItemTemplate>
+                                <asp:Label ID="Label2" runat="server" Text='<%# Eval("FruitPrice", "{0:c2}")+"元/"+Eval("FruitUnit") %>'></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:BoundField DataField="InventoryQty" HeaderText="库存数量" SortExpression="InventoryQty" />
                         <asp:CheckBoxField DataField="OnSale" HeaderText="是否上架" SortExpression="OnSale" />
                         <asp:CheckBoxField DataField="IsSticky" HeaderText="是否置顶" SortExpression="IsSticky" />

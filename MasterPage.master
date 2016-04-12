@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
 <head runat="server">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
@@ -85,10 +85,10 @@
         <footer class="footer">
             <nav>
                 <ul>
-                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><i class="fa fa-home"></i>首页</a></li>
-                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><i class="fa fa-shopping-cart"><span id="ProdAmountHints"></span></i>购物车</a></li>
-                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><i class="fa fa-list"></i>我的订单</a></li>
-                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><i class="fa fa-user"></i>个人中心</a></li>
+                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />首页</a></li>
+                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="ProdAmountHints"></span><br />购物车</a></li>
+                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><br />我的订单</a></li>
+                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><br />个人中心</a></li>
                 </ul>
             </nav>
         </footer>

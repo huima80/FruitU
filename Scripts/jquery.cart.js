@@ -200,6 +200,17 @@
             return $(cartInfo.prodItems);
         };
 
+        //获取购物车收件人信息
+        Cart.prototype.getDeliverInfo = function () {
+            var cartInfo, deliverInfo = {};
+            cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+            deliverInfo.name = cartInfo.name;
+            deliverInfo.phone = cartInfo.phone;
+            deliverInfo.address = cartInfo.address;
+            deliverInfo.memo = cartInfo.memo;
+            return deliverInfo;
+        };
+
         //生成订单信息
         Cart.prototype.makeOrderInfo = function () {
             var orderInfo;

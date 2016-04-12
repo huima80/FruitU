@@ -46,10 +46,12 @@ public partial class notify_url : System.Web.UI.Page
                 //——请根据您的业务逻辑来编写程序（以下代码仅作参考）——
                 //获取支付宝的通知返回参数，可参考技术文档中服务器异步通知参数列表
 
-                //商户订单号
+                //商户订单号
+
                 string out_trade_no = Request.Form["out_trade_no"];
 
-                //支付宝交易号
+                //支付宝交易号
+
                 string trade_no = Request.Form["trade_no"];
 
                 //交易状态

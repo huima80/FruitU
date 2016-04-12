@@ -37,7 +37,7 @@
             //如果购物车为空，则禁用结算按钮
             if (data.prodQty == 0) {
                 $("#btnBuynow").attr({ disabled: "disabled" });
-                $("div.prod-items").html('<div class="cart-empty-hint">购物车空空如也 :-(</div>');
+                $("div.prod-items").html('<div class="cart-empty-hint">带点新鲜的走吧！</div>');
             }
         }
 

@@ -7,7 +7,7 @@ using System.Web.Security;
 /// <summary>
 /// 微信用户信息类
 /// </summary>
-public class WeChatUser : User
+public class WeChatUser : User, IComparable<WeChatUser>
 {
     //是否关注微信公众号
     public bool IsSubscribe { get; set; }
@@ -39,6 +39,11 @@ public class WeChatUser : User
     //微信网页授权模式
     public WeChatAuthScope Scope { get; set; }
 
+    /// <summary>
+    /// 同一用户，对同一个微信开放平台下的不同应用，unionid是相同的
+    /// </summary>
+    public string UnionID { get; set; }
+
     public WeChatUser()
     {
         //
@@ -55,9 +60,22 @@ public class WeChatUser : User
 
     public delegate void UserLoggedEventHandler(object sender, EventArgs e);
 
-    //微信用户登录后事件
+    /// <summary>
+    /// 微信用户登录后事件
+    /// </summary>
     public event UserLoggedEventHandler UserLogged;
 
+    public int CompareTo(WeChatUser other)
+    {
+        if(this.ProviderUserKey == other.ProviderUserKey && this.OpenID == other.OpenID)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
 }
 
 /// <summary>

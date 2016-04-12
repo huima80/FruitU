@@ -7,7 +7,7 @@
     <div class="container">
         <div class="row">
             <div class="col-xs-12">
-                <img class="img-responsive center-block banner" alt="FruitU" src="images/banner.gif" />
+                <img class="img-responsive center-block banner" alt="FruitU" src="images/FruitU.png" />
             </div>
         </div>
         <div class="row category-items text-center">
@@ -26,17 +26,14 @@
                     <img src="images/fruit-category.gif" />
                 </a>
             </div>
+            <div class="col-xs-12">
+                <img src="images/OnDutyTime.png" />
+            </div>
         </div>
     </div>
 
-
     <script>
 
-        requirejs(['jquery'], function ($) {
-            $(function () {
-
-            });
-        });
 
     </script>
 

@@ -1,5 +1,4 @@
 ﻿html, body {
-    background: #EDEDED;
     padding-bottom: 65px;
 }
 
@@ -17,12 +16,14 @@
 
 
 .prod-item {
-    width:95%;
-    min-height:100px;
-    margin:10px auto;
-    background-color:white;
-    border-radius:8px;
-    padding:6px;
+    width: 95%;
+    min-height: 100px;
+    margin: 10px auto;
+    padding: 6px;
+    background-color: white;
+    border: groove;
+    border-width: 1px;
+    border-radius: 8px;
 }
 
 .prod-item div {
@@ -66,7 +67,7 @@
     text-align:left;
     padding:4px;
     font-size:12px;
-    color:deeppink;
+    color:grey;
 }
 
 .prod-price{

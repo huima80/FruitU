@@ -5,6 +5,37 @@
     <link href="css/ladda-themeless.min.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button id="btnShowMenu" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#divOrderSearchCriteria" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <p class="navbar-text">
+                    <i class="fa fa-file-o"></i>&nbsp;订单数<span id="spanOrderSubmitted"></span>
+                    <i class="fa fa-credit-card"></i>&nbsp;未支付<span id="spanOrderPaid"></span>
+                    <i class="fa fa-truck"></i>&nbsp;未发货<span id="spanOrderDelivered"></span>
+                    <i class="fa fa-pencil-square-o"></i>&nbsp;未签收<span id="spanOrderAccepted"></span>
+                </p>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="divOrderSearchCriteria">
+                <div class="form-group">
+                    <input id="txtOrderID" type="text" class="form-control" placeholder="订单号" />
+                    <input id="txtProdName" type="text" class="form-control" placeholder="商品名称" />
+                    <input id="txtStartOrderDate" type="date" class="form-control" placeholder="开始下单时间" />
+                    <input id="txtEndOrderDate" type="date" class="form-control" placeholder="结束下单时间" />
+                </div>
+                <button id="btnSearch" type="button" class="btn btn-info">查找订单</button>
+                <button id="btnAllOrder" type="button" class="btn btn-warning">全部订单</button>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+    </nav>
     <div class="container">
         <div id="divOrderItems" class="row">
         </div>
@@ -25,39 +56,40 @@
                     <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span></li>
                     {{/for}}
                 </ul>
+                <div class="order-price">
+                    <span class="order-total">合计：￥<span class="order-price">{{:OrderPrice}}</span>元
+                {{if IsCancel==0 && (TradeState!=1 && TradeState!=8)}}
+                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><span class="ladda-label"><i class="fa fa-wechat fa-fw"></i>微信支付</span><span class="ladda-spinner"></span></button>
+                        {{/if}}</span>
+                </div>
+                <hr />
                 <div class="order-state">
-                    订单状态：
                     <span class="done">
-                        <i class="fa fa-file-o"></i>&nbsp;下单—
+                        <i class="fa fa-file-o"></i>&nbsp;下单
                     </span>
-                    <span></span>
-                    {{if TradeState==1}}
-                     <span id="spanPay" class="done">{{else}}
-                       <span id="spanPay" class="doing">{{/if}}
+                    {{if IsCancel==0 && (TradeState!=1 && TradeState!=8) && IsDelivered==0 && IsAccept==0}}
+                       <span id="CancelOrder{{:ID}}" class="doing" onclick="cancelOrder({{:ID}});">(<i class="fa fa-close"></i>&nbsp;撤单)
+                           {{else IsCancel==1}}
+                        <span class="done">(已撤单)
+                           {{else TradeState==1 || IsDelivered==1 || IsAccept==1}}
+                         <span>{{/if}}
+                         </span><span class="done">—</span>
+                            {{if TradeState==1 || TradeState==8}}
+                     <span class="done">{{else}}
+                       <span id="WxPayOrder{{:ID}}" class="doing">{{/if}}
                     <i class="fa fa-credit-card"></i>&nbsp;支付—
                        </span>
                          {{if IsDelivered==1}}
                        <span class="done">{{else}}
                        <span class="doing">{{/if}}
-                   <i class="fa fa-truck"></i>&nbsp;配送—
+                   <i class="fa fa-truck"></i>&nbsp;发货—
                        </span>
                            {{if IsAccept==1}}
-                        <span class="done">{{else}}
-                       <span class="doing">{{/if}}
+                        <span class="done">{{else IsCancel==1}}
+                            <span class="doing">{{else IsCancel!=1}}
+                       <span id="AcceptOrder{{:ID}}" class="doing" onclick="acceptOrder({{:ID}});">{{/if}}
                    <i class="fa fa-pencil-square-o"></i>&nbsp;签收
                        </span>
-                </div>
-                <div class="order-price">
-                    {{if IsCancel==0 && (TradeState==3 || TradeState==7)}}
-                       <span id="CancelOrder{{:ID}}" class="cancel-order" onclick="cancelOrder({{:ID}});"><i class="fa fa-close"></i>&nbsp;撤单
-                           {{else}}
-                        <span class="cancel-order">已撤单
-                          {{/if}}
-                        </span>
-                           <span class="order-total">合计：￥<span class="order-price">{{:OrderPrice}}</span>元
-                {{if IsCancel==0 && (TradeState==3 || TradeState==7)}}
-                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><span class="ladda-label"><i class="fa fa-wechat fa-fw"></i>微信支付</span><span class="ladda-spinner"></span></button>
-                               {{/if}}</span>
                 </div>
             </div>
         </div>
@@ -66,7 +98,7 @@
     <script>
         var Ladda;
 
-        requirejs(['jquery'], function ($) {
+        requirejs(['jquery', 'bootstrap'], function ($) {
             $(function () {
 
                 requirejs(['pager', 'ladda'], function (pager, ladda) {
@@ -81,12 +113,49 @@
                         pageContainer: '#divOrderItems',
                     });
 
-                    $($.pager).on("onPageLoaded", function () {
+                    $($.pager).on("onPageLoaded", function (event, data) {
+                        //刷新订单各状态统计数
+                        if (data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
+                            $(data.originalDataPerPage).each(function () {
+                                if (this.TotalRows != undefined) {
+                                    $("#spanOrderSubmitted").text(this.TotalRows);
+                                }
+                                if (this.PayingOrderCount != undefined) {
+                                    $("#spanOrderPaid").text(this.PayingOrderCount);
+                                }
+                                if (this.DeliveringOrderCount != undefined) {
+                                    $("#spanOrderDelivered").text(this.DeliveringOrderCount);
+                                }
+                                if (this.AcceptingOrderCount != undefined) {
+                                    $("#spanOrderAccepted").text(this.AcceptingOrderCount);
+                                }
+                            });
+                        }
+
                         //绑定页面上所有的ladda button
                         Ladda.bind('button.ladda-button');
+
                     });
 
                     $.pager.loadPage();
+                });
+
+                $("#btnSearch").on("click", searchOrder);
+                $("#btnAllOrder").on("click", searchAllOrder);
+
+                $("#txtStartOrderDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtEndOrderDate").val() != "")
+                        if ($(this).val() > $("#txtEndOrderDate").val()) {
+                            alert("开始时间必须早于结束时间。");
+                            $(this).val("");
+                        }
+                });
+                $("#txtEndOrderDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtStartOrderDate").val() != "")
+                        if ($(this).val() < $("#txtStartOrderDate").val()) {
+                            alert("结束时间必须晚于开始时间。");
+                            $(this).val("");
+                        }
                 });
 
             });
@@ -107,7 +176,7 @@
 
                          //付款成功后，隐藏撤单、修改订单状态、隐藏微信支付按钮
                          $("#CancelOrder" + lastPoID).hide();
-                         $("#spanPay").removeClass("doing").addClass("done");
+                         $("#WxPayOrder" + lastPoID).removeClass("doing").addClass("done");
                          $("#btnWxPay" + lastPoID).hide();
                      }
                      else {
@@ -183,6 +252,7 @@
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
+                        Ladda.stopAll();   //停止按钮loading动画
                         console.warn(errorThrown + ":" + textStatus);
 
                     }
@@ -196,6 +266,7 @@
                 return false;
             }
             else {
+                $("#CancelOrder" + poID).prop("onclick", "").text("(撤单中...)");
                 $.ajax({
                     url: "CancelOrder.ashx",
                     data: { PoID: poID },
@@ -205,20 +276,116 @@
                     success: function (response) {
                         if (response["result_code"] == "SUCCESS") {
                             alert("撤单成功");
-                            $("#CancelOrder" + response["po_id"]).prop("onclick", "").text("已撤单");
-                            $("#btnWxPay" + response["po_id"]).hide();
+                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("doing").addClass("done");
+                            $("#AcceptOrder" + poID).prop("onclick", "");
+                            $("#btnWxPay" + poID).hide();
                         }
                         else {
-                            alert("撤单失败");
+                            alert("撤单失败：" + response["err_code_des"]);
+                            $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('(<i class="fa fa-close"></i>&nbsp;撤单)').removeClass("done").addClass("doing");
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
+                        alert("撤单失败：" + textStatus);
+                        $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('(<i class="fa fa-close"></i>&nbsp;撤单)').removeClass("done").addClass("doing");
                         console.warn(errorThrown + ":" + textStatus);
                     }
                 });
             }
 
             return false;
+        }
+
+        //签收订单
+        function acceptOrder(poID) {
+            if (!confirm("您确认签收吗？")) {
+                return false;
+            }
+            else {
+                $("#AcceptOrder" + poID).prop("onclick", "").text("签收中...");
+                $.ajax({
+                    url: "AcceptOrder.ashx",
+                    data: { PoID: poID },
+                    type: "GET",
+                    dataType: "json",
+                    cache: false,
+                    success: function (response) {
+                        if (response["result_code"] == "SUCCESS") {
+                            alert("签收成功");
+                            $("#AcceptOrder" + poID).prop("onclick", "").text("签收").removeClass("doing").addClass("done");
+                            $("#CancelOrder" + poID).prop("onclick", "");
+                        }
+                        else {
+                            alert("签收失败：" + response["err_code_des"]);
+                            $("#AcceptOrder" + poID).prop("onclick", "acceptOrder(" + poID + ");").removeClass("done").addClass("doing");
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert("签收失败：" + textStatus);
+                        $("#AcceptOrder" + poID).prop("onclick", "acceptOrder(" + poID + ");").removeClass("done").addClass("doing");
+                        console.warn(errorThrown + ":" + textStatus);
+                    }
+                });
+            }
+
+            return false;
+        }
+
+        //查询订单
+        function searchOrder() {
+            var pageQueryCriteria = {};
+            if ($("#txtOrderID").val().trim() != "") {
+                pageQueryCriteria.OrderID = $("#txtOrderID").val().trim();
+            }
+            else {
+                pageQueryCriteria.OrderID = '';
+            }
+            if ($("#txtProdName").val().trim() != "") {
+                pageQueryCriteria.ProdName = $("#txtProdName").val().trim();
+            }
+            else {
+                pageQueryCriteria.ProdName = '';
+            }
+            if ($("#txtStartOrderDate").val().trim() != "") {
+                pageQueryCriteria.StartOrderDate = $("#txtStartOrderDate").val().trim();
+            }
+            else {
+                pageQueryCriteria.StartOrderDate = '';
+            }
+            if ($("#txtEndOrderDate").val().trim() != "") {
+                pageQueryCriteria.EndOrderDate = $("#txtEndOrderDate").val().trim();
+            }
+            else {
+                pageQueryCriteria.EndOrderDate = '';
+            }
+            $($.pager).on("onPageLoaded", showSearchTip);
+            $.pager.loadPage({ pageQueryCriteria: pageQueryCriteria, pageIndex: 1 });
+            $("#btnShowMenu").click();
+        }
+
+        //显示所有订单
+        function searchAllOrder() {
+            $("#txtOrderID").val("");
+            $("#txtProdName").val("");
+            $("#txtStartOrderDate").val("");
+            $("#txtEndOrderDate").val("");
+            //如果此函数被其他地方调用时，查询窗口还未显示，则不操作
+            if ($("#divOrderSearchCriteria").is(":visible")) {
+                $("#btnShowMenu").click();
+            }
+            $($.pager).off("onPageLoaded", showSearchTip);
+            $.pager.loadPage({ pageQueryCriteria: { OrderID: '', ProdName: '', StartOrderDate: '', EndOrderDate: '' }, pageIndex: 1 });
+        }
+
+        //显示搜索后的提示
+        function showSearchTip(event, data) {
+            if ((this.totalRows() != 0) && (data.pageIndex == this.totalPages()) && !$("#pTips").is(":visible")) {
+                //搜索结果最后一页显示提示信息
+                $(this.settings.pageContainer).append('<p id="pTips" class="text-center text-danger" onclick="searchAllOrder();">不是您想找的？点我查看全部订单。</p>');
+            }
+            if (this.totalRows() == 0 && !$("#pTips").is(":visible")) {
+                $(this.settings.pageContainer).append('<p id="pTips" class="text-center text-danger" onclick="searchAllOrder();">啥也没找到哦！点我查看全部订单。</p>');
+            }
         }
 
     </script>

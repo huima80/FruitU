@@ -36,9 +36,9 @@ public partial class admin_ManageUser : System.Web.UI.Page
         CheckBox cbIsApproved = sender as CheckBox;
         Guid userId = Guid.Parse(cbIsApproved.Attributes["UserId"]);
         MembershipUser mUser = Membership.GetUser(userId);
-        mUser.IsApproved = cbIsApproved.Checked;
         if (mUser != null)
         {
+            mUser.IsApproved = cbIsApproved.Checked;
             Membership.UpdateUser(mUser);
         }
         this.gvUserList.DataBind();
@@ -60,7 +60,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
     {
         string strWhere = string.Empty, strTableName = string.Empty;
         List<string> listWhere = new List<string>();
-        bool joinMembership = false, joinUsers = false;
+        bool isJoinMembership = false, isJoinUsers = false;
         try
         {
             //查询条件：是否在线
@@ -75,14 +75,14 @@ public partial class admin_ManageUser : System.Web.UI.Page
                     UtilityHelper.AntiSQLInjection(this.ddlIsOnline.SelectedValue);
                     listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())<=aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow));
                     this.ddlIsOnline.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                    joinUsers = true;
+                    isJoinUsers = true;
                 }
                 else
                 {
                     UtilityHelper.AntiSQLInjection(this.ddlIsOnline.SelectedValue);
                     listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())>aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow));
                     this.ddlIsOnline.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                    joinUsers = true;
+                    isJoinUsers = true;
                 }
             }
 
@@ -116,7 +116,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(this.ddlIsApproved.SelectedValue);
                 listWhere.Add(string.Format("aspnet_Membership.IsApproved = {0}", this.ddlIsApproved.SelectedValue));
                 this.ddlIsApproved.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                joinMembership = true;
+                isJoinMembership = true;
             }
             else
             {
@@ -177,7 +177,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(this.txtStartCreationDate.Text);
                 listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Membership.CreateDate, 112) >= '{0}'", this.txtStartCreationDate.Text.Trim().Replace("-", "")));
                 this.txtStartCreationDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                joinMembership = true;
+                isJoinMembership = true;
             }
             else
             {
@@ -190,22 +190,48 @@ public partial class admin_ManageUser : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(this.txtEndCreationDate.Text);
                 listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Membership.CreateDate, 112) <= '{0}'", this.txtEndCreationDate.Text.Trim().Replace("-", "")));
                 this.txtEndCreationDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                joinMembership = true;
+                isJoinMembership = true;
             }
             else
             {
                 this.txtEndCreationDate.Style.Clear();
             }
 
+            //查询条件：开始活跃时间
+            if (!string.IsNullOrEmpty(this.txtStartLastActivityDate.Text.Trim()))
+            {
+                UtilityHelper.AntiSQLInjection(this.txtStartLastActivityDate.Text);
+                listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Users.LastActivityDate, 112) >= '{0}'", this.txtStartLastActivityDate.Text.Trim().Replace("-", "")));
+                this.txtStartLastActivityDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+                isJoinUsers = true;
+            }
+            else
+            {
+                this.txtStartLastActivityDate.Style.Clear();
+            }
+
+            //查询条件：结束活跃时间
+            if (!string.IsNullOrEmpty(this.txtEndLastActivityDate.Text.Trim()))
+            {
+                UtilityHelper.AntiSQLInjection(this.txtEndLastActivityDate.Text);
+                listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Users.LastActivityDate, 112) <= '{0}'", this.txtEndLastActivityDate.Text.Trim().Replace("-", "")));
+                this.txtEndLastActivityDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+                isJoinUsers = true;
+            }
+            else
+            {
+                this.txtEndLastActivityDate.Style.Clear();
+            }
+
             strWhere = string.Join<string>(" and ", listWhere);
             this.odsUserList.SelectParameters["strWhere"].DefaultValue = strWhere;
             //根据查询涉及表做关联
             strTableName = "WeChatUsers";
-            if (joinMembership)
+            if (isJoinMembership)
             {
                 strTableName += " left join aspnet_Membership on WeChatUsers.UserId = aspnet_Membership.UserId";
             }
-            if (joinUsers)
+            if (isJoinUsers)
             {
                 strTableName += " left join aspnet_Users on WeChatUsers.UserId = aspnet_Users.UserId";
             }
@@ -252,6 +278,12 @@ public partial class admin_ManageUser : System.Web.UI.Page
         this.txtEndCreationDate.Text = string.Empty;
         this.txtEndCreationDate.Style.Clear();
 
+        this.txtStartLastActivityDate.Text = string.Empty;
+        this.txtStartLastActivityDate.Style.Clear();
+
+        this.txtEndLastActivityDate.Text = string.Empty;
+        this.txtEndLastActivityDate.Style.Clear();
+
         this.odsUserList.SelectParameters["tableName"].DefaultValue = "WeChatUsers";
         this.odsUserList.SelectParameters["strWhere"].DefaultValue = string.Empty;
         this.gvUserList.PageIndex = 0;
@@ -261,9 +293,13 @@ public partial class admin_ManageUser : System.Web.UI.Page
 
     protected void odsUserList_Selected(object sender, ObjectDataSourceStatusEventArgs e)
     {
-        if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRecords"] != null)
+        if (e.ReturnValue is List<WeChatUser> && e.OutputParameters.Count != 0 && e.OutputParameters["totalRecords"] != null)
         {
             this.lblSearchResult.Text = e.OutputParameters["totalRecords"].ToString();
+
+            //更新此页用户的微信信息
+            WeChatUserDAO.RefreshWxUserInfo(e.ReturnValue as List<WeChatUser>);
+
         }
     }
 
@@ -274,7 +310,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
             WeChatUser wxUser = (WeChatUser)e.Row.DataItem;
 
             CheckBox cbIsApproved = e.Row.FindControl("cbIsApproved") as CheckBox;
-            cbIsApproved.Attributes["UserId"] = wxUser.ProviderUserKey.ToString();
+            cbIsApproved.Attributes["UserId"] = wxUser.ProviderUserKey != null ? wxUser.ProviderUserKey.ToString() : null;
             if(wxUser.IsApproved)
             {
                 cbIsApproved.Attributes["onclick"] = "if(!confirm('是否禁止此用户登录？')){return false;}";
@@ -285,5 +321,9 @@ public partial class admin_ManageUser : System.Web.UI.Page
             }
 
         }
+    }
+
+    protected void btnRefreshWxUserInfo_Click(object sender, EventArgs e)
+    {
     }
 }

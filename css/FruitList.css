@@ -1,9 +1,13 @@
-﻿.fruit-list img{
+﻿html, body{
+    background:white;
+}
+
+.fruit-list img{
     max-width:100%;
 }
 
 .fruit-list div{
-    padding:4px;
+    padding:2px;
 }
 
 .input-group, .form-control {

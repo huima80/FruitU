@@ -13,6 +13,9 @@
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
+            <div class="col-xs-12">
+                <img src="images/buy2get1free.jpg" />
+            </div>
         </div>
         <div id="divJuiceList" class="row">
         </div>
@@ -43,7 +46,10 @@
                     {{if MainImg}}
                <img src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
             {{/if}}   
-                {{/for}}            
+                {{/for}}        
+                {{if TopSellingOnMonth}}
+                    <span class="top-selling-month-prod"><i class="fa fa-trophy fa-lg"></i>本月爆款</span>
+            {{/if}}
         </div>
     </script>
 
@@ -66,7 +72,7 @@
 
                     $($.pager).on("onPageLoaded", function (event, data) {
                         //设置分页数据到全局数组变量，便于前端操作
-                        if (juiceList && Array.isArray(juiceList) && Array.isArray(data.originalDataPerPage)) {
+                        if (juiceList && Array.isArray(juiceList) && data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
                             juiceList = juiceList.concat(data.originalDataPerPage);
                         }
                     });
@@ -136,8 +142,6 @@
             //把当前商品ProdID放入btn按钮
             $("#btnAddToCart").data("prodid", prodID);
 
-            $("#imgDetailImg").attr("src", "");
-
             if (juiceList && Array.isArray(juiceList)) {
                 jLen = juiceList.length;
 
@@ -174,20 +178,11 @@
         //显示模式窗口，在图片load事件完成后回调
         function switchModalShow() {
             $("#divModal").addClass("md-show");
-            if ($(event.target).hasClass("md-setperspective")) {
-                setTimeout(function () {
-                    $(document).addClass("md-perspective");
-                }, 25);
-            }
         }
 
         //关闭模式对话框
         function closeModal() {
             $("#divModal").removeClass("md-show");
-
-            if ($(event.target).hasClass("md-setperspective")) {
-                $(document).removeClass("md-perspective");
-            }
         }
 
         //加入购物车

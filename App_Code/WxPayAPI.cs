@@ -20,13 +20,15 @@ public class WxPayAPI
     /// 微信支付统一下单，接口参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_1
     /// 除被扫支付场景以外，商户系统先调用该接口在微信支付服务后台生成预支付交易单，返回正确的预支付交易回话标识prepay_id，有效期2小时，再按扫码、JSAPI、APP等不同场景生成交易串调起支付。
     /// </summary>
-    /// <returns>正常返回prepay_id，stateCode为空；如果有错误发生，则prepay_id为空，stateCode有值</returns>
-    public static string CallUnifiedOrderAPI(WeChatUser wxUser, ProductOrder po, out string stateCode)
+    /// <param name="po"></param>
+    /// <param name="jStateCode"></param>
+    /// <returns>正常返回prepay_id，jStateCode为空；如果有错误发生，则prepay_id为空，jStateCode有值</returns>
+    public static string CallUnifiedOrderAPI(ProductOrder po, out WeChatPayData stateCode)
     {
         string prepayID = string.Empty;
 
         //统一下单API返回的状态码
-        stateCode = string.Empty;
+        stateCode = new WeChatPayData();
 
         try
         {
@@ -46,13 +48,13 @@ public class WxPayAPI
             sendPayData.SetValue("out_trade_no", po.OrderID);   //必填
             sendPayData.SetValue("fee_type", "CNY");
             sendPayData.SetValue("total_fee", (po.OrderPrice * 100).ToString("F0"));    //必填，单位为【分】
-            sendPayData.SetValue("spbill_create_ip", wxUser.ClientIP);    //必填
+            sendPayData.SetValue("spbill_create_ip", po.ClientIP);    //必填
             sendPayData.SetValue("time_start", DateTime.Now.ToString("yyyyMMddHHmmss"));
             sendPayData.SetValue("time_expire", DateTime.Now.AddMinutes(Config.WeChatOrderExpire).ToString("yyyyMMddHHmmss"));    //最短失效时间间隔必须大于5分钟，可为空，默认2小时，也即prepay_id有效期
             sendPayData.SetValue("goods_tag", "商品标记，代金券或立减优惠功能的参数");
             sendPayData.SetValue("notify_url", Config.PayNotifyUrl);   //必填，微信支付成功后异步通知url
             sendPayData.SetValue("trade_type", "JSAPI");    //必填
-            sendPayData.SetValue("openid", wxUser.OpenID); //trade_type = JSAPI，此参数必传
+            sendPayData.SetValue("openid", po.OpenID); //trade_type = JSAPI，此参数必传
 
             //生成报文签名
             sendPayData.SetValue("sign", sendPayData.MakeSign());   //必填
@@ -86,34 +88,38 @@ public class WxPayAPI
             recvPayData.FromXml(recvMsg);
 
             //校验通信标示
-            if (recvPayData.GetValue("return_code").ToString() == "SUCCESS")
+            if (recvPayData.IsSet("return_code") && recvPayData.GetValue("return_code").ToString().ToUpper() == "SUCCESS")
             {
                 //当return_code为SUCCESS，才有sign参数返回，校验对方报文签名
                 if (!recvPayData.CheckSign())
                 {
-                    stateCode = "{\"return_code\":\"FAIL\",\"return_msg\":\"微信支付返回的签名错误，请在安全的网络环境中进行支付！\"}";
+                    stateCode.SetValue("return_code", "FAIL");
+                    stateCode.SetValue("return_msg", "微信支付返回的签名错误，请在安全的网络环境中进行支付！");
                     Log.Error("CallUnifiedOrderAPI::SIGN签名错误", recvPayData.GetValue("sign").ToString());
                 }
                 else
                 {
                     //校验业务结果result_code也是SUCCESS，才有prepay_id返回
-                    if (recvPayData.GetValue("result_code").ToString() == "SUCCESS" && recvPayData.IsSet("prepay_id"))
+                    if (recvPayData.IsSet("result_code") && recvPayData.GetValue("result_code").ToString().ToUpper() == "SUCCESS" && recvPayData.IsSet("prepay_id"))
                     {
-                        //获取prepay_id，有效期2小时
+                        //获取prepay_id
                         prepayID = recvPayData.GetValue("prepay_id").ToString();
                     }
                     else  //可能是订单已支付、已关闭、订单号重复等错误原因
                     {
-                        stateCode = string.Format("{{\"result_code\":\"FAIL\",\"err_code\":\"{0}\",\"err_code_des\":\"{1}\"}}", recvPayData.GetValue("err_code"), recvPayData.GetValue("err_code_des"));
-                        Log.Error("CallUnifiedOrderAPI", stateCode);
+                        stateCode.SetValue("result_code", "FAIL");
+                        stateCode.SetValue("err_code", recvPayData.GetValue("err_code").ToString());
+                        stateCode.SetValue("err_code_des", recvPayData.GetValue("err_code_des").ToString());
+                        Log.Error("CallUnifiedOrderAPI", stateCode.ToJson());
 
                     }
                 }
             }
             else //可能为我方报文sign签名错误或参数格式错误
             {
-                stateCode = string.Format("{{\"return_code\":\"FAIL\",\"return_msg\":\"{0}\"}}", recvPayData.GetValue("return_msg"));
-                Log.Error("CallUnifiedOrderAPI", stateCode);
+                stateCode.SetValue("return_code", "FAIL");
+                stateCode.SetValue("return_msg", recvPayData.GetValue("return_msg").ToString());
+                Log.Error("CallUnifiedOrderAPI", stateCode.ToJson());
             }
 
         }
@@ -219,22 +225,33 @@ public class WxPayAPI
             //将xml格式的数据转化为对象以返回
             recvPayData.FromXml(recvMsg);
 
-            //校验返回状态码
-            if (recvPayData.GetValue("return_code").ToString() != "SUCCESS")
+            //校验微信接口返回值return_code和result_code
+            if (recvPayData.IsSet("return_code") && recvPayData.GetValue("return_code").ToString().ToUpper() == "SUCCESS")
             {
-                throw new Exception(recvPayData.GetValue("return_msg").ToString());
-            }
+                if (!recvPayData.CheckSign())
+                {
+                    throw new Exception("微信“按transaction_id查询订单”消息sign签名校验错误");
+                }
 
-            //校验业务结果
-            if (recvPayData.GetValue("result_code").ToString() != "SUCCESS")
-            {
-                throw new Exception(recvPayData.GetValue("err_code").ToString() + ":" + recvPayData.GetValue("err_code_des").ToString());
+                //return_code和result_code同时为SUCCESS，且sign签名正确，则返回此消息数据
+                if (recvPayData.IsSet("result_code") && recvPayData.GetValue("result_code").ToString().ToUpper() == "SUCCESS")
+                {
+                    return recvPayData;
+                }
+                else
+                {
+                    if (recvPayData.IsSet("err_code") && recvPayData.IsSet("err_code_des"))
+                    {
+                        throw new Exception(recvPayData.GetValue("err_code").ToString() + ":" + recvPayData.GetValue("err_code_des").ToString());
+                    }
+                }
             }
-
-            //当return_code为SUCCESS，才有sign参数返回
-            if (!recvPayData.CheckSign())
+            else
             {
-                throw new Exception("sign签名校验错误");
+                if (recvPayData.IsSet("return_msg"))
+                {
+                    throw new Exception(recvPayData.GetValue("return_msg").ToString());
+                }
             }
         }
         catch (Exception ex)
@@ -242,7 +259,7 @@ public class WxPayAPI
             Log.Error("WxPayAPI", ex.Message);
         }
 
-        return recvPayData;
+        return null;
     }
 
     /// <summary>
@@ -290,13 +307,41 @@ public class WxPayAPI
             //将xml格式的数据转化为对象以返回
             recvPayData.FromXml(recvMsg);
 
+            //校验微信接口返回值return_code和result_code
+            if (recvPayData.IsSet("return_code") && recvPayData.GetValue("return_code").ToString().ToUpper() == "SUCCESS")
+            {
+                if (!recvPayData.CheckSign())
+                {
+                    throw new Exception("微信“按out_trade_no查询订单”消息sign签名校验错误");
+                }
+
+                //return_code和result_code同时为SUCCESS，且sign签名正确，则返回此消息数据
+                if (recvPayData.IsSet("result_code") && recvPayData.GetValue("result_code").ToString().ToUpper() == "SUCCESS")
+                {
+                    return recvPayData;
+                }
+                else  //result_code返回FAIL，可能微信支付中此订单号不存在、微信支付系统异常
+                {
+                    if (recvPayData.IsSet("err_code") && recvPayData.IsSet("err_code_des"))
+                    {
+                        throw new Exception(recvPayData.GetValue("err_code").ToString() + ":" + recvPayData.GetValue("err_code_des").ToString());
+                    }
+                }
+            }
+            else  //return_code返回FAIL，可能签名失败、参数格式校验错误
+            {
+                if (recvPayData.IsSet("return_msg"))
+                {
+                    throw new Exception(recvPayData.GetValue("return_msg").ToString());
+                }
+            }
         }
         catch (Exception ex)
         {
             Log.Error("WxPayAPI", ex.Message);
         }
 
-        return recvPayData;
+        return null;
     }
 
     /// <summary>
@@ -309,7 +354,7 @@ public class WxPayAPI
     /// <returns></returns>
     public static WeChatPayData CloseOrder(string orderID)
     {
-        if(string.IsNullOrEmpty(orderID))
+        if (string.IsNullOrEmpty(orderID))
         {
             throw new ArgumentNullException("orderID不能为空");
         }
@@ -336,12 +381,32 @@ public class WxPayAPI
             recvPayData.FromXml(recvMsg);
 
             //校验返回状态码
-            if (recvPayData.GetValue("return_code").ToString() == "SUCCESS")
+            if (recvPayData.IsSet("return_code") && recvPayData.GetValue("return_code").ToString().ToUpper() == "SUCCESS")
             {
                 //当return_code为SUCCESS，才有sign参数返回
                 if (!recvPayData.CheckSign())
                 {
                     throw new Exception("sign签名校验错误");
+                }
+
+                //return_code和result_code同时为SUCCESS，且sign签名正确，则返回此消息数据
+                if (recvPayData.IsSet("result_code") && recvPayData.GetValue("result_code").ToString().ToUpper() == "SUCCESS")
+                {
+                    return recvPayData;
+                }
+                else  //result_code返回FAIL，可能微信支付中此订单号不存在、微信支付系统异常
+                {
+                    if (recvPayData.IsSet("err_code") && recvPayData.IsSet("err_code_des"))
+                    {
+                        throw new Exception(recvPayData.GetValue("err_code").ToString() + ":" + recvPayData.GetValue("err_code_des").ToString());
+                    }
+                }
+            }
+            else  //return_code返回FAIL，可能签名失败、参数格式校验错误
+            {
+                if (recvPayData.IsSet("return_msg"))
+                {
+                    throw new Exception(recvPayData.GetValue("return_msg").ToString());
                 }
             }
         }

@@ -6,14 +6,8 @@ input[type=checkbox] {
     cursor:pointer;
 }
 
-.pager td{
-    padding:8px;
-    font-size:18px;
-}
-
-.search-result{
+.panel-footer{
     color:red;
-    padding:4px;
 }
 
 .purchase-price{
@@ -34,5 +28,13 @@ input[type=checkbox] {
 
 .order-price{
     font-size:large;
+    color:red;
+}
+
+.fa-wechat{
+    color:#00CD00;
+}
+
+.fa-money{
     color:red;
 }

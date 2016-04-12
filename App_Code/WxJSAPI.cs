@@ -37,7 +37,7 @@ public class WxJSAPI
 
                 JsonData jToken = JsonMapper.ToObject(strToken);
 
-                if (jToken["access_token"] != null)
+                if (jToken.Keys.Contains("access_token") && jToken.Keys.Contains("expires_in"))
                 {
                     //根据微信返回的token和有效期，存入Cache
                     double tokenExpiration = double.Parse(jToken["expires_in"].ToString());
@@ -87,7 +87,7 @@ public class WxJSAPI
 
                 JsonData jTicket = JsonMapper.ToObject(strTicket);
 
-                if (jTicket["ticket"] != null)
+                if (jTicket.Keys.Contains("ticket") && jTicket.Keys.Contains("expires_in"))
                 {
                     //根据微信返回的ticket和有效期，存入Cache
                     double ticketExpiration = double.Parse(jTicket["expires_in"].ToString());
@@ -202,6 +202,4 @@ public class WxJSAPI
 
         return editAddrParam;
     }
-
-
 }

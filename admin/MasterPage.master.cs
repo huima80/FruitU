@@ -8,32 +8,35 @@ using LitJson;
 
 public partial class admin_MasterPage : System.Web.UI.MasterPage
 {
-    protected void Page_Load(object sender, EventArgs e)
+    protected override void OnInit(EventArgs e)
     {
-        if (HttpContext.Current.User.Identity.IsAuthenticated && Roles.IsUserInRole(Config.AdminRoleName))
-        {
-            Label lblNickName = this.LoginView1.FindControl("lblNickName") as Label;
-            Image imgQQImg = this.LoginView1.FindControl("imgQQImg") as Image;
+        base.OnInit(e);
 
-            if (lblNickName != null && imgQQImg != null && Session["QQUser"] != null)
-            {
-                QQUser qqUser = Session["QQUser"] as QQUser;
-                if (qqUser != null)
-                {
-                    imgQQImg.ImageUrl = qqUser.FigureUrlQQ1;
-                    lblNickName.Text = qqUser.NickName;
-                }
-            }
-        }
-        else
+        if (!HttpContext.Current.User.Identity.IsAuthenticated || !Roles.IsUserInRole(Config.AdminRoleName))
         {
             FormsAuthentication.RedirectToLoginPage();
         }
     }
 
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        Label lblNickName = this.LoginView1.FindControl("lblNickName") as Label;
+        Image imgQQImg = this.LoginView1.FindControl("imgQQImg") as Image;
+
+        if (lblNickName != null && imgQQImg != null && Session["QQUser"] != null)
+        {
+            QQUser qqUser = Session["QQUser"] as QQUser;
+            if (qqUser != null)
+            {
+                imgQQImg.ImageUrl = qqUser.FigureUrlQQ1;
+                lblNickName.Text = qqUser.NickName;
+            }
+        }
+    }
+
     protected void lbLogout_Click(object sender, EventArgs e)
     {
-        Session["QQUser"] = null;
+        Session.Remove("QQUser");
         FormsAuthentication.SignOut();
         FormsAuthentication.RedirectToLoginPage();
     }

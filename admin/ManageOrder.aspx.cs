@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.UI.HtmlControls;
 using System.Text.RegularExpressions;
 using System.Data;
 
@@ -38,13 +39,16 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.odsOrderList.SelectParameters.Add("strWhere", DbType.String, strWhere);
                 this.odsOrderList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("payingOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("deliveringOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("acceptingOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
 
                 this.gvOrderList.AllowPaging = true;
                 this.gvOrderList.AllowCustomPaging = true;
                 this.gvOrderList.PageIndex = 0;
                 this.gvOrderList.PageSize = Config.OrderListPageSize;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Response.Write(string.Format("<script>alert('{0}');history.back();</script>", ex.Message));
                 Response.End();
@@ -66,25 +70,38 @@ public partial class ManageOrder : System.Web.UI.Page
 
     protected void odsOrderList_Selected(object sender, ObjectDataSourceStatusEventArgs e)
     {
-        if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRows"] != null)
+        if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRows"] != null && e.OutputParameters["payingOrderCount"] != null && e.OutputParameters["deliveringOrderCount"] != null && e.OutputParameters["acceptingOrderCount"] != null)
         {
-            this.lblSearchResult.Text = e.OutputParameters["totalRows"].ToString();
+            this.lblTotalRows.Text = e.OutputParameters["totalRows"].ToString();
+            this.lblPayingOrderCount.Text = e.OutputParameters["payingOrderCount"].ToString();
+            this.lblDeliveringOrderCount.Text = e.OutputParameters["deliveringOrderCount"].ToString();
+            this.lblAcceptingOrderCount.Text = e.OutputParameters["acceptingOrderCount"].ToString();
         }
     }
 
+    /// <summary>
+    /// 用于GridView控件中的订单支付方式显示值
+    /// </summary>
+    /// <param name="pt"></param>
+    /// <returns></returns>
     protected string paymentTerm(PaymentTerm pt)
     {
-        switch(pt)
+        switch (pt)
         {
             case PaymentTerm.WECHAT:
-                return "微信支付";
+                return "<i class=\"fa fa-wechat\"></i>&nbsp;微信支付";
             case PaymentTerm.CASH:
-                return "货到付款";
+                return "<i class=\"fa fa-money\"></i>&nbsp;货到付款";
             default:
                 return "未知方式";
         }
     }
 
+    /// <summary>
+    /// 用于GridView控件中的订单支付状态显示值
+    /// </summary>
+    /// <param name="ts"></param>
+    /// <returns></returns>
     protected string tradeState(TradeState ts)
     {
         switch (ts)
@@ -103,6 +120,10 @@ public partial class ManageOrder : System.Web.UI.Page
                 return "用户支付中";
             case TradeState.PAYERROR:
                 return "支付失败(其他原因，如银行返回失败)";
+            case TradeState.CASHPAID:
+                return "已付现金";
+            case TradeState.CASHNOTPAID:
+                return "未付现金";
             default:
                 return "未知状态";
         }
@@ -113,52 +134,205 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         if (e.Row.RowType == DataControlRowType.DataRow)
         {
-            //绑定订单商品详情
+            //当前行绑定的订单对象
             ProductOrder po = (ProductOrder)e.Row.DataItem;
 
             //根据微信支付状态，标识表格栏底色
-            switch(po.TradeState)
+            if (po.IsCancel)
             {
-                case TradeState.SUCCESS:
-                    e.Row.CssClass = "success";
+                e.Row.CssClass = "default";
+            }
+            else
+            {
+                switch (po.TradeState)
+                {
+                    case TradeState.SUCCESS:
+                    case TradeState.CASHPAID:
+                        e.Row.CssClass = "success";
+                        break;
+                    default:
+                        e.Row.CssClass = "danger";
+                        break;
+                }
+            }
+
+            //处理订单支付状态
+            Label lblPaymentTerm = e.Row.FindControl("lblPaymentTerm") as Label;
+            Label lblWxTradeState = e.Row.FindControl("lblWxTradeState") as Label;
+            Label lblCashTradeState = e.Row.FindControl("lblCashTradeState") as Label;
+            HtmlGenericControl pTransactionID = e.Row.FindControl("pTransactionID") as HtmlGenericControl;
+            HtmlGenericControl pTransactionTime = e.Row.FindControl("pTransactionTime") as HtmlGenericControl;
+            HtmlGenericControl divCashTradeState = e.Row.FindControl("divCashTradeState") as HtmlGenericControl;
+            CheckBox cbCashTradeState = e.Row.FindControl("cbCashTradeState") as CheckBox;
+
+            //显示支付方式文本值
+            lblPaymentTerm.Text = paymentTerm(po.PaymentTerm);
+
+            //根据支付方式（微信支付、货到付款），分别显示不同的支付状态，如果是货到付款还需要提供CheckBox供修改
+            switch (po.PaymentTerm)
+            {
+                case PaymentTerm.WECHAT:
+                    lblWxTradeState.Visible = true;
+                    lblWxTradeState.Text = tradeState(po.TradeState);
+                    pTransactionID.Visible = !string.IsNullOrEmpty(po.TransactionID);
+                    pTransactionTime.Visible = po.TransactionTime.HasValue;
+                    divCashTradeState.Visible = false;
                     break;
-                case TradeState.NOTPAY:
-                    e.Row.CssClass = "danger";
+                case PaymentTerm.CASH:
+                    lblWxTradeState.Visible = false;
+                    pTransactionID.Visible = false;
+                    pTransactionTime.Visible = false;
+                    divCashTradeState.Visible = true;
+                    cbCashTradeState.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+                    lblCashTradeState.Text = tradeState(po.TradeState);
+                    if (po.TradeState == TradeState.CASHPAID)
+                    {
+                        cbCashTradeState.Checked = true;
+                    }
+                    else
+                    {
+                        if (po.TradeState == TradeState.CASHNOTPAID)
+                        {
+                            cbCashTradeState.Checked = false;
+                        }
+                    }
                     break;
             }
 
-            //如果已发货，则发货按钮不可用
+            //如果已发货，则绑定发货时间
             CheckBox cbIsDelivery = e.Row.FindControl("cbIsDelivery") as CheckBox;
-            if(po.IsDelivered)
+            if (po.IsDelivered)
             {
                 cbIsDelivery.Enabled = false;
+                cbIsDelivery.ToolTip = string.Format("发货时间：{0}", po.DeliverDate);
             }
             else
             {
                 cbIsDelivery.Enabled = true;
+                cbIsDelivery.ToolTip = "点击发货";
+                cbIsDelivery.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+            }
+
+            //如果已签收，则绑定签收时间
+            CheckBox cbIsAccept = e.Row.FindControl("cbIsAccept") as CheckBox;
+            if (po.IsAccept)
+            {
+                cbIsAccept.Enabled = false;
+                cbIsAccept.ToolTip = string.Format("签收时间：{0}", po.AcceptDate);
+            }
+            else
+            {
+                cbIsAccept.Enabled = true;
+                cbIsAccept.ToolTip = "点击签收";
+                cbIsAccept.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+            }
+
+            //如果已撤单则屏蔽发货、签收按钮，显示发货时间
+            HtmlGenericControl pCancelDate = e.Row.FindControl("pCancelDate") as HtmlGenericControl;
+            if (po.IsCancel)
+            {
+                //屏蔽发货按钮
+                cbIsDelivery.Enabled = false;
+                cbIsDelivery.ToolTip = "已撤单，不能发货";
+
+                //屏蔽签收按钮
+                cbIsAccept.Enabled = false;
+                cbIsAccept.ToolTip = "已撤单，不能签收";
+
+                //显示撤单时间
+                pCancelDate.Visible = true;
+            }
+            else
+            {
+                pCancelDate.Visible = false;
             }
 
         }
 
     }
 
-    protected void cbIsDelivery_CheckedChanged(object sender, EventArgs e)
+    protected void gvOrderList_RowUpdating(object sender, GridViewUpdateEventArgs e)
     {
-        CheckBox cbIsDelivery = sender as CheckBox;
-        int poID = int.Parse(cbIsDelivery.Attributes["POID"]);
-        this.odsOrderList.UpdateParameters.Add("id", DbType.Int32, poID.ToString());
-        this.odsOrderList.UpdateParameters.Add("isDelivered", DbType.Boolean, cbIsDelivery.Checked ? "true" : "false");
-        this.odsOrderList.Update();
-        this.gvOrderList.DataBind();
+        //由于cbCashTradeState控件不是Bind绑定控件，所以GridView提交时不会自动生成更新值，需要根据是否选中现金收讫状态，在GridView的NewValues集合中增加值
+        GridViewRow gvr = ((GridView)sender).Rows[e.RowIndex];
+        CheckBox cbCashTradeState = gvr.FindControl("cbCashTradeState") as CheckBox;
+        //设置支付方式为货到付款，并根据是否选中checkbox设置现金收款状态
+        e.NewValues.Add("PaymentTerm", PaymentTerm.CASH);
+        if (cbCashTradeState.Checked)
+        {
+            e.NewValues.Add("TradeState", TradeState.CASHPAID);
+        }
+        else
+        {
+            e.NewValues.Add("TradeState", TradeState.CASHNOTPAID);
+        }
 
     }
 
+    /// <summary>
+    /// 根据ObjectDataSource控件反射生成的ProductOrder业务对象的订单ID，加载完整的订单数据，并注册事件处理函数，用于订单处理后回调事件处理函数
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    protected void odsOrderList_Updating(object sender, ObjectDataSourceMethodEventArgs e)
+    {
+        if (e.InputParameters.Count == 1 && e.InputParameters[0] is ProductOrder)
+        {
+            ProductOrder po = e.InputParameters[0] as ProductOrder;
+
+            //保存用户更改的checkbox值
+            bool isAccept = po.IsAccept;
+            bool isDelivered = po.IsDelivered;
+            PaymentTerm paymentTerm = po.PaymentTerm;
+            TradeState tradeState = po.TradeState;
+
+            //根据订单ID加载完整订单信息，并赋值用户更改值
+            po.FindOrderByID(po.ID);
+            po.IsAccept = isAccept;
+            po.AcceptDate = DateTime.Now;
+            po.IsDelivered = isDelivered;
+            po.DeliverDate = DateTime.Now;
+            po.PaymentTerm = paymentTerm;
+            po.TradeState = tradeState;
+
+            //注册订单发货事件处理函数
+            po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+
+        }
+    }
+
+    protected void cbIsDelivery_CheckedChanged(object sender, EventArgs e)
+    {
+        CheckBox cbIsDelivery = sender as CheckBox;
+        int rowIndex = int.Parse(cbIsDelivery.Attributes["RowIndex"]);
+        this.odsOrderList.UpdateMethod = "UpdateOrderDeliver";
+        this.gvOrderList.UpdateRow(rowIndex, false);
+        this.gvOrderList.DataBind();
+    }
+
+    protected void cbIsAccept_CheckedChanged(object sender, EventArgs e)
+    {
+        CheckBox cbIsAccept = sender as CheckBox;
+        int rowIndex = int.Parse(cbIsAccept.Attributes["RowIndex"]);
+        this.odsOrderList.UpdateMethod = "UpdateOrderAccept";
+        this.gvOrderList.UpdateRow(rowIndex, false);
+        this.gvOrderList.DataBind();
+    }
+
+    protected void cbCashTradeState_CheckedChanged(object sender, EventArgs e)
+    {
+        CheckBox cbCashTradeState = sender as CheckBox;
+        int rowIndex = int.Parse(cbCashTradeState.Attributes["RowIndex"]);
+        this.odsOrderList.UpdateMethod = "UpdateTradeState";
+        this.gvOrderList.UpdateRow(rowIndex, false);
+        this.gvOrderList.DataBind();
+    }
 
     protected void btnSearch_Click(object sender, EventArgs e)
     {
         string strWhere = string.Empty, tableName = string.Empty;
         List<string> listWhere = new List<string>();
-        bool joinProductDetailCriteria = false;
+        bool isJoinProductDetail = false;
 
         try
         {
@@ -264,7 +438,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(this.txtOrderDetail.Text);
                 listWhere.Add(string.Format("OrderDetail.OrderProductName like '%{0}%'", this.txtOrderDetail.Text.Trim()));
                 this.txtOrderDetail.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                joinProductDetailCriteria = true;
+                isJoinProductDetail = true;
             }
             else
             {
@@ -313,7 +487,7 @@ public partial class ManageOrder : System.Web.UI.Page
             this.odsOrderList.SelectParameters["strWhere"].DefaultValue = strWhere;
 
             //如果查询涉及到订单商品详情，则需要关联表OrderDetail
-            if (joinProductDetailCriteria)
+            if (isJoinProductDetail)
             {
                 this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID";
             }
@@ -373,4 +547,5 @@ public partial class ManageOrder : System.Web.UI.Page
         this.gvOrderList.PageIndex = 0;
         this.gvOrderList.DataBind();
     }
+
 }

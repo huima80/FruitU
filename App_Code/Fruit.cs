@@ -1525,7 +1525,7 @@ public class Fruit : IComparable<Fruit>
                         switch (orderDate.Length)
                         {
                             case 0:
-                                cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail group by ProductID order by sum(PurchaseQty) desc";
+                                cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail left join Product on OrderDetail.ProductID = Product.Id group by ProductID order by sum(PurchaseQty) desc";
                                 break;
                             case 1:
                                 SqlParameter paramOrderDate = cmdFruit.CreateParameter();
@@ -1553,6 +1553,101 @@ public class Fruit : IComparable<Fruit>
                                 cmdFruit.Parameters.Add(paramOrderDateEnd);
 
                                 cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail left join ProductOrder on OrderDetail.PoID = ProductOrder.Id where CONVERT(varchar(6),OrderDate,112) >= @OrderDateStart and CONVERT(varchar(6),OrderDate,112) <= @OrderDateEnd group by ProductID order by sum(PurchaseQty) desc";
+                                break;
+                            default:
+                                throw new Exception("参数orderDate只能接收0~2个参数");
+                        }
+
+                        using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
+                        {
+                            while (sdrFruit.Read())
+                            {
+                                prodID = int.Parse(sdrFruit["ProductID"].ToString());
+                            }
+
+                            sdrFruit.Close();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    if (conn.State == System.Data.ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("FindTopSelling", ex.ToString());
+            throw ex;
+        }
+
+        return prodID;
+    }
+
+    /// <summary>
+    /// 在指定时间范围内查询销量最高的商品
+    /// </summary>
+    /// <param name="categoryID"></param>
+    /// <param name="orderDate"></param>
+    /// <returns></returns>
+    public static int FindTopSelling(int categoryID, params DateTime[] orderDate)
+    {
+        int prodID = 0;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                try
+                {
+                    using (SqlCommand cmdFruit = conn.CreateCommand())
+                    {
+                        SqlParameter paramCategoryID = cmdFruit.CreateParameter();
+                        paramCategoryID.ParameterName = "@CategoryID";
+                        paramCategoryID.SqlDbType = System.Data.SqlDbType.Int;
+                        paramCategoryID.SqlValue = categoryID;
+                        cmdFruit.Parameters.Add(paramCategoryID);
+
+                        switch (orderDate.Length)
+                        {
+                            case 0:
+                                cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail left join Product on OrderDetail.ProductID = Product.Id where ProductOnSale=1 and CategoryID=@CategoryID group by ProductID order by sum(PurchaseQty) desc";
+                                break;
+                            case 1:
+                                SqlParameter paramOrderDate = cmdFruit.CreateParameter();
+                                paramOrderDate.ParameterName = "@OrderDate";
+                                paramOrderDate.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramOrderDate.Size = 6;
+                                paramOrderDate.SqlValue = orderDate[0].ToString("yyyyMM");
+                                cmdFruit.Parameters.Add(paramOrderDate);
+
+                                cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail left join ProductOrder on OrderDetail.PoID = ProductOrder.Id left join Product on OrderDetail.ProductID = Product.Id where ProductOnSale=1 and CONVERT(varchar(6), OrderDate, 112) = @OrderDate and CategoryID=@CategoryID group by ProductID order by sum(PurchaseQty) desc";
+                                break;
+                            case 2:
+                                SqlParameter paramOrderDateStart = cmdFruit.CreateParameter();
+                                paramOrderDateStart.ParameterName = "@OrderDateStart";
+                                paramOrderDateStart.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramOrderDateStart.Size = 6;
+                                paramOrderDateStart.SqlValue = orderDate[0].ToString("yyyyMM");
+                                cmdFruit.Parameters.Add(paramOrderDateStart);
+
+                                SqlParameter paramOrderDateEnd = cmdFruit.CreateParameter();
+                                paramOrderDateEnd.ParameterName = "@OrderDateEnd";
+                                paramOrderDateEnd.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramOrderDateEnd.Size = 6;
+                                paramOrderDateEnd.SqlValue = orderDate[1].ToString("yyyyMM");
+                                cmdFruit.Parameters.Add(paramOrderDateEnd);
+
+                                cmdFruit.CommandText = "select top 1 ProductID, sum(PurchaseQty) from OrderDetail left join ProductOrder on OrderDetail.PoID = ProductOrder.Id left join Product on OrderDetail.ProductID = Product.Id where ProductOnSale=1 and CONVERT(varchar(6),OrderDate,112) >= @OrderDateStart and CONVERT(varchar(6),OrderDate,112) <= @OrderDateEnd and CategoryID=@CategoryID group by ProductID order by sum(PurchaseQty) desc";
                                 break;
                             default:
                                 throw new Exception("参数orderDate只能接收0~2个参数");

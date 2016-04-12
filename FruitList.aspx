@@ -13,7 +13,7 @@
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
-        </div>
+       </div>
         <div id="divFruitList" class="row">
         </div>
     </div>
@@ -65,7 +65,7 @@
 
                     $($.pager).on("onPageLoaded", function (event, data) {
                         //设置分页数据到全局数组变量，便于前端操作
-                        if (fruitList && Array.isArray(fruitList) && Array.isArray(data.originalDataPerPage)) {
+                        if (fruitList && Array.isArray(fruitList) && data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
                             fruitList = fruitList.concat(data.originalDataPerPage);
                         }
                     });
@@ -167,20 +167,11 @@
         //显示模式窗口，在图片load事件完成后回调
         function switchModalShow() {
             $("#divModal").addClass("md-show");
-            if ($(event.target).hasClass("md-setperspective")) {
-                setTimeout(function () {
-                    $(document).addClass("md-perspective");
-                }, 25);
-            }
         }
 
         //关闭模式对话框
         function closeModal() {
             $("#divModal").removeClass("md-show");
-
-            if ($(event.target).hasClass("md-setperspective")) {
-                $(document).removeClass("md-perspective");
-            }
         }
 
         //加入购物车

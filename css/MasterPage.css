@@ -1,9 +1,9 @@
 ﻿html {
-    background-color: white;
 }
 
 body {
-    background-color: white;
+    background-image: url('../images/bg.jpg');
+    background-size:100%;
     padding-bottom: 60px;
 }
 
@@ -97,6 +97,12 @@ hr {
             margin-bottom: 3px;
         }
 
+    .footer img {
+        margin-bottom: 3px;
+        width: 20px;
+        height: 20px;
+    }
+
 .cart-prod-hint {
     position: absolute;
     top: -10px;
@@ -107,6 +113,13 @@ hr {
     color: white;
     background-color: red;
     border-radius: 50%;
+}
+
+.wx-sticky{
+    position: fixed;
+    top: 50px;
+    left: 5px;
+    font-size:small;
 }
 
 .qq-login {
