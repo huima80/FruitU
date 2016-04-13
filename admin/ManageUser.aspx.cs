@@ -74,14 +74,14 @@ public partial class admin_ManageUser : System.Web.UI.Page
                 if (this.ddlIsOnline.SelectedValue == "1")
                 {
                     UtilityHelper.AntiSQLInjection(this.ddlIsOnline.SelectedValue);
-                    listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())<=aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow));
+                    listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())<=aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow + 480));
                     this.ddlIsOnline.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                     isJoinUsers = true;
                 }
                 else
                 {
                     UtilityHelper.AntiSQLInjection(this.ddlIsOnline.SelectedValue);
-                    listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())>aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow));
+                    listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())>aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow + 480));
                     this.ddlIsOnline.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                     isJoinUsers = true;
                 }
@@ -202,7 +202,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
             if (!string.IsNullOrEmpty(this.txtStartLastActivityDate.Text.Trim()))
             {
                 UtilityHelper.AntiSQLInjection(this.txtStartLastActivityDate.Text);
-                listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Users.LastActivityDate, 112) >= '{0}'", this.txtStartLastActivityDate.Text.Trim().Replace("-", "")));
+                listWhere.Add(string.Format("CONVERT(varchar(8), DATEADD(hh,8,aspnet_Users.LastActivityDate), 112) >= '{0}'", this.txtStartLastActivityDate.Text.Trim().Replace("-", "")));
                 this.txtStartLastActivityDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                 isJoinUsers = true;
             }
@@ -215,7 +215,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
             if (!string.IsNullOrEmpty(this.txtEndLastActivityDate.Text.Trim()))
             {
                 UtilityHelper.AntiSQLInjection(this.txtEndLastActivityDate.Text);
-                listWhere.Add(string.Format("CONVERT(varchar(8), aspnet_Users.LastActivityDate, 112) <= '{0}'", this.txtEndLastActivityDate.Text.Trim().Replace("-", "")));
+                listWhere.Add(string.Format("CONVERT(varchar(8), DATEADD(hh,8,aspnet_Users.LastActivityDate), 112) <= '{0}'", this.txtEndLastActivityDate.Text.Trim().Replace("-", "")));
                 this.txtEndLastActivityDate.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                 isJoinUsers = true;
             }
