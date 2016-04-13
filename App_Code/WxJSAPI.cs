@@ -19,8 +19,7 @@ public class WxJSAPI
     }
 
     /// <summary>
-    /// access_token是公众号的全局唯一票据，公众号调用各接口时都需使用access_token。开发者需要进行妥善保存。access_token的存储至少要保留512个字符空间。access_token的有效期目前为2个小时，需定时刷新，重复获取将导致上次获取的access_token失效。
-    /// API参考：http://mp.weixin.qq.com/wiki/15/54ce45d8d30b6bf6758f68d2e95bc627.html
+    /// 从Cache缓存中获取Access Token，如果缓存为空，则重新向微信请求Access Token
     /// </summary>
     /// <returns></returns>
     public static string GetAccessToken()
@@ -31,30 +30,11 @@ public class WxJSAPI
         {
             if (HttpRuntime.Cache["AccessToken"] == null)
             {
-                string tokenUrl = string.Format(@"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={0}&secret={1}", Config.APPID, Config.APPSECRET);
-
-                string strToken = HttpService.Get(tokenUrl);
-
-                JsonData jToken = JsonMapper.ToObject(strToken);
-
-                if (jToken.Keys.Contains("access_token") && jToken.Keys.Contains("expires_in"))
-                {
-                    //根据微信返回的token和有效期，存入Cache
-                    double tokenExpiration = double.Parse(jToken["expires_in"].ToString());
-                    HttpRuntime.Cache.Insert("AccessToken", jToken["access_token"].ToString(), null, DateTime.Now.AddSeconds(tokenExpiration), Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
-
-                    token = jToken["access_token"].ToString();
-                }
-                else
-                {
-                    token = strToken;
-                    throw new Exception(strToken);
-                }
+                token = RefreshAccessToken();
             }
             else
             {
                 token = HttpRuntime.Cache["AccessToken"].ToString();
-
             }
         }
         catch (Exception ex)
@@ -64,6 +44,50 @@ public class WxJSAPI
 
         return token;
 
+    }
+
+    /// <summary>
+    /// access_token是公众号的全局唯一票据，公众号调用各接口时都需使用access_token。开发者需要进行妥善保存。access_token的存储至少要保留512个字符空间。access_token的有效期目前为2个小时，需定时刷新，重复获取将导致上次获取的access_token失效。
+    /// API参考：http://mp.weixin.qq.com/wiki/15/54ce45d8d30b6bf6758f68d2e95bc627.html
+    /// </summary>
+    /// <returns></returns>
+    private static string RefreshAccessToken()
+    {
+        string token = string.Empty;
+        string tokenUrl = string.Format(@"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={0}&secret={1}", Config.APPID, Config.APPSECRET);
+        string strToken;
+        JsonData jToken;
+
+        do
+        {
+            strToken = HttpService.Get(tokenUrl);
+            jToken = JsonMapper.ToObject(strToken);
+            if (jToken.Keys.Contains("access_token") && jToken.Keys.Contains("expires_in") && jToken["access_token"] != null && jToken["expires_in"] != null)
+            {
+                token = jToken["access_token"].ToString();
+                //根据微信返回的token和有效期，设置cache项有效期为expires_in提前10分钟，存入Cache
+                double tokenExpiration = double.Parse(jToken["expires_in"].ToString());
+                HttpRuntime.Cache.Insert("AccessToken", token, null, DateTime.Now.AddSeconds(tokenExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.Default, onAccessTokenRemovedCallBack);
+            }
+        } while (string.IsNullOrEmpty(token));
+
+        Log.Info("RefreshAccessToken", token);
+
+        return token;
+    }
+
+    /// <summary>
+    /// Cache删除过期的Access Token缓存后，重新向微信请求缓存
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <param name="reason"></param>
+    private static void onAccessTokenRemovedCallBack(string key, object value, CacheItemRemovedReason reason)
+    {
+        if (key == "AccessToken")
+        {
+            RefreshAccessToken();
+        }
     }
 
     /// <summary>
