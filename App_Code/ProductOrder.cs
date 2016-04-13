@@ -1581,7 +1581,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// PrepayID超时后，需要重新发起统一下单，得到新的PrepayID，并更新数据库的“PrepayID、微信支付方式”字段
+    /// PrepayID超时后，需要重新发起统一下单，得到新的PrepayID，并更新数据库的“PrepayID、PaymentTerm微信支付方式、TradeState未支付”字段
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
@@ -1600,7 +1600,7 @@ public class ProductOrder : IComparable<ProductOrder>
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
 
-                        cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm where Id=@Id";
+                        cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm, TradeState = @TradeState where Id=@Id";
 
                         SqlParameter paramId;
                         paramId = cmdOrderID.CreateParameter();
@@ -1623,6 +1623,13 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramPaymentTerm.SqlDbType = System.Data.SqlDbType.Int;
                         paramPaymentTerm.SqlValue = (int)PaymentTerm.WECHAT;
                         cmdOrderID.Parameters.Add(paramPaymentTerm);
+
+                        SqlParameter paramTradeState;
+                        paramTradeState = cmdOrderID.CreateParameter();
+                        paramTradeState.ParameterName = "@TradeState";
+                        paramTradeState.SqlDbType = System.Data.SqlDbType.Int;
+                        paramTradeState.SqlValue = TradeState.NOTPAY;
+                        cmdOrderID.Parameters.Add(paramTradeState);
 
                         foreach (SqlParameter param in cmdOrderID.Parameters)
                         {
