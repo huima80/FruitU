@@ -315,6 +315,10 @@ public class ProductOrder : IComparable<ProductOrder>
         //加载完整的订单信息
         ProductOrder po = new ProductOrder(poID);
 
+        //对于已有订单，用户在我的订单中点击“微信支付”后，需要把此订单的支付方式改为“微信支付”、支付状态改为“未支付”
+        po.PaymentTerm = PaymentTerm.WECHAT;
+        po.TradeState = TradeState.NOTPAY;
+
         if (!string.IsNullOrEmpty(po.OrderID))
         {
             //如果此订单的PrepayID不为空（下单时选择的微信支付）
@@ -1599,7 +1603,6 @@ public class ProductOrder : IComparable<ProductOrder>
                 {
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
-
                         cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm, TradeState = @TradeState where Id=@Id";
 
                         SqlParameter paramId;
@@ -1621,14 +1624,14 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramPaymentTerm = cmdOrderID.CreateParameter();
                         paramPaymentTerm.ParameterName = "@PaymentTerm";
                         paramPaymentTerm.SqlDbType = System.Data.SqlDbType.Int;
-                        paramPaymentTerm.SqlValue = (int)PaymentTerm.WECHAT;
+                        paramPaymentTerm.SqlValue = (int)po.PaymentTerm;
                         cmdOrderID.Parameters.Add(paramPaymentTerm);
 
                         SqlParameter paramTradeState;
                         paramTradeState = cmdOrderID.CreateParameter();
                         paramTradeState.ParameterName = "@TradeState";
                         paramTradeState.SqlDbType = System.Data.SqlDbType.Int;
-                        paramTradeState.SqlValue = TradeState.NOTPAY;
+                        paramTradeState.SqlValue = (int)po.TradeState;
                         cmdOrderID.Parameters.Add(paramTradeState);
 
                         foreach (SqlParameter param in cmdOrderID.Parameters)
