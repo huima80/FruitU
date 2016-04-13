@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.UI.HtmlControls;
 using System.Data;
 using System.Web.Security;
 
@@ -70,7 +71,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
             }
             else
             {
-                if(this.ddlIsOnline.SelectedValue == "1")
+                if (this.ddlIsOnline.SelectedValue == "1")
                 {
                     UtilityHelper.AntiSQLInjection(this.ddlIsOnline.SelectedValue);
                     listWhere.Add(string.Format("DATEADD(mi,-{0},GETDATE())<=aspnet_Users.LastActivityDate", Membership.UserIsOnlineTimeWindow));
@@ -309,21 +310,53 @@ public partial class admin_ManageUser : System.Web.UI.Page
         {
             WeChatUser wxUser = (WeChatUser)e.Row.DataItem;
 
-            CheckBox cbIsApproved = e.Row.FindControl("cbIsApproved") as CheckBox;
-            cbIsApproved.Attributes["UserId"] = wxUser.ProviderUserKey != null ? wxUser.ProviderUserKey.ToString() : null;
-            if(wxUser.IsApproved)
+            //是否在线图标
+            HtmlContainerControl divIsOnline = e.Row.FindControl("divIsOnline") as HtmlContainerControl;
+            if (wxUser.IsOnline)
             {
-                cbIsApproved.Attributes["onclick"] = "if(!confirm('是否禁止此用户登录？')){return false;}";
+                divIsOnline.InnerHtml = "<i class=\"fa fa-check\"></i>";
+                divIsOnline.Attributes["title"] = "在线";
             }
             else
             {
-                cbIsApproved.Attributes["onclick"] = "if(!confirm('是否允许此用户登录？')){return false;}";
+                divIsOnline.InnerHtml = "<i class=\"fa fa-close\"></i>";
+                divIsOnline.Attributes["title"] = "离线";
+            }
+
+            //是否关注公众号图标
+            HtmlContainerControl divIsSubscribe = e.Row.FindControl("divIsSubscribe") as HtmlContainerControl;
+            if (wxUser.IsSubscribe)
+            {
+                divIsSubscribe.InnerHtml = "<i class=\"fa fa-check\"></i>";
+                divIsSubscribe.Attributes["title"] = "已关注";
+            }
+            else
+            {
+                divIsSubscribe.InnerHtml = "<i class=\"fa fa-close\"></i>";
+                divIsSubscribe.Attributes["title"] = "未关注";
+            }
+
+            //是否允许登录
+            CheckBox cbIsApproved = e.Row.FindControl("cbIsApproved") as CheckBox;
+            if (wxUser.ProviderUserKey != null)
+            {
+                cbIsApproved.Attributes["UserId"] = wxUser.ProviderUserKey.ToString();
+                if (wxUser.IsApproved)
+                {
+                    cbIsApproved.Attributes["onclick"] = "if(!confirm('是否禁止此用户登录？')){return false;}";
+                }
+                else
+                {
+                    cbIsApproved.Attributes["onclick"] = "if(!confirm('是否允许此用户登录？')){return false;}";
+                }
+            }
+            else
+            {
+                cbIsApproved.Enabled = false;
+                cbIsApproved.ToolTip = "此用户没有成员资格信息，请核查。";
             }
 
         }
     }
 
-    protected void btnRefreshWxUserInfo_Click(object sender, EventArgs e)
-    {
-    }
 }

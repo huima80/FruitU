@@ -3,6 +3,17 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="../css/ManageProduct.css" rel="stylesheet" />
     <link href="../Scripts/gridstack/gridstack-0.2.4.css" rel="stylesheet" />
+    <style>
+        .fa-check {
+            color: red;
+            font-size: 20px;
+        }
+
+        .fa-close {
+            color: grey;
+            font-size: 20px;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container-fluid">
@@ -64,8 +75,16 @@
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:BoundField DataField="InventoryQty" HeaderText="库存数量" SortExpression="InventoryQty" />
-                        <asp:CheckBoxField DataField="OnSale" HeaderText="是否上架" SortExpression="OnSale" />
-                        <asp:CheckBoxField DataField="IsSticky" HeaderText="是否置顶" SortExpression="IsSticky" />
+                        <asp:TemplateField HeaderText="是否上架" SortExpression="OnSale">
+                            <ItemTemplate>
+                                <div id="divOnSale" runat="server"></div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="是否置顶" SortExpression="IsSticky">
+                            <ItemTemplate>
+                                <div id="divIsSticky" runat="server"></div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:BoundField DataField="Priority" HeaderText="优先级" SortExpression="Priority" />
                         <asp:CommandField ButtonType="Button" ShowSelectButton="True">
                             <ControlStyle CssClass="btn btn-default" />

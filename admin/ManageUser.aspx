@@ -6,6 +6,16 @@
             width: 64px;
             height: 64px;
         }
+
+        .fa-check {
+            color: red;
+            font-size: 20px;
+        }
+
+        .fa-close {
+            color: grey;
+            font-size: 20px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server" ClientIDMode="Static">
@@ -123,8 +133,16 @@
                                 <p title="最近活跃时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# Eval("LastActivityDate") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:CheckBoxField DataField="IsOnline" HeaderText="是否在线" ReadOnly="True" SortExpression="IsOnline" />
-                        <asp:CheckBoxField DataField="IsSubscribe" HeaderText="是否关注公众号" SortExpression="IsSubscribe" ReadOnly="True" />
+                        <asp:TemplateField HeaderText="是否在线" SortExpression="IsOnline">
+                            <ItemTemplate>
+                                <div id="divIsOnline" runat="server"></div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="是否关注公众号" SortExpression="IsSubscribe">
+                            <ItemTemplate>
+                                <div id="divIsSubscribe" runat="server"></div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="是否允许登录" SortExpression="IsApproved">
                             <ItemTemplate>
                                 <div class="checkbox">
@@ -142,6 +160,8 @@
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
+
+                    <PagerSettings Mode="NumericFirstLast"></PagerSettings>
 
                     <PagerStyle CssClass="pager"></PagerStyle>
                 </asp:GridView>

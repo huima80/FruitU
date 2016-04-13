@@ -110,9 +110,36 @@ public partial class ManageProduct : System.Web.UI.Page
     {
         if (e.Row.RowType == DataControlRowType.DataRow)
         {
+            Fruit fruit = (Fruit)e.Row.DataItem;
+
+            //是否上架图标
+            HtmlContainerControl divOnSale = e.Row.FindControl("divOnSale") as HtmlContainerControl;
+            if (fruit.OnSale)
+            {
+                divOnSale.InnerHtml = "<i class=\"fa fa-check\"></i>";
+                divOnSale.Attributes["title"] = "已上架";
+            }
+            else
+            {
+                divOnSale.InnerHtml = "<i class=\"fa fa-close\"></i>";
+                divOnSale.Attributes["title"] = "已下架";
+            }
+
+            //是否置顶图标
+            HtmlContainerControl divIsSticky = e.Row.FindControl("divIsSticky") as HtmlContainerControl;
+            if (fruit.IsSticky)
+            {
+                divIsSticky.InnerHtml = "<i class=\"fa fa-check\"></i>";
+                divIsSticky.Attributes["title"] = "已置顶";
+            }
+            else
+            {
+                divIsSticky.InnerHtml = "<i class=\"fa fa-close\"></i>";
+                divIsSticky.Attributes["title"] = "未置顶";
+            }
+
             LinkButton btnDel = (LinkButton)e.Row.Controls[0].Controls[0];
             btnDel.Attributes.Add("onclick", "return confirm('您是否要删除这条信息？');");
-
 
         }
     }
