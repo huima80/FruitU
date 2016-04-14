@@ -23,7 +23,7 @@ input[type=checkbox] {
 .purchase-qty{
     font-size:10px;
     font-style:italic;
-    color:grey;
+    color:blue;
 }
 
 .order-price{

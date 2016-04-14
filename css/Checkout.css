@@ -1,8 +1,4 @@
-﻿html, body{
-    background: #EDEDED;
-}
-
-.container {
+﻿.container {
     padding: 0;
 }
 
@@ -12,11 +8,13 @@
 
 .prod-item {
     width: 95%;
+    padding: 6px;
     min-height: 100px;
     margin: 10px auto;
     background-color: white;
+    border: groove;
+    border-width: 1px;
     border-radius: 8px;
-    padding: 6px;
 }
 
     .prod-item div {

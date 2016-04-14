@@ -4,6 +4,7 @@
 body {
     background-image: url('../images/bg.jpg');
     background-size:100%;
+    background-attachment:fixed;
     padding-bottom: 60px;
 }
 
