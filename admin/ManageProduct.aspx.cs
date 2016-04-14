@@ -38,9 +38,9 @@ public partial class ManageProduct : System.Web.UI.Page
             this.odsFruitList.TypeName = "Fruit";
             this.odsFruitList.EnablePaging = true;
 
-            this.odsFruitList.SelectParameters.Add("tableName", DbType.String, "Product");
+            this.odsFruitList.SelectParameters.Add("tableName", DbType.String, "Product left join Category on Product.CategoryID = Category.Id");
             this.odsFruitList.SelectParameters.Add("pk", DbType.String, "Product.Id");
-            this.odsFruitList.SelectParameters.Add("fieldsName", DbType.String, "Product.*");
+            this.odsFruitList.SelectParameters.Add("fieldsName", DbType.String, "Product.*,Category.ParentID,Category.CategoryName");
             this.odsFruitList.SelectParameters.Add("strWhere", DbType.String, string.Empty);
             this.odsFruitList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
             this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;

@@ -111,14 +111,15 @@
             <div class="col-lg-12">
                 <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowUpdating="gvOrderList_RowUpdating">
                     <Columns>
-                        <asp:TemplateField HeaderText="订单ID" SortExpression="OrderID">
+                        <asp:TemplateField HeaderText="订单信息" SortExpression="OrderID">
                             <ItemTemplate>
+                                <p title="下单人微信昵称"><i class="fa fa-wechat"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# Eval("Purchaser.Nickname") + ((bool)Eval("Purchaser.Sex")?"&nbsp;<i class=\"fa fa-mars\" style=\"color:blue;\"></i>":"&nbsp;<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>") %>'></asp:Label></p>
                                 <p title="订单编号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="Label1" runat="server" Text='<%# Eval("OrderID") %>'></asp:Label></p>
                                 <p title="下单时间"><i class="fa fa-calendar"></i>&nbsp;<asp:Label ID="Label4" runat="server" Text='<%# Eval("OrderDate") %>'></asp:Label></p>
                                 <p id="pCancelDate" runat="server" title="撤单时间"><i class="fa fa-close"></i>&nbsp;<asp:Label ID="Label2" runat="server" Text='<%# Eval("CancelDate") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="收货人信息" SortExpression="DeliverName">
+                        <asp:TemplateField HeaderText="收货人信息" SortExpression="DeliverName" ItemStyle-CssClass="col-lg-3">
                             <ItemTemplate>
                                 <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-pencil-square-o\"></i>&nbsp;"+Server.HtmlEncode(Eval("OrderMemo").ToString())+"</p>" %>'></asp:Label>
                             </ItemTemplate>

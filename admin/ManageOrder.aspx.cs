@@ -253,20 +253,21 @@ public partial class ManageOrder : System.Web.UI.Page
 
     protected void gvOrderList_RowUpdating(object sender, GridViewUpdateEventArgs e)
     {
-        //由于cbCashTradeState控件不是Bind绑定控件，所以GridView提交时不会自动生成更新值，需要根据是否选中现金收讫状态，在GridView的NewValues集合中增加值
-        GridViewRow gvr = ((GridView)sender).Rows[e.RowIndex];
-        CheckBox cbCashTradeState = gvr.FindControl("cbCashTradeState") as CheckBox;
-        //设置支付方式为货到付款，并根据是否选中checkbox设置现金收款状态
-        e.NewValues.Add("PaymentTerm", PaymentTerm.CASH);
-        if (cbCashTradeState.Checked)
+        if (odsOrderList.UpdateMethod == "UpdateTradeState")
         {
-            e.NewValues.Add("TradeState", TradeState.CASHPAID);
+            //由于cbCashTradeState控件不是Bind绑定控件，所以GridView提交时不会自动生成更新值，需要根据是否选中现金收讫状态，在GridView的NewValues集合中增加值
+            GridViewRow gvr = ((GridView)sender).Rows[e.RowIndex];
+            CheckBox cbCashTradeState = gvr.FindControl("cbCashTradeState") as CheckBox;
+            //根据是否选中checkbox设置现金收款状态
+            if (cbCashTradeState != null && cbCashTradeState.Checked)
+            {
+                e.NewValues.Add("TradeState", TradeState.CASHPAID);
+            }
+            else
+            {
+                e.NewValues.Add("TradeState", TradeState.CASHNOTPAID);
+            }
         }
-        else
-        {
-            e.NewValues.Add("TradeState", TradeState.CASHNOTPAID);
-        }
-
     }
 
     /// <summary>
@@ -283,17 +284,27 @@ public partial class ManageOrder : System.Web.UI.Page
             //保存用户更改的checkbox值
             bool isAccept = po.IsAccept;
             bool isDelivered = po.IsDelivered;
-            PaymentTerm paymentTerm = po.PaymentTerm;
             TradeState tradeState = po.TradeState;
 
             //根据订单ID加载完整订单信息，并赋值用户更改值
             po.FindOrderByID(po.ID);
-            po.IsAccept = isAccept;
-            po.AcceptDate = DateTime.Now;
-            po.IsDelivered = isDelivered;
-            po.DeliverDate = DateTime.Now;
-            po.PaymentTerm = paymentTerm;
-            po.TradeState = tradeState;
+
+            switch (odsOrderList.UpdateMethod)
+            {
+                case "AcceptOrder":
+                    po.IsAccept = isAccept;
+                    po.AcceptDate = DateTime.Now;
+                    break;
+                case "DeliverOrder":
+                    po.IsDelivered = isDelivered;
+                    po.DeliverDate = DateTime.Now;
+                    break;
+                case "UpdateTradeState":
+                    po.TradeState = tradeState;
+                    break;
+                default:
+                    throw new Exception("不能识别的更新方法");
+            }
 
             //注册订单发货事件处理函数
             po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
@@ -305,7 +316,7 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         CheckBox cbIsDelivery = sender as CheckBox;
         int rowIndex = int.Parse(cbIsDelivery.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "UpdateOrderDeliver";
+        this.odsOrderList.UpdateMethod = "DeliverOrder";
         this.gvOrderList.UpdateRow(rowIndex, false);
         this.gvOrderList.DataBind();
     }
@@ -314,7 +325,7 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         CheckBox cbIsAccept = sender as CheckBox;
         int rowIndex = int.Parse(cbIsAccept.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "UpdateOrderAccept";
+        this.odsOrderList.UpdateMethod = "AcceptOrder";
         this.gvOrderList.UpdateRow(rowIndex, false);
         this.gvOrderList.DataBind();
     }
