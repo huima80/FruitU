@@ -97,8 +97,8 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 maximumRows = pageSize;
                 startRowIndex = (pageIndex - 1) * maximumRows;
 
-                //查询分页数据
-                orderListPerPage = ProductOrder.FindProductOrderPager(strTableName, "ProductOrder.Id", "ProductOrder.*", strWhere, null, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, startRowIndex, maximumRows);
+                //分页查询订单数据，不需要加载下单人信息
+                orderListPerPage = ProductOrder.FindProductOrderPager(false, strTableName, "ProductOrder.Id", "ProductOrder.*", strWhere, null, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, startRowIndex, maximumRows);
 
                 //把List<>对象集合转换成JSON数据格式
                 jOrderListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(orderListPerPage));

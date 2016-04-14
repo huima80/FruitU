@@ -116,9 +116,9 @@ public class PayResultHandler : IHttpHandler
                         //校验微信支付返回的OpenID与原订单OpenID是否相符
                         if (queryOrderPayData.IsSet("openid"))
                         {
-                            if (po.OpenID != queryOrderPayData.GetValue("openid").ToString())
+                            if (po.Purchaser.OpenID != queryOrderPayData.GetValue("openid").ToString())
                             {
-                                throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), po.OpenID));
+                                throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), po.Purchaser.OpenID));
                             }
                         }
                         else

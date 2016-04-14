@@ -84,8 +84,8 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                 {
                     bool isNewUser;
 
-                    //在微信用户表和成员资格表中查找此用户信息，如找不到就新建
-                    WeChatUser wxUser = WeChatUserDAO.FindUserByOpenID(jAuthInfo["openid"].ToString());
+                    //在微信用户表和成员资格表中查找此用户信息，并刷新最近活动时间
+                    WeChatUser wxUser = WeChatUserDAO.FindUserByOpenID(jAuthInfo["openid"].ToString(), true);
 
                     //此用户在微信用户表中存在，但在成员资格表中不存在，则删除微信用户表数据，后续再重建
                     if (wxUser != null && wxUser.ProviderUserKey == null)

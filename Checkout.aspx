@@ -9,7 +9,6 @@
     <div class="container">
         <div class="prod-items">
         </div>
-        <hr />
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
@@ -62,7 +61,6 @@
                 </div>
             </div>
         </div>
-        <hr />
         <div class="row">
             <div class="col-sm-10">
                 <div class="form-group order-memo">
@@ -71,7 +69,6 @@
                 </div>
             </div>
         </div>
-        <hr />
         <div class="row sub-total">
             <div class="col-xs-12">
                 <span>总价：<span class="sub-total-price" id="spSubTotalPrice"></span></span>

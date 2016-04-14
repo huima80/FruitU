@@ -47,8 +47,8 @@
                <img src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
             {{/if}}   
                 {{/for}}        
-                {{if TopSellingOnMonth}}
-                    <span class="top-selling-month-prod"><i class="fa fa-trophy fa-lg"></i>本月爆款</span>
+                {{if TopSellingOnWeek}}
+                    <span class="top-selling-week-prod"><i class="fa fa-trophy fa-lg"></i>本周爆款</span>
             {{/if}}
         </div>
     </script>

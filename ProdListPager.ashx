@@ -16,10 +16,11 @@ public class ProdListPager : IHttpHandler
         List<Fruit> prodListPerPage;
         JsonData jProdListPerPage;
         List<string> listWhere = new List<string>();
-        int categoryID = 0;
+        int categoryID = 0, topSellingOnMonth, topSellingOnWeek;
 
         try
         {
+            //分页参数
             if (context.Request.QueryString["PageIndex"] == null)
             {
                 throw new Exception("缺少分页参数PageIndex");
@@ -39,6 +40,9 @@ public class ProdListPager : IHttpHandler
                 UtilityHelper.AntiSQLInjection(context.Request.QueryString["PageSize"]);
                 pageSize = int.Parse(context.Request.QueryString["PageSize"]);
             }
+            int startRowIndex, maximumRows;
+            maximumRows = pageSize;
+            startRowIndex = (pageIndex - 1) * maximumRows;
 
             //查询条件：上架的商品
             listWhere.Add("ProductOnSale=1");
@@ -58,31 +62,29 @@ public class ProdListPager : IHttpHandler
                 listWhere.Add(string.Format("ProductName like '%{0}%'", context.Request.QueryString["ProdName"].Trim()));
             }
 
+            //查询条件字句
             strWhere = string.Join<string>(" and ", listWhere);
 
             //排序条件：是否置顶、优先级、商品ID
             strOrder = "IsSticky desc, Priority desc";
 
-            int startRowIndex, maximumRows;
-            maximumRows = pageSize;
-            startRowIndex = (pageIndex - 1) * maximumRows;
-
-            //查询分页数据
-            prodListPerPage = Fruit.FindFruitPager(strWhere, strOrder, out totalRows, startRowIndex, maximumRows);
+            //查询分页数据，本周、本月爆款
+            prodListPerPage = Fruit.FindFruitPager("Product left join Category on Product.CategoryID = Category.Id", "Product.Id", "Product.*,Category.ParentID,Category.CategoryName", strWhere, strOrder, categoryID, out topSellingOnWeek, out topSellingOnMonth, out totalRows, startRowIndex, maximumRows);
 
             //把List<>对象集合转换成JSON数据格式
             jProdListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(prodListPerPage));
 
-            //查询当月爆款商品
-            int topSellingOnMonth = Fruit.FindTopSelling(categoryID, DateTime.Now);
-
-            //在JsonData中标记当月、当年销量最高的商品
+            //在JsonData中标记本周、本月爆款商品
             for (int i = 0; i < jProdListPerPage.Count; i++)
             {
+                if (jProdListPerPage[i]["ID"].ToString() == topSellingOnWeek.ToString())
+                {
+                    jProdListPerPage[i]["TopSellingOnWeek"] = "1";
+                }
+
                 if (jProdListPerPage[i]["ID"].ToString() == topSellingOnMonth.ToString())
                 {
                     jProdListPerPage[i]["TopSellingOnMonth"] = "1";
-                    break;
                 }
             }
 

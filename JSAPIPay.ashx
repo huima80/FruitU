@@ -52,7 +52,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //--------------生成订单业务对象START-----------------
                     newPO = new ProductOrder();
                     newPO.OrderID = ProductOrder.MakeOrderID();    //生成OrderID
-                    newPO.OpenID = wxUser.OpenID;
+                    newPO.Purchaser = wxUser;
                     newPO.ClientIP = wxUser.ClientIP;
                     newPO.DeliverName = jOrderInfo["name"].ToString();
                     newPO.DeliverPhone = jOrderInfo["phone"].ToString();

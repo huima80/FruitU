@@ -86,7 +86,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                         strOpenID = Regex.Match(strOpenID, @"\{.*\}").Value;
 
-                        if(string.IsNullOrEmpty(strOpenID))
+                        if (string.IsNullOrEmpty(strOpenID))
                         {
                             //正则解析openid错误
                             throw new Exception("正则解析openid错误");
@@ -94,7 +94,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                         JsonData jOpenID = JsonMapper.ToObject(strOpenID);
 
-                        if (jOpenID != null && jOpenID["openid"] != null)
+                        if (jOpenID != null && jOpenID.Keys.Contains("openid") && jOpenID["openid"] != null)
                         {
                             jAuthInfo["openid"] = jOpenID["openid"];
                         }
@@ -134,7 +134,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         //    "is_yellow_year_vip": "0"
                         //}
 
-                        if(string.IsNullOrEmpty(strUserInfo))
+                        if (string.IsNullOrEmpty(strUserInfo))
                         {
                             //QQ用户信息为空
                             throw new Exception("QQ用户信息为空");
@@ -142,7 +142,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                         JsonData jUserInfo = JsonMapper.ToObject(strUserInfo);
 
-                        if (jUserInfo != null && jUserInfo["ret"] != null && jUserInfo["ret"].ToString() == "0" && jUserInfo["nickname"] != null)
+                        if (jUserInfo != null && jUserInfo.Keys.Contains("ret") && jUserInfo["ret"] != null && jUserInfo["ret"].ToString() == "0" && jUserInfo.Keys.Contains("nickname") && jUserInfo["nickname"] != null)
                         {
                             bool isNewUser;
                             QQUser qqUser;

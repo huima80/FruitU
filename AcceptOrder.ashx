@@ -32,7 +32,7 @@ public class AcceptOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessio
                     po.IsAccept = true;
                     po.AcceptDate = DateTime.Now;
                     po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    if (ProductOrder.UpdateOrderAccept(po) == 1)
+                    if (ProductOrder.AcceptOrder(po) == 1)
                     {
                         jStateCode["result_code"] = "SUCCESS";
                         jStateCode["po_id"] = poID;

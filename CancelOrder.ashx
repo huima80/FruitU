@@ -42,7 +42,7 @@ public class CancelOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessio
                     po.IsCancel = true;
                     po.CancelDate = DateTime.Now;
                     po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    if (ProductOrder.UpdateOrderCancel(po) == 1)
+                    if (ProductOrder.CancelOrder(po) == 1)
                     {
                         jStateCode["result_code"] = "SUCCESS";
                         jStateCode["po_id"] = poID;
