@@ -19,9 +19,9 @@ public class ProductOrder : IComparable<ProductOrder>
     public string OrderID { get; set; }
 
     /// <summary>
-    /// 下单人微信OpenID
+    /// 下单人信息
     /// </summary>
-    public string OpenID { get; set; }
+    public WeChatUser Purchaser { get; set; }
 
     /// <summary>
     /// 订单商品明细
@@ -415,7 +415,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramOpenID.ParameterName = "@OpenID";
                         paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
                         paramOpenID.Size = 50;
-                        paramOpenID.SqlValue = po.OpenID;
+                        paramOpenID.SqlValue = po.Purchaser.OpenID;
                         cmdAddOrder.Parameters.Add(paramOpenID);
 
                         SqlParameter paramDeliverName = cmdAddOrder.CreateParameter();
@@ -705,7 +705,6 @@ public class ProductOrder : IComparable<ProductOrder>
 
                                 po.ID = int.Parse(sdrOrder["Id"].ToString());
                                 po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
                                 po.DeliverName = sdrOrder["DeliverName"].ToString();
                                 po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
                                 po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
@@ -725,6 +724,8 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
+
+                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
                                 poList.Add(po);
 
@@ -769,7 +770,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <returns>符合条件的记录集</returns>
     public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
     {
-        return FindProductOrderPager("ProductOrder", "Id", "*", strWhere, strOrder, out totalRows, startRowIndex, maximumRows);
+        return FindProductOrderPager(true, "ProductOrder", "Id", "*", strWhere, strOrder, out totalRows, startRowIndex, maximumRows);
     }
 
     /// <summary>
@@ -784,7 +785,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="startRowIndex"></param>
     /// <param name="maximumRows"></param>
     /// <returns>符合条件的记录集</returns>
-    public static List<ProductOrder> FindProductOrderPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -801,7 +802,7 @@ public class ProductOrder : IComparable<ProductOrder>
                 {
                     using (SqlCommand cmdOrder = conn.CreateCommand())
                     {
-                        cmdOrder.CommandText = "spOrderQuery";
+                        cmdOrder.CommandText = "spSqlPageByRowNum";
                         cmdOrder.CommandType = CommandType.StoredProcedure;
 
                         SqlParameter paramTableName = cmdOrder.CreateParameter();
@@ -882,7 +883,6 @@ public class ProductOrder : IComparable<ProductOrder>
 
                                 po.ID = int.Parse(sdrOrder["Id"].ToString());
                                 po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.DeliverName = sdrOrder["DeliverName"].ToString();
                                 po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
@@ -901,6 +901,8 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
                                 po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+
+                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -941,8 +943,31 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 分页查询订单
+    /// 按条件加载订单信息、订单所属下单人信息
+    /// 用于ManageOrder.aspx后台订单管理页面里的分页显示订单，需要加载订单的下单人信息，用于显示订单的下单人微信昵称等信息
     /// </summary>
+    /// <param name="tableName"></param>
+    /// <param name="pk"></param>
+    /// <param name="fieldsName"></param>
+    /// <param name="strWhere"></param>
+    /// <param name="strOrder"></param>
+    /// <param name="totalRows"></param>
+    /// <param name="payingOrderCount"></param>
+    /// <param name="deliveringOrderCount"></param>
+    /// <param name="acceptingOrderCount"></param>
+    /// <param name="startRowIndex"></param>
+    /// <param name="maximumRows"></param>
+    /// <returns></returns>
+    public static List<ProductOrder> FindProductOrderPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
+    {
+        //默认加载每个订单所属的用户信息
+        return FindProductOrderPager(true, tableName, pk, fieldsName, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, startRowIndex, maximumRows);
+    }
+
+    /// <summary>
+    /// 分页查询订单，可指定是否加载订单的下单人信息，用于前台MyOrders.aspx我的订单页面，不需要加载订单的下单人信息，避免对象转换JSON数据出错
+    /// </summary>
+    /// <param name="isLoadPurchaser">是否加载订单所属的下单人信息</param>
     /// <param name="tableName">待查询表名，可关联</param>
     /// <param name="pk">主键</param>
     /// <param name="fieldsName">待查询字段名</param>
@@ -955,7 +980,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="startRowIndex">每页开始行号</param>
     /// <param name="maximumRows">每页行数</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -1074,7 +1099,6 @@ public class ProductOrder : IComparable<ProductOrder>
 
                                 po.ID = int.Parse(sdrOrder["Id"].ToString());
                                 po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.DeliverName = sdrOrder["DeliverName"].ToString();
                                 po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
@@ -1094,6 +1118,13 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
 
+                                if (isLoadPurchaser)
+                                {
+                                    //此订单的下单人信息，不需要再加载下单人的所有订单列表信息，也不需要刷新下单人活动时间
+                                    po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                }
+
+                                //此订单的商品详情
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
                                 poPerPage.Add(po);
@@ -1239,7 +1270,6 @@ public class ProductOrder : IComparable<ProductOrder>
                             {
                                 this.ID = int.Parse(sdrOrder["Id"].ToString());
                                 this.OrderID = sdrOrder["OrderID"].ToString();
-                                this.OpenID = sdrOrder["OpenID"].ToString();
                                 this.DeliverName = sdrOrder["DeliverName"].ToString();
                                 this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
                                 this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
@@ -1258,6 +1288,8 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.ClientIP = sdrOrder["ClientIP"].ToString();
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+
+                                this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
                                 this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
@@ -1330,7 +1362,6 @@ public class ProductOrder : IComparable<ProductOrder>
                             {
                                 this.ID = int.Parse(sdrOrder["Id"].ToString());
                                 this.OrderID = sdrOrder["OrderID"].ToString();
-                                this.OpenID = sdrOrder["OpenID"].ToString();
                                 this.DeliverName = sdrOrder["DeliverName"].ToString();
                                 this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
                                 this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
@@ -1349,6 +1380,8 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.ClientIP = sdrOrder["ClientIP"].ToString();
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+
+                                this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
                                 this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
@@ -1428,7 +1461,6 @@ public class ProductOrder : IComparable<ProductOrder>
 
                                 po.ID = int.Parse(sdrOrder["Id"].ToString());
                                 po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.OpenID = sdrOrder["OpenID"].ToString();
                                 po.DeliverName = sdrOrder["DeliverName"].ToString();
                                 po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
                                 po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
@@ -1447,6 +1479,8 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+
+                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -1672,7 +1706,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderCancel(ProductOrder po)
+    public static int CancelOrder(ProductOrder po)
     {
         int result;
 
@@ -1699,7 +1733,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramOpenID = cmdOrderID.CreateParameter();
                         paramOpenID.ParameterName = "@OpenID";
                         paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
-                        paramOpenID.SqlValue = po.OpenID;
+                        paramOpenID.SqlValue = po.Purchaser.OpenID;
                         cmdOrderID.Parameters.Add(paramOpenID);
 
                         SqlParameter paramIsCancel;
@@ -1759,7 +1793,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderDeliver(ProductOrder po)
+    public static int DeliverOrder(ProductOrder po)
     {
         int result;
 
@@ -1840,7 +1874,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdateOrderAccept(ProductOrder po)
+    public static int AcceptOrder(ProductOrder po)
     {
         int result;
 
@@ -1868,7 +1902,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramOpenID = cmdOrderID.CreateParameter();
                         paramOpenID.ParameterName = "@OpenID";
                         paramOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
-                        paramOpenID.SqlValue = po.OpenID;
+                        paramOpenID.SqlValue = po.Purchaser.OpenID;
                         cmdOrderID.Parameters.Add(paramOpenID);
 
                         SqlParameter paramIsAccept;

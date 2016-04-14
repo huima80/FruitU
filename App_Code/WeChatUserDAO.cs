@@ -175,7 +175,7 @@ public static class WeChatUserDAO
                             while (sdrUser.Read())
                             {
                                 //加载此用户的成员资格信息
-                                MembershipUser mUser = Membership.GetUser(sdrUser["OpenID"].ToString());
+                                MembershipUser mUser = Membership.GetUser(sdrUser["OpenID"].ToString(), false);
                                 if (mUser != null)
                                 {
                                     //使用成员资格对象初始化微信用户对象，并追加微信用户信息表数据
@@ -306,7 +306,23 @@ public static class WeChatUserDAO
         return wxUser;
     }
 
+    /// <summary>
+    /// 查找指定OpenID的用户，默认不刷新最近活动时间
+    /// </summary>
+    /// <param name="openID"></param>
+    /// <returns></returns>
     public static WeChatUser FindUserByOpenID(string openID)
+    {
+        return FindUserByOpenID(openID, false);
+    }
+
+    /// <summary>
+    /// 查找指定OpenID的用户
+    /// </summary>
+    /// <param name="openID"></param>
+    /// <param name="userIsOnline">是否刷新用户活动时间</param>
+    /// <returns></returns>
+    public static WeChatUser FindUserByOpenID(string openID, bool userIsOnline)
     {
         WeChatUser wxUser = null;
 
@@ -316,69 +332,78 @@ public static class WeChatUserDAO
             {
                 conn.Open();
 
-                try
-                {
-                    using (SqlCommand cmdUser = conn.CreateCommand())
-                    {
-                        SqlParameter paramUserID = cmdUser.CreateParameter();
-                        paramUserID.ParameterName = "@OpenID";
-                        paramUserID.SqlDbType = System.Data.SqlDbType.NVarChar;
-                        paramUserID.SqlValue = openID;
-                        cmdUser.Parameters.Add(paramUserID);
+                wxUser = FindUserByOpenID(conn, openID, userIsOnline);
 
-                        cmdUser.CommandText = "select WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount from WeChatUsers where OpenID = @OpenID";
-
-                        using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
-                        {
-                            while (sdrUser.Read())
-                            {
-                                //加载此用户的成员资格信息
-                                MembershipUser mUser = Membership.GetUser(sdrUser["OpenID"].ToString(), true);
-                                if (mUser != null)
-                                {
-                                    //使用新建的成员资格对象初始化微信用户对象
-                                    wxUser = new WeChatUser(mUser);
-                                }
-                                else
-                                {
-                                    wxUser = new WeChatUser();
-                                }
-
-                                wxUser.ID = int.Parse(sdrUser["Id"].ToString());
-                                wxUser.OpenID = sdrUser["OpenID"].ToString();
-                                wxUser.NickName = sdrUser["NickName"].ToString();
-                                wxUser.Sex = sdrUser["Sex"] != DBNull.Value ? bool.Parse(sdrUser["Sex"].ToString()) : true;
-                                wxUser.Country = sdrUser["Country"].ToString();
-                                wxUser.Province = sdrUser["Province"].ToString();
-                                wxUser.City = sdrUser["City"].ToString();
-                                wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
-                                wxUser.Privilege = sdrUser["Privilege"].ToString();
-                                wxUser.ClientIP = sdrUser["ClientIP"].ToString();
-                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                wxUser.OrderCount = int.Parse(sdrUser["OrderCount"].ToString());
-
-                            }
-                            sdrUser.Close();
-                        }
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == System.Data.ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
             }
         }
         catch (Exception ex)
         {
             Log.Error("FindUserByOpenID", ex.ToString());
+            throw ex;
+        }
+
+        return wxUser;
+    }
+
+    /// <summary>
+    /// 查找指定OpenID的用户
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <param name="openID"></param>
+    /// <param name="userIsOnline">是否刷新用户活动时间</param>
+    /// <returns></returns>
+    public static WeChatUser FindUserByOpenID(SqlConnection conn, string openID, bool userIsOnline)
+    {
+        WeChatUser wxUser = null;
+
+        try
+        {
+            using (SqlCommand cmdUser = conn.CreateCommand())
+            {
+                SqlParameter paramUserID = cmdUser.CreateParameter();
+                paramUserID.ParameterName = "@OpenID";
+                paramUserID.SqlDbType = System.Data.SqlDbType.NVarChar;
+                paramUserID.SqlValue = openID;
+                cmdUser.Parameters.Add(paramUserID);
+
+                cmdUser.CommandText = "select * from WeChatUsers where OpenID = @OpenID";
+
+                using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
+                {
+                    while (sdrUser.Read())
+                    {
+                        //加载此用户的成员资格信息
+                        MembershipUser mUser = Membership.GetUser(sdrUser["OpenID"].ToString(), userIsOnline);
+                        if (mUser != null)
+                        {
+                            //使用新建的成员资格对象初始化微信用户对象
+                            wxUser = new WeChatUser(mUser);
+                        }
+                        else
+                        {
+                            wxUser = new WeChatUser();
+                        }
+
+                        wxUser.ID = int.Parse(sdrUser["Id"].ToString());
+                        wxUser.OpenID = sdrUser["OpenID"].ToString();
+                        wxUser.NickName = sdrUser["NickName"].ToString();
+                        wxUser.Sex = sdrUser["Sex"] != DBNull.Value ? bool.Parse(sdrUser["Sex"].ToString()) : true;
+                        wxUser.Country = sdrUser["Country"].ToString();
+                        wxUser.Province = sdrUser["Province"].ToString();
+                        wxUser.City = sdrUser["City"].ToString();
+                        wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
+                        wxUser.Privilege = sdrUser["Privilege"].ToString();
+                        wxUser.ClientIP = sdrUser["ClientIP"].ToString();
+                        wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+
+                    }
+                    sdrUser.Close();
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
             throw ex;
         }
 

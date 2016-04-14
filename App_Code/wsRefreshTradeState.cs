@@ -47,9 +47,9 @@ public class wsRefreshTradeState : System.Web.Services.WebService
                         //校验微信支付返回的OpenID与原订单OpenID是否相符
                         if (queryOrderPayData.IsSet("openid"))
                         {
-                            if (poList[i].OpenID != queryOrderPayData.GetValue("openid").ToString())
+                            if (poList[i].Purchaser.OpenID != queryOrderPayData.GetValue("openid").ToString())
                             {
-                                throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), poList[i].OpenID));
+                                throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), poList[i].Purchaser.OpenID));
                             }
                         }
                         else

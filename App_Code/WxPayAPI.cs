@@ -54,7 +54,7 @@ public class WxPayAPI
             sendPayData.SetValue("goods_tag", "商品标记，代金券或立减优惠功能的参数");
             sendPayData.SetValue("notify_url", Config.PayNotifyUrl);   //必填，微信支付成功后异步通知url
             sendPayData.SetValue("trade_type", "JSAPI");    //必填
-            sendPayData.SetValue("openid", po.OpenID); //trade_type = JSAPI，此参数必传
+            sendPayData.SetValue("openid", po.Purchaser.OpenID); //trade_type = JSAPI，此参数必传
 
             //生成报文签名
             sendPayData.SetValue("sign", sendPayData.MakeSign());   //必填

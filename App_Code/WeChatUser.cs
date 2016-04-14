@@ -9,34 +9,54 @@ using System.Web.Security;
 /// </summary>
 public class WeChatUser : User, IComparable<WeChatUser>
 {
-    //是否关注微信公众号
+    /// <summary>
+    /// 是否关注微信公众号
+    /// </summary>
     public bool IsSubscribe { get; set; }
 
-    //微信用户头像
+    /// <summary>
+    /// 微信用户头像
+    /// </summary>
     public string HeadImgUrl { get; set; }
 
-    //微信用户特权信息
+    /// <summary>
+    /// 微信用户特权信息
+    /// </summary>
     public string Privilege { get; set; }
 
-    //snsapi_base授权模式的Access Token
+    /// <summary>
+    /// snsapi_base授权模式的Access Token
+    /// </summary>
     public string AccessTokenForBase { get; set; }
 
-    //snsapi_base授权模式的Refresh Token
+    /// <summary>
+    /// snsapi_base授权模式的Refresh Token
+    /// </summary>
     public string RefreshTokenForBase { get; set; }
 
-    //snsapi_base授权模式的过期时间
+    /// <summary>
+    /// snsapi_base授权模式的过期时间
+    /// </summary>
     public DateTime ExpireOfAccessTokenForBase { get; set; }
 
-    //snsapi_userinfo授权模式的Access Token
+    /// <summary>
+    /// snsapi_userinfo授权模式的Access Token
+    /// </summary>
     public string AccessTokenForUserInfo { get; set; }
 
-    //snsapi_userinfo授权模式的Refresh Token
+    /// <summary>
+    /// snsapi_userinfo授权模式的Refresh Token
+    /// </summary>
     public string RefreshTokenForUserInfo { get; set; }
 
-    //snsapi_userinfo授权模式的过期时间
+    /// <summary>
+    /// snsapi_userinfo授权模式的过期时间
+    /// </summary>
     public DateTime ExpireOfAccessTokenForUserInfo { get; set; }
 
-    //微信网页授权模式
+    /// <summary>
+    /// 微信网页授权模式
+    /// </summary>
     public WeChatAuthScope Scope { get; set; }
 
     /// <summary>

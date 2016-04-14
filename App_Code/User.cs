@@ -13,22 +13,45 @@ public abstract class User : MembershipUser, IComparable<User>
 
     public string OpenID { get; set; }
 
+    /// <summary>
+    /// 昵称
+    /// </summary>
     public string NickName { get; set; }
 
+    /// <summary>
+    /// 性别
+    /// </summary>
     public bool Sex { get; set; }
 
+    /// <summary>
+    /// 国家
+    /// </summary>
     public string Country { get; set; }
 
+    /// <summary>
+    /// 省份
+    /// </summary>
     public string Province { get; set; }
 
+    /// <summary>
+    /// 城市
+    /// </summary>
     public string City { get; set; }
 
+    /// <summary>
+    /// 客户端IP
+    /// </summary>
     public string ClientIP { get; set; }
 
     /// <summary>
     /// 订单数
     /// </summary>
     public int OrderCount { get; set; }
+
+    /// <summary>
+    /// 用户订单列表
+    /// </summary>
+    public List<ProductOrder> ProductOrderList { get; set; }
 
     public User()
     {

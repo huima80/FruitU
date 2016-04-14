@@ -57,6 +57,7 @@ public class WxJSAPI
         string tokenUrl = string.Format(@"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={0}&secret={1}", Config.APPID, Config.APPSECRET);
         string strToken;
         JsonData jToken;
+        double tokenExpiration;
 
         do
         {
@@ -64,10 +65,13 @@ public class WxJSAPI
             jToken = JsonMapper.ToObject(strToken);
             if (jToken.Keys.Contains("access_token") && jToken.Keys.Contains("expires_in") && jToken["access_token"] != null && jToken["expires_in"] != null)
             {
-                token = jToken["access_token"].ToString();
-                //根据微信返回的token和有效期，设置cache项有效期为expires_in提前10分钟，存入Cache
-                double tokenExpiration = double.Parse(jToken["expires_in"].ToString());
-                HttpRuntime.Cache.Insert("AccessToken", token, null, DateTime.Now.AddSeconds(tokenExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.Default, onAccessTokenRemovedCallBack);
+                if (double.TryParse(jToken["expires_in"].ToString(), out tokenExpiration))
+                {
+                    token = jToken["access_token"].ToString();
+ 
+                    //把微信返回的token存入Cache，设置cache项有效期为expires_in秒数再提前10分钟，且不允许.net自动回收
+                    HttpRuntime.Cache.Insert("AccessToken", token, null, DateTime.Now.AddSeconds(tokenExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.NotRemovable, onAccessTokenRemovedCallBack);
+                }
             }
         } while (string.IsNullOrEmpty(token));
 

@@ -287,7 +287,7 @@ public static class WxTmplMsg
                             break;
                     }
 
-                    jTmplMsg["touser"] = po.OpenID;
+                    jTmplMsg["touser"] = po.Purchaser.OpenID;
                     jTmplMsg["template_id"] = TMPL_DELIVER;
                     jTmplMsg["url"] = @"http://mahui.me/";
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
@@ -355,7 +355,7 @@ public static class WxTmplMsg
                     }
 
                     //通知管理员和用户
-                    listReceiver.Add(po.OpenID);
+                    listReceiver.Add(po.Purchaser.OpenID);
 
                     for (int i = 0; i < listReceiver.Count; i++)
                     {
