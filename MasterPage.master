@@ -18,11 +18,11 @@
     <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/MasterPage.css" rel="stylesheet" />
-    <link href="css/shake.css" rel="stylesheet" /> 
+    <link href="css/shake.css" rel="stylesheet" />
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <script src="Scripts/require.js"></script>
-        <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
+    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
     <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
          <script src="http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min.js"></script>
@@ -55,7 +55,7 @@
                 jsrender: 'jsrender',
                 flexslider: 'jquery.flexslider-min',
                 jssorslider: 'jssor.slider.mini',
-                cart: 'jquery.cart',
+                cart: 'cart',
                 pager: 'pager',
                 webConfig: 'webConfig'
             },
@@ -85,10 +85,14 @@
         <footer class="footer">
             <nav>
                 <ul>
-                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />首页</a></li>
-                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="ProdAmountHints"></span><br />购物车</a></li>
-                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><br />我的订单</a></li>
-                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><br />个人中心</a></li>
+                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />
+                        首页</a></li>
+                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="ProdAmountHints"></span><br />
+                        购物车</a></li>
+                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><br />
+                        我的订单</a></li>
+                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><br />
+                        个人中心</a></li>
                 </ul>
             </nav>
         </footer>
@@ -124,11 +128,11 @@
 
                     //挂接购物车商品变动前事件处理函数
                     $($.cart).on({
-                        "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemsClearing": shakeCart,
-                        "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemsCleared": refreshCartProdQty
+                        "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemClearing": shakeCart,
+                        "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemCleared": refreshCartProdQty
                     });
                 });
-                
+
             });
 
             //购物车抖动

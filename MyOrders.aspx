@@ -56,8 +56,8 @@
                     <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span></li>
                     {{/for}}
                 </ul>
-                <div class="order-price">
-                    <span class="order-total">合计：￥<span class="order-price">{{:OrderPrice}}</span>元
+                <div class="order-price-freight">
+                    <span class="order-total">合计：￥<span class="order-price">{{:OrderPrice}}</span>元<span class="freight">（含运费{{:Freight}}元)</span>
                 {{if IsCancel==0 && (TradeState!=1 && TradeState!=8)}}
                 <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><span class="ladda-label"><i class="fa fa-wechat fa-fw"></i>微信支付</span><span class="ladda-spinner"></span></button>
                         {{/if}}</span>

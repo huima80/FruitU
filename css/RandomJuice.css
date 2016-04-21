@@ -13,3 +13,9 @@
         cursor: pointer;
         font-size: large;
     }
+
+.prod-info {
+    font-size: 10px;
+    color: orange;
+    text-align: left;
+}

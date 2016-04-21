@@ -69,7 +69,7 @@ public class ProdListPager : IHttpHandler
             strOrder = "IsSticky desc, Priority desc";
 
             //查询分页数据，本周、本月爆款
-            prodListPerPage = Fruit.FindFruitPager("Product left join Category on Product.CategoryID = Category.Id", "Product.Id", "Product.*,Category.ParentID,Category.CategoryName", strWhere, strOrder, categoryID, out topSellingOnWeek, out topSellingOnMonth, out totalRows, startRowIndex, maximumRows);
+            prodListPerPage = Fruit.FindFruitPager(strWhere, strOrder, categoryID, out topSellingOnWeek, out topSellingOnMonth, out totalRows, startRowIndex, maximumRows);
 
             //把List<>对象集合转换成JSON数据格式
             jProdListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(prodListPerPage));

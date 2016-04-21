@@ -25,6 +25,8 @@
         <div class="md-content">
             <img id="imgDetailImg" src="" />
             <div>
+                <div class="prod-info"><i class="fa fa-check-circle"></i>&nbsp;单价：<span class="prod-price"></span>&nbsp;&nbsp;<i class="fa fa-check-circle"></i>&nbsp;库存数：<span id="spanInventory" class="inventory"></span><input type="hidden" id="hfInventory" /></div>
+                <hr />
                 <label class="sr-only" for="txtQty">购买数量</label>
                 <span class="input-group">
                     <span id="btnDesc" class="input-group-addon">-</span>
@@ -44,6 +46,13 @@
         requirejs(['jquery'], function ($) {
             $(function () {
                 $("#imgRandomJuice").on("click", randomJuice);
+
+                requirejs(['cart'], function () {
+                    //超出库存事件处理函数
+                    $($.cart).on("onOutOfStock", function (event, data) {
+                        alert("您已购买最大库存数了哦。");
+                    });
+                });
             });
 
             //递减商品数量
@@ -57,27 +66,34 @@
                     else {
                         currQty = 1;
                     }
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
                 }
                 else {
-                    $("#txtQty").val(1);
+                    currQty = 1;
                 }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
             });
 
             //递增商品数量
             $("#btnAsc").on("click", function () {
                 var currQty = $("#txtQty").val();
+                var inventory = $("#hfInventory").val();
                 if (!isNaN(currQty)) {
                     currQty = parseInt(currQty);
-                    currQty++;
-
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
+                    inventory = parseInt(inventory);
+                    if (currQty < inventory) {
+                        currQty++;
+                    }
                 }
                 else {
-                    $("#txtQty").val(1);
+                    currQty = 1;
                 }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
             });
 
             //校验是否输入数值
@@ -109,7 +125,7 @@
                 do {
                     //在商品数组中随机选择
                     ri = Math.floor(Math.random() * jLen);
-                } while (!juiceList[ri])
+                } while (!juiceList[ri]);
 
                 //查找随机商品的主图
                 if (juiceList[ri]["FruitImgList"] && Array.isArray(juiceList[ri]["FruitImgList"])) {
@@ -178,10 +194,17 @@
                             detailImg = webConfig.defaultImg;
                         }
 
-                        //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
-                        $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg);
+                        //商品库存量
+                        $("#spanInventory").text(juiceList[i]["InventoryQty"] == -1 ? "无限量" : juiceList[i]["InventoryQty"]);
+                        $("#hfInventory").val(juiceList[i]["InventoryQty"]);
+
+                        //商品单价
+                        $("span.prod-price").text("￥" + juiceList[i]["FruitPrice"] + "元/" + juiceList[i]["FruitUnit"]);
 
                         $("input#txtQty").val(1);
+
+                        //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
+                        $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg);
 
                         break;
                     }
@@ -214,7 +237,7 @@
 
         //加入购物车
         function addToCart() {
-            var prodID, mainImg, qty, jLen;
+            var prodID, mainImg, jLen;
             prodID = $("#btnAddToCart").data("prodid");
 
             if (prodID && juiceList && Array.isArray(juiceList)) {
@@ -234,11 +257,9 @@
                             mainImg = webConfig.defaultImg;
                         }
 
-                        //商品数量
-                        qty = $("input#txtQty").val();
-
                         //购物车里添加商品
-                        $.cart.insertProdItem(prodID, juiceList[i]["FruitName"], juiceList[i]["FruitDesc"], "images/" + mainImg, juiceList[i]["FruitPrice"], qty);
+                        var prodItem = new $.cart.ProdItem(prodID, juiceList[i]["FruitName"], juiceList[i]["FruitDesc"], "images/" + mainImg, juiceList[i]["FruitPrice"], parseInt($("input#txtQty").val()), juiceList[i]["InventoryQty"]);
+                        $.cart.insertProdItem(prodItem);
 
                         break;
                     }

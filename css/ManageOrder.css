@@ -31,6 +31,11 @@ input[type=checkbox] {
     color:red;
 }
 
+.freight{
+    font-size:small;
+    color:orange;
+}
+
 .fa-wechat{
     color:#00CD00;
 }

@@ -74,7 +74,11 @@
                                 <asp:Label ID="Label2" runat="server" Text='<%# Eval("FruitPrice", "{0:c2}")+"元/"+Eval("FruitUnit") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="InventoryQty" HeaderText="库存数量" SortExpression="InventoryQty" />
+                        <asp:TemplateField HeaderText="库存数量" SortExpression="InventoryQty">
+                            <ItemTemplate>
+                                <asp:Label ID="lblInventoryQty" runat="server" Text='<%# Eval("InventoryQty") %>'></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="是否上架" SortExpression="OnSale">
                             <ItemTemplate>
                                 <div id="divOnSale" runat="server"></div>
@@ -103,45 +107,121 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged">
+                <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged" OnDataBound="dvFruit_DataBound">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
-                        <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
-                        <asp:BoundField DataField="FruitName" HeaderText="商品名称" SortExpression="FruitName" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
+                        <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID"></asp:BoundField>
+                        <asp:TemplateField HeaderText="商品名称" SortExpression="FruitName">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtFruitName" runat="server" Text='<%# Bind("FruitName") %>' CausesValidation="True" CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ErrorMessage="请填写商品名称" ControlToValidate="txtFruitName" SetFocusOnError="True" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtFruitName" runat="server" Text='<%# Bind("FruitName") %>' CausesValidation="True" CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server" ErrorMessage="请填写商品名称" ControlToValidate="txtFruitName" SetFocusOnError="True" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Label5" runat="server" Text='<%# Bind("FruitName") %>'></asp:Label>
+                            </ItemTemplate>
+                            <ControlStyle CssClass="form-control" />
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="商品类别" SortExpression="Category">
                             <EditItemTemplate>
                                 <asp:DropDownList ID="ddlCategoryEdit" runat="server" DataSource="<%# MakeCategoryDataSource() %>" DataTextField="Value" DataValueField="Key" SelectedValue='<%# Eval("Category.ID") %>' CssClass="form-control">
-                                </asp:DropDownList>
+                                </asp:DropDownList><asp:CustomValidator ID="CustomValidator1" runat="server" ErrorMessage="请选择商品类别" ControlToValidate="ddlCategoryEdit" ClientValidationFunction="validateCategory" Display="Dynamic"></asp:CustomValidator>
                             </EditItemTemplate>
                             <InsertItemTemplate>
                                 <asp:DropDownList ID="ddlCategoryInsert" runat="server" DataSource="<%# MakeCategoryDataSource() %>" DataTextField="Value" DataValueField="Key" CssClass="form-control">
-                                </asp:DropDownList>
+                                </asp:DropDownList><asp:CustomValidator ID="CustomValidator2" runat="server" ErrorMessage="请选择商品类别" ControlToValidate="ddlCategoryInsert" ClientValidationFunction="validateCategory" Display="Dynamic"></asp:CustomValidator>
                             </InsertItemTemplate>
                             <ItemTemplate>
                                 <asp:Label ID="Label2" runat="server" Text='<%# Eval("Category.CategoryName") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="FruitPrice" HeaderText="商品价格" SortExpression="FruitPrice" DataFormatString="{0:c2}" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
-                        <asp:BoundField DataField="FruitUnit" HeaderText="商品单位" SortExpression="FruitUnit" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
-                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
-                        <asp:BoundField DataField="InventoryQty" HeaderText="库存数量" SortExpression="InventoryQty" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
-                        <asp:CheckBoxField DataField="OnSale" HeaderText="是否上架" SortExpression="OnSale" />
-                        <asp:CheckBoxField DataField="IsSticky" HeaderText="是否置顶" SortExpression="IsSticky" />
-                        <asp:BoundField DataField="Priority" HeaderText="优先级" SortExpression="Priority" ControlStyle-CssClass="form-control">
-                            <ControlStyle CssClass="form-control"></ControlStyle>
-                        </asp:BoundField>
+                        <asp:TemplateField HeaderText="商品价格" SortExpression="FruitPrice">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtFruitPrice" runat="server" Text='<%# Bind("FruitPrice") %>' CssClass="form-control"></asp:TextBox>元<asp:RegularExpressionValidator ID="RegularExpressionValidator1" runat="server" ErrorMessage="请输入有效的数字" ControlToValidate="txtFruitPrice" SetFocusOnError="True" ValidationExpression="[1-9]\d*.\d*|0.\d*[1-9]\d*|[1-9]\d*" Display="Dynamic"></asp:RegularExpressionValidator>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ErrorMessage="请输入商品价格" SetFocusOnError="True" ControlToValidate="txtFruitPrice" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtFruitPrice" runat="server" Text='<%# Bind("FruitPrice", "{0:c2}") %>' CssClass="form-control"></asp:TextBox>元<asp:RegularExpressionValidator ID="RegularExpressionValidator1" runat="server" ErrorMessage="请输入有效的数字" ControlToValidate="txtFruitPrice" SetFocusOnError="True" ValidationExpression="[1-9]\d*.\d*|0.\d*[1-9]\d*|[1-9]\d*" Display="Dynamic"></asp:RegularExpressionValidator>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ErrorMessage="请输入商品价格" SetFocusOnError="True" ControlToValidate="txtFruitPrice" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Label1" runat="server" Text='<%# Bind("FruitPrice", "{0:c2}") %>'></asp:Label>
+                            </ItemTemplate>
+                            <ControlStyle CssClass="form-control" />
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="商品单位" SortExpression="FruitUnit">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtFruitUnit" runat="server" Text='<%# Bind("FruitUnit") %>' CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator3" runat="server" ErrorMessage="请输入商品单位" SetFocusOnError="True" ControlToValidate="txtFruitUnit" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtFruitUnit" runat="server" Text='<%# Bind("FruitUnit") %>' CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator3" runat="server" ErrorMessage="请输入商品单位" SetFocusOnError="True" ControlToValidate="txtFruitUnit" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Label6" runat="server" Text='<%# Bind("FruitUnit") %>'></asp:Label>
+                            </ItemTemplate>
+                            <ControlStyle CssClass="form-control" />
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="商品描述" SortExpression="FruitDesc">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtFruitDesc" runat="server" Text='<%# Bind("FruitDesc") %>' Rows="3" TextMode="MultiLine" CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator4" runat="server" ErrorMessage="请输入商品描述" ControlToValidate="txtFruitDesc" SetFocusOnError="True" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtFruitDesc" runat="server" Text='<%# Bind("FruitDesc") %>' Rows="3" TextMode="MultiLine" CssClass="form-control"></asp:TextBox><asp:RequiredFieldValidator ID="RequiredFieldValidator4" runat="server" ErrorMessage="请输入商品描述" ControlToValidate="txtFruitDesc" SetFocusOnError="True" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Label3" runat="server" Text='<%# Bind("FruitDesc") %>'></asp:Label>
+                            </ItemTemplate>
+                            <ControlStyle CssClass="form-control" />
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="库存数量" SortExpression="InventoryQty">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtInventoryQty" runat="server" Text='<%# Bind("InventoryQty") %>' ClientIDMode="Static" onchange="validateInventory();" CssClass="form-control"></asp:TextBox>
+                                <div class="checkbox">
+                                    <label>
+                                        <asp:CheckBox ID="cbInventoryQty" runat="server" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="无限量" />
+                                    </label>
+                                </div>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtInventoryQty" runat="server" Style="display: none;" Text='<%# Bind("InventoryQty") %>' ClientIDMode="Static" onchange="validateInventory();" CssClass="form-control"></asp:TextBox>
+                                <div class="checkbox">
+                                    <label>
+                                        <asp:CheckBox ID="cbInventoryQty" runat="server" Checked="true" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="无限量" />
+                                    </label>
+                                </div>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="lblInventoryQty" runat="server"></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="是否上架" SortExpression="OnSale" ControlStyle-CssClass="checkbox">
+                            <EditItemTemplate>
+                                <asp:CheckBox ID="cbOnSale" runat="server" Checked='<%# Bind("OnSale") %>' />
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:CheckBox ID="cbOnSale" runat="server" Checked='<%# Bind("OnSale") %>' />
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:CheckBox ID="cbOnSale" runat="server" Checked='<%# Bind("OnSale") %>' Enabled="false" />
+                            </ItemTemplate>
+                            <ControlStyle CssClass="checkbox" />
+                        </asp:TemplateField>
+                        <asp:CheckBoxField DataField="IsSticky" HeaderText="是否置顶" SortExpression="IsSticky" ControlStyle-CssClass="checkbox"></asp:CheckBoxField>
+                        <asp:TemplateField HeaderText="优先级" SortExpression="Priority">
+                            <EditItemTemplate>
+                                <asp:TextBox ID="txtPriority" runat="server" Text='<%# Bind("Priority") %>' CssClass="form-control"></asp:TextBox><asp:RegularExpressionValidator ID="RegularExpressionValidator2" runat="server" ErrorMessage="请输入有效的数字" ControlToValidate="txtPriority" SetFocusOnError="True" ValidationExpression="\d*" Display="Dynamic"></asp:RegularExpressionValidator>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator6" runat="server" ErrorMessage="请输入优先级" ControlToValidate="txtPriority" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </EditItemTemplate>
+                            <InsertItemTemplate>
+                                <asp:TextBox ID="txtPriority" runat="server" Text='<%# Bind("Priority") %>' CssClass="form-control"></asp:TextBox><asp:RegularExpressionValidator ID="RegularExpressionValidator2" runat="server" ErrorMessage="请输入有效的数字" ControlToValidate="txtPriority" SetFocusOnError="True" ValidationExpression="\d*" Display="Dynamic"></asp:RegularExpressionValidator>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator6" runat="server" ErrorMessage="请输入优先级" ControlToValidate="txtPriority" Display="Dynamic"></asp:RequiredFieldValidator>
+                            </InsertItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Label4" runat="server" Text='<%# Bind("Priority") %>'></asp:Label>
+                            </ItemTemplate>
+                            <ControlStyle CssClass="form-control" />
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="商品图片">
                             <EditItemTemplate>
                                 <div class="panel panel-default">
@@ -301,7 +381,7 @@
             setImgSeq();
         }
 
-        //设置商品图片的gridstack.js的X/Y值
+        //设置客户端调整后的商品图片gridstack.js的X/Y值
         function setImgSeq() {
 
             $(".grid-stack-item").each(function () {
@@ -310,7 +390,6 @@
             });
 
         }
-
 
         var fuNum = 1;
 
@@ -365,6 +444,34 @@
             }
         }
 
+        //切换商品是否无限库存量
+        function switchInventoryInfinite(event) {
+            if ($("#cbInventoryQty").is(":checked")) {
+                $("#txtInventoryQty").val(-1).hide();
+            }
+            else {
+                $("#txtInventoryQty").val("").show();
+            }
+        }
+
+        //校验商品库存量是否数值
+        function validateInventory() {
+            var inventoryQty = $("#txtInventoryQty").val();
+            if (isNaN(inventoryQty) || inventoryQty < 0) {
+                alert("请输入>=0数值");
+                $("#txtInventoryQty").val("").focus();
+            }
+        }
+
+        //校验是否选择了商品类别
+        function validateCategory(sender, args){
+            if (args.Value == "0") {
+                args.IsValid = false;
+            }
+            else {
+                args.IsValid = true;
+            }
+        }
     </script>
 
 </asp:Content>

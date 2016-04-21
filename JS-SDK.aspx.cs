@@ -9,11 +9,10 @@ public partial class JS_SDK : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
-        string token, jsTicket, jsSign, timestamp, nonceStr, url;
+        string jsTicket, jsSign, timestamp, nonceStr, url;
 
         url = Request.Url.ToString().Split('#')[0];
-        token = WxJSAPI.GetAccessToken();
-        jsTicket = WxJSAPI.GetJsAPITicket(token);
+        jsTicket = WxJSAPI.GetJsAPITicket();
         jsSign = WxJSAPI.MakeJsAPISign(jsTicket, url, out nonceStr, out timestamp);
 
         //向前端页面注册JS变量，用于调用微信客户端JS-API

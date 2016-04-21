@@ -10,9 +10,9 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
 
     public void ProcessRequest(HttpContext context)
     {
-
         int pageIndex, pageSize;
-        int totalRows, payingOrderCount, deliveringOrderCount, acceptingOrderCount;
+        int totalRows, payingOrderCount, deliveringOrderCount, acceptingOrderCount, cancelledOrderCount;
+        decimal orderPrice;
         List<ProductOrder> orderListPerPage;
         JsonData jOrderListPerPage;
 
@@ -44,9 +44,11 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                     pageSize = int.Parse(context.Request.QueryString["PageSize"]);
                 }
 
-                bool isJoinOrderDetail = false;
+                int startRowIndex, maximumRows;
+                maximumRows = pageSize;
+                startRowIndex = (pageIndex - 1) * maximumRows;
 
-                string strWhere, strTableName;
+                string strWhere;
                 List<string> listWhere = new List<string>();
 
                 //查询条件：只能查询本人的订单
@@ -63,8 +65,7 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 if (!string.IsNullOrEmpty(context.Request.QueryString["ProdName"]))
                 {
                     UtilityHelper.AntiSQLInjection(context.Request.QueryString["ProdName"]);
-                    listWhere.Add(string.Format("OrderDetail.OrderProductName like '%{0}%'", context.Request.QueryString["ProdName"].Trim()));
-                    isJoinOrderDetail = true;
+                    listWhere.Add(string.Format("Id in (select PoID from OrderDetail where OrderProductName like '%{0}%')", context.Request.QueryString["ProdName"].Trim()));
                 }
 
                 //查询条件：订单开始日期
@@ -83,22 +84,8 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
 
                 strWhere = string.Join<string>(" and ", listWhere);
 
-                //如果查询涉及到订单商品详情，则需要关联表OrderDetail
-                if (isJoinOrderDetail)
-                {
-                    strTableName = "ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID";
-                }
-                else
-                {
-                    strTableName = "ProductOrder";
-                }
-
-                int startRowIndex, maximumRows;
-                maximumRows = pageSize;
-                startRowIndex = (pageIndex - 1) * maximumRows;
-
                 //分页查询订单数据，不需要加载下单人信息
-                orderListPerPage = ProductOrder.FindProductOrderPager(false, strTableName, "ProductOrder.Id", "ProductOrder.*", strWhere, null, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, startRowIndex, maximumRows);
+                orderListPerPage = ProductOrder.FindProductOrderPager(false, strWhere, null, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, out cancelledOrderCount, out orderPrice, startRowIndex, maximumRows);
 
                 //把List<>对象集合转换成JSON数据格式
                 jOrderListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(orderListPerPage));
@@ -184,7 +171,7 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 jPayingOrder["PayingOrderCount"] = payingOrderCount;
                 jOrderListPerPage.Add(jPayingOrder);
 
-                //本次查询待配送订单数
+                //本次查询待发货订单数
                 JsonData jDeliveringOrder = new JsonData();
                 jDeliveringOrder["DeliveringOrderCount"] = deliveringOrderCount;
                 jOrderListPerPage.Add(jDeliveringOrder);
@@ -193,6 +180,16 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSes
                 JsonData jAcceptingOrder = new JsonData();
                 jAcceptingOrder["AcceptingOrderCount"] = acceptingOrderCount;
                 jOrderListPerPage.Add(jAcceptingOrder);
+
+                //本次查询已撤单订单数
+                JsonData jCancelledOrder = new JsonData();
+                jCancelledOrder["CancelledOrderCount"] = cancelledOrderCount;
+                jOrderListPerPage.Add(jCancelledOrder);
+
+                //本次查询订单总金额
+                JsonData jOrderPrice = new JsonData();
+                jOrderPrice["OrderPrice"] = orderPrice.ToString();
+                jOrderListPerPage.Add(jOrderPrice);
 
                 context.Response.Clear();
                 context.Response.ContentType = "text/plain";

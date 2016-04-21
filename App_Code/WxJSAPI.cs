@@ -51,7 +51,7 @@ public class WxJSAPI
     /// API参考：http://mp.weixin.qq.com/wiki/15/54ce45d8d30b6bf6758f68d2e95bc627.html
     /// </summary>
     /// <returns></returns>
-    private static string RefreshAccessToken()
+    public static string RefreshAccessToken()
     {
         string token = string.Empty;
         string tokenUrl = string.Format(@"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={0}&secret={1}", Config.APPID, Config.APPSECRET);
@@ -59,7 +59,7 @@ public class WxJSAPI
         JsonData jToken;
         double tokenExpiration;
 
-        do
+        while (string.IsNullOrEmpty(token))
         {
             strToken = HttpService.Get(tokenUrl);
             jToken = JsonMapper.ToObject(strToken);
@@ -68,12 +68,12 @@ public class WxJSAPI
                 if (double.TryParse(jToken["expires_in"].ToString(), out tokenExpiration))
                 {
                     token = jToken["access_token"].ToString();
- 
+
                     //把微信返回的token存入Cache，设置cache项有效期为expires_in秒数再提前10分钟，且不允许.net自动回收
                     HttpRuntime.Cache.Insert("AccessToken", token, null, DateTime.Now.AddSeconds(tokenExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.NotRemovable, onAccessTokenRemovedCallBack);
                 }
             }
-        } while (string.IsNullOrEmpty(token));
+        }
 
         Log.Info("RefreshAccessToken", token);
 
@@ -98,9 +98,8 @@ public class WxJSAPI
     /// jsapi_ticket是公众号用于调用微信JS接口的临时票据。正常情况下，jsapi_ticket的有效期为7200秒，通过access_token来获取。由于获取jsapi_ticket的api调用次数非常有限，频繁刷新jsapi_ticket会导致api调用受限，影响自身业务，开发者必须在自己的服务全局缓存jsapi_ticket
     /// API参考：http://mp.weixin.qq.com/wiki/7/aaa137b55fb2e0456bf8dd9148dd613f.html#.E9.99.84.E5.BD.951-JS-SDK.E4.BD.BF.E7.94.A8.E6.9D.83.E9.99.90.E7.AD.BE.E5.90.8D.E7.AE.97.E6.B3.95
     /// </summary>
-    /// <param name="token"></param>
     /// <returns></returns>
-    public static string GetJsAPITicket(string token)
+    public static string GetJsAPITicket()
     {
         string jsAPITicket = string.Empty;
 
@@ -108,26 +107,7 @@ public class WxJSAPI
         {
             if (HttpRuntime.Cache["JsAPITicket"] == null)
             {
-
-                string ticketUrl = String.Format(@"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={0}&type=jsapi", token);
-
-                string strTicket = HttpService.Get(ticketUrl);
-
-                JsonData jTicket = JsonMapper.ToObject(strTicket);
-
-                if (jTicket.Keys.Contains("ticket") && jTicket.Keys.Contains("expires_in"))
-                {
-                    //根据微信返回的ticket和有效期，存入Cache
-                    double ticketExpiration = double.Parse(jTicket["expires_in"].ToString());
-                    HttpRuntime.Cache.Insert("JsAPITicket", jTicket["ticket"].ToString(), null, DateTime.Now.AddSeconds(ticketExpiration), Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
-
-                    jsAPITicket = jTicket["ticket"].ToString();
-
-                }
-                else
-                {
-                    throw new Exception(string.Format("errcode:{0},errmsg:{1}", jTicket["errcode"], jTicket["errmsg"]));
-                }
+                jsAPITicket = RefreshJsAPITicket();
             }
             else
             {
@@ -141,6 +121,156 @@ public class WxJSAPI
         }
 
         return jsAPITicket;
+    }
+
+    /// <summary>
+    /// 刷新jsapi_ticket
+    /// </summary>
+    /// <returns></returns>
+    public static string RefreshJsAPITicket()
+    {
+        string jsAPITicket = string.Empty;
+        string ticketUrl = String.Format(@"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={0}&type=jsapi", GetAccessToken());
+        string strTicket;
+        JsonData jTicket;
+        double ticketExpiration;
+
+        while (string.IsNullOrEmpty(jsAPITicket))
+        {
+            strTicket = HttpService.Get(ticketUrl);
+            jTicket = JsonMapper.ToObject(strTicket);
+            if (jTicket.Keys.Contains("ticket") && jTicket.Keys.Contains("expires_in") && jTicket["ticket"] != null && jTicket["expires_in"] != null)
+            {
+                //根据微信返回的ticket和有效期，存入Cache
+                if (double.TryParse(jTicket["expires_in"].ToString(), out ticketExpiration))
+                {
+                    jsAPITicket = jTicket["ticket"].ToString();
+                    HttpRuntime.Cache.Insert("JsAPITicket", jsAPITicket, null, DateTime.Now.AddSeconds(ticketExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.NotRemovable, onJsAPITicketRemovedCallBack);
+                }
+            }
+        }
+
+        Log.Info("RefreshJsAPITicket", jsAPITicket);
+
+        return jsAPITicket;
+    }
+
+    /// <summary>
+    /// Cache删除过期的JsAPITicket缓存后，重新向微信请求缓存
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <param name="reason"></param>
+    private static void onJsAPITicketRemovedCallBack(string key, object value, CacheItemRemovedReason reason)
+    {
+        if (key == "JsAPITicket")
+        {
+            RefreshJsAPITicket();
+        }
+    }
+
+    /// <summary>
+    /// 获取微信卡券APITicket
+    /// </summary>
+    /// <returns></returns>
+    public static string GetAPITicket()
+    {
+        string apiTicket = string.Empty;
+
+        try
+        {
+            if (HttpRuntime.Cache["APITicket"] == null)
+            {
+                apiTicket = RefreshAPITicket();
+            }
+            else
+            {
+                apiTicket = HttpRuntime.Cache["APITicket"].ToString();
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("GetAPITicket", ex.Message);
+        }
+
+        return apiTicket;
+    }
+
+    /// <summary>
+    /// 刷新微信票据APITicket
+    /// </summary>
+    /// <returns></returns>
+    public static string RefreshAPITicket()
+    {
+        string apiTicket = string.Empty;
+        string ticketUrl = String.Format(@"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={0}&type=wx_card", GetAccessToken());
+        string strTicket;
+        JsonData jTicket;
+        double ticketExpiration;
+
+        while (string.IsNullOrEmpty(apiTicket))
+        {
+            strTicket = HttpService.Get(ticketUrl);
+            jTicket = JsonMapper.ToObject(strTicket);
+            if (jTicket.Keys.Contains("ticket") && jTicket.Keys.Contains("expires_in") && jTicket["ticket"] != null && jTicket["expires_in"] != null)
+            {
+                //根据微信返回的ticket和有效期，存入Cache
+                if (double.TryParse(jTicket["expires_in"].ToString(), out ticketExpiration))
+                {
+                    apiTicket = jTicket["ticket"].ToString();
+                    HttpRuntime.Cache.Insert("APITicket", apiTicket, null, DateTime.Now.AddSeconds(ticketExpiration - 600), Cache.NoSlidingExpiration, CacheItemPriority.NotRemovable, onAPITicketRemovedCallBack);
+                }
+            }
+        }
+
+        Log.Info("RefreshAPITicket", apiTicket);
+
+        return apiTicket;
+    }
+
+    /// <summary>
+    /// Cache删除过期的APITicket缓存后，重新向微信请求缓存
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <param name="reason"></param>
+    private static void onAPITicketRemovedCallBack(string key, object value, CacheItemRemovedReason reason)
+    {
+        if (key == "APITicket")
+        {
+            RefreshAPITicket();
+        }
+    }
+
+    public static string MakeCardSign(string apiTicket, string url, out string noncestr, out string timestamp)
+    {
+        string cardSign = string.Empty;
+        try
+        {
+            noncestr = WeChatPayData.MakeNonceStr();
+            timestamp = WeChatPayData.MakeTimeStamp();
+            //参与加密的参数key全部小写
+            WeChatPayData signData = new WeChatPayData();
+            signData.SetValue("api_ticket", apiTicket);
+            signData.SetValue("timestamp", timestamp);
+            signData.SetValue("noncestr", noncestr);
+            signData.SetValue("url", url);
+            string param = signData.ToSignStr();
+
+            Log.Debug("MakeJsAPISign", "SHA1 encrypt param : " + param);
+            //SHA1加密
+            cardSign = FormsAuthentication.HashPasswordForStoringInConfigFile(param, "SHA1");
+            Log.Debug("MakeJsAPISign", "SHA1 encrypt result : " + cardSign);
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error("MakeJsAPISign", ex.ToString());
+            throw ex;
+        }
+
+        return cardSign;
     }
 
     /// <summary>

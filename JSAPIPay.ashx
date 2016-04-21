@@ -43,10 +43,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //--------------校验表单信息关键字段-------------------
                     JsonData jOrderInfo = JsonMapper.ToObject(orderInfo);
                     if (jOrderInfo == null || !jOrderInfo.Keys.Contains("name") || !jOrderInfo.Keys.Contains("phone") || !jOrderInfo.Keys.Contains("address")
-                            || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm")
+                            || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm") || !jOrderInfo.Keys.Contains("freight")
                             || !jOrderInfo.Keys.Contains("prodItems") || !jOrderInfo["prodItems"].IsArray || jOrderInfo["prodItems"].Count < 1)
                     {
-                        throw new Exception("订单姓名、电话、地址、支付方式、备注、商品项信息不完整。");
+                        throw new Exception("订单姓名、电话、地址、支付方式、运费、备注、商品项信息不完整。");
                     }
 
                     //--------------生成订单业务对象START-----------------
@@ -62,6 +62,9 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     newPO.PaymentTerm = (PaymentTerm)int.Parse(jOrderInfo["paymentTerm"].ToString());
 
                     //订单初始状态：未支付、未发货、未签收、未撤单
+                    newPO.IsDelivered = false;
+                    newPO.IsAccept = false;
+                    newPO.IsCancel = false;
                     switch(newPO.PaymentTerm)
                     {
                         case PaymentTerm.WECHAT:
@@ -71,13 +74,11 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                             newPO.TradeState = TradeState.CASHNOTPAID;
                             break;
                     }
-                    newPO.IsDelivered = false;
-                    newPO.IsAccept = false;
-                    newPO.IsCancel = false;
 
                     //订单商品项信息
                     OrderDetail od;
                     int prodID, qty;
+                    List<string> outOfStockProdItems = new List<string>();
 
                     for (int i = 0; i < jOrderInfo["prodItems"].Count; i++)
                     {
@@ -95,19 +96,47 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
 
                                 if (fruit != null)
                                 {
-                                    od = new OrderDetail();
+                                    //如果此商品是无限库存量，或者购买量不超过库存量，则可以下单
+                                    if (fruit.InventoryQty == -1 || fruit.InventoryQty >= qty)
+                                    {
+                                        od = new OrderDetail(fruit);
 
-                                    od.ProductID = prodID;
-                                    od.OrderProductName = fruit.FruitName;
-                                    od.PurchasePrice = fruit.FruitPrice;
-                                    od.PurchaseQty = qty;
-                                    od.PurchaseUnit = fruit.FruitUnit;
+                                        od.ProductID = prodID;
+                                        od.PurchaseQty = qty;
+                                        od.OrderProductName = fruit.FruitName;
+                                        od.PurchasePrice = fruit.FruitPrice;
+                                        od.PurchaseUnit = fruit.FruitUnit;
 
-                                    newPO.OrderDetailList.Add(od);
+                                        //注册商品库存量事件，通知管理员
+                                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
+
+                                        newPO.OrderDetailList.Add(od);
+                                    }
+                                    else
+                                    {
+                                        outOfStockProdItems.Add(fruit.FruitName);
+                                    }
                                 }
                             }
                         }
                     }
+
+                    //校验订单中是否有超出库存量的商品
+                    if (outOfStockProdItems.Count > 0)
+                    {
+                        throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请调整后重新下单。", string.Join<string>(",", outOfStockProdItems)));
+                    }
+
+                    //根据订单商品项金额计算运费，满99元包邮
+                    if(newPO.OrderDetailPrice < 99)
+                    {
+                        newPO.Freight = 10;
+                    }
+                    else
+                    {
+                        newPO.Freight = 0;
+                    }
+
                     //--------------生成订单业务对象END-----------------
 
 

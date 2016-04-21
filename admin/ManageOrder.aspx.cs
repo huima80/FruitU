@@ -33,15 +33,14 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.odsOrderList.TypeName = "ProductOrder";
                 this.odsOrderList.EnablePaging = true;
 
-                this.odsOrderList.SelectParameters.Add("tableName", DbType.String, "ProductOrder");
-                this.odsOrderList.SelectParameters.Add("pk", DbType.String, "ProductOrder.Id");
-                this.odsOrderList.SelectParameters.Add("fieldsName", DbType.String, "ProductOrder.*");
                 this.odsOrderList.SelectParameters.Add("strWhere", DbType.String, strWhere);
                 this.odsOrderList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("payingOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("deliveringOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("acceptingOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("cancelledOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("orderPrice", DbType.Decimal, "0")].Direction = ParameterDirection.Output;
 
                 this.gvOrderList.AllowPaging = true;
                 this.gvOrderList.AllowCustomPaging = true;
@@ -61,9 +60,8 @@ public partial class ManageOrder : System.Web.UI.Page
         //自定义查询时，GridView控件会调用两次数据源的SelectMethod，第一次调用SelectMethod，第二次调用SelectCountMethod。每次调用都会把SelectParameters集合复制给e.InputParameters集合。SelectParameters也会在每次的post时保存在viewstate中，维持状态。
         if (e.ExecutingSelectCount)
         {
-            //第二次调用SelectCountMethod时，只需要tableName，strWhere实参。
+            //第二次调用SelectCountMethod时，只需要strWhere实参。
             e.InputParameters.Clear();
-            e.InputParameters.Add("tableName", this.odsOrderList.SelectParameters["tableName"].DefaultValue);
             e.InputParameters.Add("strWhere", this.odsOrderList.SelectParameters["strWhere"].DefaultValue);
         }
     }
@@ -72,10 +70,12 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRows"] != null && e.OutputParameters["payingOrderCount"] != null && e.OutputParameters["deliveringOrderCount"] != null && e.OutputParameters["acceptingOrderCount"] != null)
         {
+            this.lblOrderPrice.Text = string.Format("￥{0}元", decimal.Parse(e.OutputParameters["orderPrice"].ToString()));
             this.lblTotalRows.Text = e.OutputParameters["totalRows"].ToString();
             this.lblPayingOrderCount.Text = e.OutputParameters["payingOrderCount"].ToString();
             this.lblDeliveringOrderCount.Text = e.OutputParameters["deliveringOrderCount"].ToString();
             this.lblAcceptingOrderCount.Text = e.OutputParameters["acceptingOrderCount"].ToString();
+            this.lblCancelledOrderCount.Text = e.OutputParameters["cancelledOrderCount"].ToString();
         }
     }
 
@@ -201,30 +201,36 @@ public partial class ManageOrder : System.Web.UI.Page
 
             //如果已发货，则绑定发货时间
             CheckBox cbIsDelivery = e.Row.FindControl("cbIsDelivery") as CheckBox;
+            HtmlGenericControl faIsDelivery = e.Row.FindControl("faIsDelivery") as HtmlGenericControl;
             if (po.IsDelivered)
             {
-                cbIsDelivery.Enabled = false;
-                cbIsDelivery.ToolTip = string.Format("发货时间：{0}", po.DeliverDate);
+                cbIsDelivery.Visible = false;
+                faIsDelivery.Visible = true;
+                faIsDelivery.Attributes.Add("title", string.Format("发货时间：{0}", po.DeliverDate));
             }
             else
             {
-                cbIsDelivery.Enabled = true;
+                cbIsDelivery.Visible = true;
                 cbIsDelivery.ToolTip = "点击发货";
                 cbIsDelivery.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+                faIsDelivery.Visible = false;
             }
 
             //如果已签收，则绑定签收时间
             CheckBox cbIsAccept = e.Row.FindControl("cbIsAccept") as CheckBox;
+            HtmlGenericControl faIsAccept = e.Row.FindControl("faIsAccept") as HtmlGenericControl;
             if (po.IsAccept)
             {
-                cbIsAccept.Enabled = false;
-                cbIsAccept.ToolTip = string.Format("签收时间：{0}", po.AcceptDate);
+                cbIsAccept.Visible = false;
+                faIsAccept.Visible = true;
+                faIsAccept.Attributes.Add("title", string.Format("签收时间：{0}", po.AcceptDate));
             }
             else
             {
                 cbIsAccept.Enabled = true;
                 cbIsAccept.ToolTip = "点击签收";
                 cbIsAccept.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+                faIsAccept.Visible = false;
             }
 
             //如果已撤单则屏蔽发货、签收按钮，显示发货时间
@@ -343,7 +349,6 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         string strWhere = string.Empty, tableName = string.Empty;
         List<string> listWhere = new List<string>();
-        bool isJoinProductDetail = false;
 
         try
         {
@@ -447,9 +452,8 @@ public partial class ManageOrder : System.Web.UI.Page
             if (!string.IsNullOrEmpty(this.txtOrderDetail.Text.Trim()))
             {
                 UtilityHelper.AntiSQLInjection(this.txtOrderDetail.Text);
-                listWhere.Add(string.Format("OrderDetail.OrderProductName like '%{0}%'", this.txtOrderDetail.Text.Trim()));
+                listWhere.Add(string.Format("Id in (select PoID from OrderDetail where OrderProductName like '%{0}%')", this.txtOrderDetail.Text.Trim()));
                 this.txtOrderDetail.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
-                isJoinProductDetail = true;
             }
             else
             {
@@ -497,16 +501,6 @@ public partial class ManageOrder : System.Web.UI.Page
             this.gvOrderList.PageIndex = 0;
             this.odsOrderList.SelectParameters["strWhere"].DefaultValue = strWhere;
 
-            //如果查询涉及到订单商品详情，则需要关联表OrderDetail
-            if (isJoinProductDetail)
-            {
-                this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID";
-            }
-            else
-            {
-                this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder";
-            }
-
             this.gvOrderList.DataBind();
         }
         catch (Exception ex)
@@ -553,7 +547,6 @@ public partial class ManageOrder : System.Web.UI.Page
         this.txtStartOrderDate.Style.Clear();
         this.txtEndOrderDate.Style.Clear();
 
-        this.odsOrderList.SelectParameters["tableName"].DefaultValue = "ProductOrder";
         this.odsOrderList.SelectParameters["strWhere"].DefaultValue = string.Empty;
         this.gvOrderList.PageIndex = 0;
         this.gvOrderList.DataBind();

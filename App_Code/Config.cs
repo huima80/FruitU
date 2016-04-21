@@ -144,6 +144,11 @@ public static class Config
     /// </summary>
     public static readonly List<string> WxTmplMsgReceiver;
 
+    /// <summary>
+    /// 商品库存量最低警戒线
+    /// </summary>
+    public const int ProductInventoryWarn = 10;
+
     /////////////////////////// QQ互联平台：http://connect.qq.com
     /// <summary>
     /// QQ互联APP ID

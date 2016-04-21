@@ -13,7 +13,7 @@
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
-       </div>
+        </div>
         <div id="divFruitList" class="row">
         </div>
     </div>
@@ -21,7 +21,9 @@
         <div class="md-content">
             <img id="imgDetailImg" src="" />
             <div>
-                <label class="sr-only" for="txtQty">购买数量</label>
+                   <div class="prod-info"><i class="fa fa-check-circle"></i>&nbsp;单价：<span class="prod-price"></span>&nbsp;&nbsp;<i class="fa fa-check-circle"></i>&nbsp;库存数：<span id="spanInventory" class="inventory"></span><input type="hidden" id="hfInventory" /></div>
+                <hr />
+              <label class="sr-only" for="txtQty">购买数量</label>
                 <span class="input-group">
                     <span id="btnDesc" class="input-group-addon">-</span>
                     <input class="form-control" type="text" id="txtQty" value="1" />
@@ -38,21 +40,36 @@
 
     <!-- Declare a JsRender template, in a script block: -->
     <script id="tmplFruitPage" type="text/x-jsrender">
-        <div class="col-xs-12" onclick="openModal({{:ID}});">
+        <div class="col-xs-12" 
+            {{if InventoryQty!=0 }}
+                onclick="openModal({{:ID}});"
+            {{/if}}
+            >
             {{for FruitImgList}}
                     {{if MainImg}}
                <img src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
             {{/if}}   
                 {{/for}}            
+                  {{if TopSellingOnWeek}}
+                    <span class="top-selling-week-prod"><i class="fa fa-trophy fa-lg"></i>本周爆款</span>
+            {{/if}}
+          {{if InventoryQty==0}}
+                    <span class="sell-out">已售罄</span>
+            {{/if}}
         </div>
     </script>
 
     <script>
         var fruitList = [];
 
-        requirejs(['jquery', 'webConfig'], function ($) {
+        requirejs(['jquery'], function ($) {
             $(function () {
                 requirejs(['pager', 'cart'], function () {
+
+                    //超出库存事件处理函数
+                    $($.cart).on("onOutOfStock", function (event, data) {
+                        alert("您已购买最大库存数了哦。");
+                    });
 
                     $.pager.init({
                         pagerMode: 1,
@@ -74,7 +91,7 @@
 
                 });
 
-                //递减果汁数量
+                //递减商品数量
                 $("#btnDesc").on("click", function () {
                     var currQty = $("#txtQty").val();
                     if (!isNaN(currQty)) {
@@ -85,27 +102,34 @@
                         else {
                             currQty = 1;
                         }
-                        //显示更新的数量
-                        $("#txtQty").val(currQty);
                     }
                     else {
-                        $("#txtQty").val(1);
+                        currQty = 1;
                     }
+
+                    //显示更新的数量
+                    $("#txtQty").val(currQty);
+
                 });
 
-                //递增果汁数量
+                //递增商品数量
                 $("#btnAsc").on("click", function () {
                     var currQty = $("#txtQty").val();
+                    var inventory = $("#hfInventory").val();
                     if (!isNaN(currQty)) {
                         currQty = parseInt(currQty);
-                        currQty++;
-
-                        //显示更新的数量
-                        $("#txtQty").val(currQty);
+                        inventory = parseInt(inventory);
+                        if (inventory == -1 || currQty < inventory) {
+                            currQty++;
+                        }
                     }
                     else {
-                        $("#txtQty").val(1);
+                        currQty = 1;
                     }
+
+                    //显示更新的数量
+                    $("#txtQty").val(currQty);
+
                 });
 
                 //校验是否输入数值
@@ -149,10 +173,18 @@
                             detailImg = webConfig.defaultImg;
                         }
 
+                        //商品库存量
+                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "无限量" : fruitList[i]["InventoryQty"]);
+                        $("#hfInventory").val(fruitList[i]["InventoryQty"]);
+
+                        //商品单价
+                        $("span.prod-price").text("￥" + fruitList[i]["FruitPrice"] + "元/" + fruitList[i]["FruitUnit"]);
+
+                        //商品购买数量
+                        $("input#txtQty").val(1);
+
                         //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
                         $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg);
-
-                        $("input#txtQty").val(1);
 
                         break;
                     }
@@ -176,7 +208,7 @@
 
         //加入购物车
         function addToCart() {
-            var prodID, mainImg, qty, jLen;
+            var prodID, mainImg, jLen;
             prodID = $("#btnAddToCart").data("prodid");
 
             if (prodID && fruitList && Array.isArray(fruitList)) {
@@ -195,11 +227,9 @@
                             mainImg = webConfig.defaultImg;
                         }
 
-                        //商品数量
-                        qty = $("input#txtQty").val();
-
                         //购物车里添加商品
-                        $.cart.insertProdItem(prodID, fruitList[i]["FruitName"], fruitList[i]["FruitDesc"], "images/" + mainImg, fruitList[i]["FruitPrice"], qty);
+                        var prodItem = new $.cart.ProdItem(prodID, fruitList[i]["FruitName"], fruitList[i]["FruitDesc"], "images/" + mainImg, fruitList[i]["FruitPrice"], parseInt($("input#txtQty").val()), fruitList[i]["InventoryQty"]);
+                        $.cart.insertProdItem(prodItem);
 
                         break;
                     }

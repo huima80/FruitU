@@ -12,24 +12,28 @@
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
-                    <div class="panel-heading" <%--onclick="selectWxAddress();"--%>>
+                    <div class="panel-heading" onclick="selectWxAddress();">
                         <i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货人信息 >>
                     </div>
-                    <%--                    <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
+                    <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
                         <strong><span class="wx-user-name"></span></strong>，<span class="wx-tel-number"></span>
                         <br />
                         <span class="wx-user-address"></span>
-                    </div>--%>
-                    <div id="divCustomizeAddrInfo" class="panel-body">
+                    </div>
+                    <div id="divCustomizeAddrInfo" class="panel-body customize-addr-info">
                         <div class="form-group">
-                            <label for="txtDeliverName" class="sr-only control-label">您的姓名</label>
+                            <label for="txtDeliverName" class="sr-only control-label">收货人姓名</label>
                             <input type="text" class="form-control" id="txtDeliverName" required="required" placeholder="您的姓名" />
                         </div>
                         <div class="form-group">
-                            <label for="txtDeliverPhone" class="sr-only control-label">您的电话</label>
+                            <label for="txtDeliverPhone" class="sr-only control-label">收货人电话</label>
                             <input type="text" class="form-control" id="txtDeliverPhone" required="required" placeholder="您的电话" />
                         </div>
-                        <div class="radio">
+                        <div class="form-group">
+                            <label for="txtDeliverAddress" class="sr-only control-label">详细收货地址</label>
+                            <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="详细收货地址"></textarea>
+                        </div>
+                        <%--<div class="radio">
                             <label>
                                 <input type="radio" name="rdAddr" id="rdAddr1" value="上海电影集团办公楼" />
                                 上海电影集团办公楼
@@ -52,11 +56,7 @@
                                 <input type="radio" name="rdAddr" id="rdAddr4" value="复旦大学附属肿瘤医院" />
                                 复旦大学附属肿瘤医院
                             </label>
-                        </div>
-                        <div class="form-group">
-                            <label for="txtDeliverAddress" class="sr-only control-label">详细收货地址</label>
-                            <textarea class="form-control" id="txtDeliverAddress" required="required" placeholder="详细收货地址"></textarea>
-                        </div>
+                        </div>--%>
                     </div>
                 </div>
             </div>
@@ -69,9 +69,17 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="price-freight">
+                    <div><i class="fa fa-check-circle"></i>&nbsp;商品价格：￥<span id="spanSubTotal"></span>元</div>
+                    <div><i class="fa fa-check-circle"></i>&nbsp;运费：￥<span id="spanFreight"></span>元（订单满99元包邮）</div>
+                </div>
+            </div>
+        </div>
         <div class="row sub-total">
             <div class="col-xs-12">
-                <span>总价：<span class="sub-total-price" id="spSubTotalPrice"></span></span>
+                <div>总金额：￥<span class="sub-total-price" id="spanOrderPrice"></span>元</div>
             </div>
         </div>
         <div class="row pay-button">
@@ -104,40 +112,41 @@
             $(function () {
 
                 requirejs(['cart'], function () {
-                    displayCart();
+
+                    showProdItemsAndCalPrice();
 
                     //加载显示购物车里的收货人信息
-                    if ($.cart) {
-                        var deliverInfo = $.cart.getDeliverInfo();
-                        $("#txtDeliverName").val(deliverInfo.name);
-                        $("#txtDeliverPhone").val(deliverInfo.phone);
-                        if (!!deliverInfo.address) {
-                            if (deliverInfo.address.indexOf("上海电影集团办公楼") != -1) {
-                                $("#rdAddr1").prop("checked", "checked");
-                                deliverInfo.address = deliverInfo.address.replace("上海电影集团办公楼，", "");
-                            }
-                            else {
-                                if (deliverInfo.address.indexOf("汇智大厦") != -1) {
-                                    $("#rdAddr2").prop("checked", "checked");
-                                    deliverInfo.address = deliverInfo.address.replace("汇智大厦，", "");
-                                }
-                                else {
-                                    if (deliverInfo.address.indexOf("新东方（漕溪北路中心）") != -1) {
-                                        $("#rdAddr3").prop("checked", "checked");
-                                        deliverInfo.address = deliverInfo.address.replace("新东方（漕溪北路中心），", "");
-                                    }
-                                    else {
-                                        if (deliverInfo.address.indexOf("复旦大学附属肿瘤医院") != -1) {
-                                            $("#rdAddr4").prop("checked", "checked");
-                                            deliverInfo.address = deliverInfo.address.replace("复旦大学附属肿瘤医院，", "");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        $("#txtDeliverAddress").val(deliverInfo.address);
-                        $("#txtMemo").val(deliverInfo.memo);
-                    }
+                    //if ($.cart) {
+                    //    var deliverInfo = $.cart.getDeliverInfo();
+                    //    $("#txtDeliverName").val(deliverInfo.name);
+                    //    $("#txtDeliverPhone").val(deliverInfo.phone);
+                    //    if (!!deliverInfo.address) {
+                    //        if (deliverInfo.address.indexOf("上海电影集团办公楼") != -1) {
+                    //            $("#rdAddr1").prop("checked", "checked");
+                    //            deliverInfo.address = deliverInfo.address.replace("上海电影集团办公楼，", "");
+                    //        }
+                    //        else {
+                    //            if (deliverInfo.address.indexOf("汇智大厦") != -1) {
+                    //                $("#rdAddr2").prop("checked", "checked");
+                    //                deliverInfo.address = deliverInfo.address.replace("汇智大厦，", "");
+                    //            }
+                    //            else {
+                    //                if (deliverInfo.address.indexOf("新东方（漕溪北路中心）") != -1) {
+                    //                    $("#rdAddr3").prop("checked", "checked");
+                    //                    deliverInfo.address = deliverInfo.address.replace("新东方（漕溪北路中心），", "");
+                    //                }
+                    //                else {
+                    //                    if (deliverInfo.address.indexOf("复旦大学附属肿瘤医院") != -1) {
+                    //                        $("#rdAddr4").prop("checked", "checked");
+                    //                        deliverInfo.address = deliverInfo.address.replace("复旦大学附属肿瘤医院，", "");
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //    $("#txtDeliverAddress").val(deliverInfo.address);
+                    //    $("#txtMemo").val(deliverInfo.memo);
+                    //}
                 });
 
                 lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
@@ -149,21 +158,32 @@
             });
         });
 
-        //展示购物车里的商品
-        function displayCart() {
+        //展示购物车里的商品，计算商品价格、运费、订单总金额
+        function showProdItemsAndCalPrice() {
             var htmlItem = "";
-
             //遍历购物车，显示所有的商品项
             $.cart.getProdItems().each(function () {
                 htmlItem += '<div class="row prod-item"><div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                     + '<div class="col-xs-6 prod-item-middle"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div></div>'
                     + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>';
             });
-
             $("div.prod-items").append(htmlItem);
 
-            //显示总价格
-            $("#spSubTotalPrice").text("￥" + $.cart.subTotal());
+            //根据购物车中的商品价格计算运费，并更新购物车中的运费
+            var subTotal, freight;
+            subTotal = parseFloat($.cart.subTotal());
+            if (subTotal < 99) {
+                freight = 10;
+            }
+            else {
+                freight = 0;
+            }
+            $.cart.updateFreight(freight);
+
+            //显示商品价格、运费、总金额
+            $("#spanSubTotal").text(subTotal.toFixed(2));
+            $("#spanFreight").text(freight);
+            $("#spanOrderPrice").text((subTotal + freight).toFixed(2));
 
         }
 
@@ -176,6 +196,7 @@
                 'editAddress',
                 wxEditAddrParam,   //后端获取的参数
                   function (res) {
+                      //显示微信地址信息，如获取不到，则显示手工填写地址栏
                       if (res.err_msg.indexOf("ok") != -1) {
                           wxUserName = res.userName;
                           wxTelNumber = res.telNumber;
@@ -253,7 +274,7 @@
                      }
 
                      //停止按钮loading动画
-                     lBtnWxPay.stop();   
+                     lBtnWxPay.stop();
 
                  });
         }
@@ -297,27 +318,27 @@
                     ////////////////处理订单收货人信息////////////////////
                     var rdAddr = "", txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
 
-                    //判断是否选择了微信用户地址
-                    //if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
                     //判断是否弹出了手工地址栏
-                    //if ($("#divCustomizeAddrInfo").is(":visible")) {
-                    //} else {
-                    //    alert("请选择收货地址。");
-                    //    return false;
-                    //}
-                    //}
-                    //else {
-                    //    //获取微信地址信息
-                    //    txtName = wxUserName;
-                    //    txtPhone = wxTelNumber;
-                    //    txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
-                    //}
+                    if (!$("#divCustomizeAddrInfo").is(":visible")) {
+                        //判断是否选择了微信用户地址
+                        if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
+                            alert("请选择收货地址。");
+                            return false;
+                        }
+                        else {
+                            //获取微信地址信息
+                            txtName = wxUserName;
+                            txtPhone = wxTelNumber;
+                            txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
+                        }
+                    } else {
+                        //获取手工输入的地址信息
+                        //rdAddr = $("#divCustomizeAddrInfo :radio:checked").val();
+                        txtName = $("#txtDeliverName").val().trim();
+                        txtPhone = $("#txtDeliverPhone").val().trim();
+                        txtAddress = $("#txtDeliverAddress").val().trim();
+                    }
 
-                    //获取手工输入的地址信息
-                    rdAddr = $("#divCustomizeAddrInfo :radio:checked").val();
-                    txtName = $("#txtDeliverName").val().trim();
-                    txtPhone = $("#txtDeliverPhone").val().trim();
-                    txtAddress = $("#txtDeliverAddress").val().trim();
                     if (!txtName) {
                         alert("请填写收货人姓名。");
                         $("#txtDeliverName").focus();
@@ -328,18 +349,15 @@
                         $("#txtDeliverPhone").focus();
                         return false;
                     }
-                    if (!rdAddr) {
-                        alert("请选择收货地点。");
-                        $("#divCustomizeAddrInfo :radio:first").focus();
-                        return false;
-                    }
+                    //if (!rdAddr) {
+                    //    alert("请选择收货地点。");
+                    //    $("#divCustomizeAddrInfo :radio:first").focus();
+                    //    return false;
+                    //}
                     if (!txtAddress) {
                         alert("请填写详细地址。");
                         $("#txtDeliverAddress").focus();
                         return false;
-                    }
-                    else {
-                        txtAddress = rdAddr + "，" + txtAddress;
                     }
 
                     //订单备注信息

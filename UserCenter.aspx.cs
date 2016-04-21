@@ -40,7 +40,7 @@ public partial class UserCenter : System.Web.UI.Page
                     string strAuth = HttpService.Get(authUrl);
                     JsonData jAccessToken = JsonMapper.ToObject(strAuth);
 
-                    if (jAccessToken != null && jAccessToken is JsonData && jAccessToken["access_token"] != null)
+                    if (jAccessToken != null && jAccessToken is JsonData && jAccessToken.Keys.Contains("access_token") && jAccessToken.Keys.Contains("refresh_token") && jAccessToken.Keys.Contains("expires_in"))
                     {
                         wxUser.AccessTokenForBase = jAccessToken["access_token"].ToString();
                         wxUser.RefreshTokenForBase = jAccessToken["refresh_token"].ToString();

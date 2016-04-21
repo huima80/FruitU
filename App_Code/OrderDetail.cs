@@ -42,12 +42,19 @@ public class OrderDetail : Fruit
         //
     }
 
-    public OrderDetail(int purchaseQty, decimal purchasePrice)
+    public OrderDetail(Fruit fruit) : base(fruit.ID, fruit.FruitName, fruit.Category, fruit.FruitPrice, fruit.FruitUnit, fruit.FruitImgList, fruit.FruitDesc, fruit.InventoryQty, fruit.OnSale, fruit.IsSticky, fruit.Priority)
     {
         //
         // TODO: 在此处添加构造函数逻辑
         //
-        this.PurchaseQty = purchaseQty;
-        this.PurchasePrice = purchasePrice;
     }
+
+    //public OrderDetail(int purchaseQty, decimal purchasePrice)
+    //{
+    //    //
+    //    // TODO: 在此处添加构造函数逻辑
+    //    //
+    //    this.PurchaseQty = purchaseQty;
+    //    this.PurchasePrice = purchasePrice;
+    //}
 }

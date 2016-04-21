@@ -87,24 +87,25 @@ img.prod-img{
     width:100%;
 }
 
+div.order-price-freight{
+    text-align:right;
+}
+
+span.freight{
+    text-align:left;
+    font-size:smaller;
+    color:orange;
+}
+
 span.order-total{
     text-align:right;
     font-size: 12px;
 }
 
-div.order-price{
-    text-align:right;
-}
 
 span.order-price{
     font-size:x-large;
     color:red;
-}
-
-.order-quantity{
-    font-size:larger;
-    font-weight:bold;
-    color:blue;
 }
 
 .btn-wxpay{

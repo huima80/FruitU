@@ -33,17 +33,17 @@ public partial class ManageProduct : System.Web.UI.Page
 
     protected void Page_Load(object sender, EventArgs e)
     {
-        if(!Page.IsPostBack)
+        if (!Page.IsPostBack)
         {
             this.odsFruitList.TypeName = "Fruit";
             this.odsFruitList.EnablePaging = true;
 
-            this.odsFruitList.SelectParameters.Add("tableName", DbType.String, "Product left join Category on Product.CategoryID = Category.Id");
-            this.odsFruitList.SelectParameters.Add("pk", DbType.String, "Product.Id");
-            this.odsFruitList.SelectParameters.Add("fieldsName", DbType.String, "Product.*,Category.ParentID,Category.CategoryName");
             this.odsFruitList.SelectParameters.Add("strWhere", DbType.String, string.Empty);
             this.odsFruitList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
+            this.odsFruitList.SelectParameters.Add("categoryOfTopSelling", DbType.Int32, string.Empty);
             this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDOnWeek", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDOnMonth", DbType.Int32, "0")].Direction = ParameterDirection.Output;
 
             this.gvFruitList.AllowPaging = true;
             this.gvFruitList.AllowCustomPaging = true;
@@ -74,7 +74,7 @@ public partial class ManageProduct : System.Web.UI.Page
         this.dvFruit.ChangeMode(DetailsViewMode.Edit);
         this.dvFruit.AutoGenerateInsertButton = false;
         this.dvFruit.AutoGenerateEditButton = true;
-        
+
         this.dvFruit.DataBind();
         this.gvFruitList.DataBind();
 
@@ -98,9 +98,8 @@ public partial class ManageProduct : System.Web.UI.Page
         //自定义查询时，GridView控件会调用两次数据源的SelectMethod，第一次调用SelectMethod，第二次调用SelectCountMethod。每次调用都会把SelectParameters集合复制给e.InputParameters集合。SelectParameters也会在每次的post时保存在viewstate中，维持状态。
         if (e.ExecutingSelectCount)
         {
-            //第二次调用SelectCountMethod时，只需要tableName，strWhere实参。
+            //第二次调用SelectCountMethod时，只需要strWhere实参。
             e.InputParameters.Clear();
-            e.InputParameters.Add("tableName", this.odsFruitList.SelectParameters["tableName"].DefaultValue);
             e.InputParameters.Add("strWhere", this.odsFruitList.SelectParameters["strWhere"].DefaultValue);
         }
 
@@ -111,6 +110,20 @@ public partial class ManageProduct : System.Web.UI.Page
         if (e.Row.RowType == DataControlRowType.DataRow)
         {
             Fruit fruit = (Fruit)e.Row.DataItem;
+
+            //预处理库存量显示
+            Label lblInventoryQty = e.Row.FindControl("lblInventoryQty") as Label;
+            if (fruit.InventoryQty == -1)
+            {
+                lblInventoryQty.Text = "无限量";
+            }
+            else
+            {
+                if (fruit.InventoryQty <= Config.ProductInventoryWarn)
+                {
+                    lblInventoryQty.ForeColor = System.Drawing.Color.Red;
+                }
+            }
 
             //是否上架图标
             HtmlContainerControl divOnSale = e.Row.FindControl("divOnSale") as HtmlContainerControl;
@@ -146,7 +159,7 @@ public partial class ManageProduct : System.Web.UI.Page
 
     protected void odsFruit_Selecting(object sender, ObjectDataSourceSelectingEventArgs e)
     {
-        if(e.InputParameters["fruitID"] == null)
+        if (e.InputParameters["fruitID"] == null)
         {
             e.Cancel = true;
         }
@@ -195,7 +208,7 @@ public partial class ManageProduct : System.Web.UI.Page
 
     protected void dvFruit_ItemInserting(object sender, DetailsViewInsertEventArgs e)
     {
-        //DetailView会把所有绑定字段的键值放入e.Values集合，其他模板列则不会自动处理，需要手工处理。
+        //DetailView会把所有绑定字段的键值放入e.Values集合，非绑定字段则不会自动处理，需要手工处理。
         try
         {
             if (e.Values["FruitName"] == null)
@@ -208,7 +221,6 @@ public partial class ManageProduct : System.Web.UI.Page
             }
 
             DropDownList ddlCategoryInsert = ((DetailsView)sender).FindControl("ddlCategoryInsert") as DropDownList;
-
             if (ddlCategoryInsert.SelectedIndex == 0)
             {
                 throw new Exception("请选择商品类别");
@@ -245,33 +257,27 @@ public partial class ManageProduct : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(e.Values["FruitDesc"].ToString());
             }
 
-            if (e.Values["InventoryQty"] == null)
-            {
-                throw new Exception("请输入商品库存数量");
-            }
-            else
-            {
-                UtilityHelper.AntiSQLInjection(e.Values["InventoryQty"].ToString());
-            }
-
+            //默认上架
             if (e.Values["OnSale"] == null)
             {
-                throw new Exception("请输入是否上架");
+                e.Values["OnSale"] = true;
             }
             else
             {
                 UtilityHelper.AntiSQLInjection(e.Values["OnSale"].ToString());
             }
 
+            //默认不置顶
             if (e.Values["IsSticky"] == null)
             {
-                throw new Exception("请输入是否置顶");
+                e.Values["IsSticky"] = false;
             }
             else
             {
                 UtilityHelper.AntiSQLInjection(e.Values["IsSticky"].ToString());
             }
 
+            //默认优先级0
             if (e.Values["Priority"] == null)
             {
                 e.Values["Priority"] = 0;
@@ -279,6 +285,16 @@ public partial class ManageProduct : System.Web.UI.Page
             else
             {
                 UtilityHelper.AntiSQLInjection(e.Values["Priority"].ToString());
+            }
+
+            //获取商品库存数量，默认为无限量
+            if (e.Values["InventoryQty"] == null)
+            {
+                e.Values["InventoryQty"] = -1;
+            }
+            else
+            {
+                UtilityHelper.AntiSQLInjection(e.Values["InventoryQty"].ToString());
             }
 
             //获取商品类别信息，添加入e.Values集合
@@ -344,6 +360,7 @@ public partial class ManageProduct : System.Web.UI.Page
         {
             this.lblErrMsg.Text = ex.Message;
             e.Cancel = true;
+            this.gvFruitList.DataBind();
         }
     }
 
@@ -551,6 +568,7 @@ public partial class ManageProduct : System.Web.UI.Page
         {
             this.lblErrMsg.Text = ex.Message;
             e.Cancel = true;
+            this.gvFruitList.DataBind();
         }
     }
 
@@ -725,7 +743,6 @@ public partial class ManageProduct : System.Web.UI.Page
 
             this.gvFruitList.PageIndex = 0;
             this.odsFruitList.SelectParameters["strWhere"].DefaultValue = strWhere;
-            this.odsFruitList.SelectParameters["tableName"].DefaultValue = "Product";
 
             this.gvFruitList.DataBind();
         }
@@ -750,7 +767,6 @@ public partial class ManageProduct : System.Web.UI.Page
         this.txtProdName.Style.Clear();
 
         this.gvFruitList.PageIndex = 0;
-        this.odsFruitList.SelectParameters["tableName"].DefaultValue = "Product";
         this.odsFruitList.SelectParameters["strWhere"].DefaultValue = string.Empty;
         this.gvFruitList.DataBind();
 
@@ -759,7 +775,7 @@ public partial class ManageProduct : System.Web.UI.Page
 
     protected void rpFruitImgList_ItemDataBound(object sender, RepeaterItemEventArgs e)
     {
-        if(e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+        if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
         {
             FruitImg fruitImg = e.Item.DataItem as FruitImg;
             HtmlContainerControl divGridStackItem = e.Item.FindControl("divGridStackItem") as HtmlContainerControl;
@@ -775,5 +791,51 @@ public partial class ManageProduct : System.Web.UI.Page
     protected void dvFruit_ModeChanged(object sender, EventArgs e)
     {
         this.gvFruitList.DataBind();
+
+    }
+
+
+    protected void dvFruit_DataBound(object sender, EventArgs e)
+    {
+        TextBox txtFruitName = dvFruit.FindControl("txtFruitName") as TextBox;
+        TextBox txtInventoryQty = dvFruit.FindControl("txtInventoryQty") as TextBox;
+        CheckBox cbInventoryQty = dvFruit.FindControl("cbInventoryQty") as CheckBox;
+        Label lblInventoryQty = dvFruit.FindControl("lblInventoryQty") as Label;
+        CheckBox cbOnSale = dvFruit.FindControl("cbOnSale") as CheckBox;
+        TextBox txtPriority = dvFruit.FindControl("txtPriority") as TextBox;
+        Fruit prod = dvFruit.DataItem as Fruit;
+
+        switch (dvFruit.CurrentMode)
+        {
+            case DetailsViewMode.Edit:
+                txtFruitName.Focus();
+                if (prod != null && prod.InventoryQty == -1)
+                {
+                    txtInventoryQty.Style["display"] = "none";
+                    cbInventoryQty.Checked = true;
+                }
+                else
+                {
+                    cbInventoryQty.Checked = false;
+                }
+                break;
+            case DetailsViewMode.Insert:
+                txtFruitName.Focus();
+                //插入记录时，默认显示无限库存量
+                txtInventoryQty.Style["display"] = "none";
+                txtInventoryQty.Text = "-1";
+                cbInventoryQty.Checked = true;
+                //默认上架
+                cbOnSale.Checked = true;
+                //默认优先级0
+                txtPriority.Text = "0";
+                break;
+            case DetailsViewMode.ReadOnly:
+                if (prod != null)
+                {
+                    lblInventoryQty.Text = (prod.InventoryQty == -1 ? "无限量" : prod.InventoryQty.ToString());
+                }
+                break;
+        }
     }
 }

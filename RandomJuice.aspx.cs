@@ -16,11 +16,11 @@ public partial class RandomJuice : System.Web.UI.Page
         List<string> juiceStrList = new List<string>();
         List<string> imgStrList = new List<string>();
 
-        //查询果汁类商品，并去掉未上架的商品
+        //查询果汁类商品，并去掉未上架、零库存的商品
         juiceList = Fruit.FindFruitByCategoryID(1);
         juiceList.RemoveAll(juice =>
         {
-            return !juice.OnSale;
+            return (!juice.OnSale || juice.InventoryQty <= 0);
         });
 
         jJuiceList = JsonMapper.ToJson(juiceList);

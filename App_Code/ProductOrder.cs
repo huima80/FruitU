@@ -109,6 +109,11 @@ public class ProductOrder : IComparable<ProductOrder>
     public PaymentTerm PaymentTerm { get; set; }
 
     /// <summary>
+    /// 订单运费
+    /// </summary>
+    public decimal Freight { get; set; }
+
+    /// <summary>
     /// 客户端IP
     /// </summary>
     public string ClientIP { get; set; }
@@ -144,9 +149,20 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 根据订单明细，计算总价格
+    /// 根据订单商品价格+运费，计算总价格
     /// </summary>
     public decimal OrderPrice
+    {
+        get
+        {
+            return OrderDetailPrice + Freight;
+        }
+    }
+
+    /// <summary>
+    /// 订单商品项总价格，不含运费
+    /// </summary>
+    public decimal OrderDetailPrice
     {
         get
         {
@@ -289,6 +305,16 @@ public class ProductOrder : IComparable<ProductOrder>
                 throw new Exception("不支持的支付方式。");
         }
 
+        //如果订单中每项商品的库存量低于警戒线，则触发商品库存量报警事件
+        po.OrderDetailList.ForEach(od =>
+        {
+            if ((od.InventoryQty - od.PurchaseQty) <= Config.ProductInventoryWarn)
+            {
+                od.OnInventoryWarn();
+            }
+        });
+
+        //触发订单提交状态事件
         po.OnOrderStateChanged(OrderState.Submitted);
 
         return po;
@@ -387,8 +413,10 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 把订单加入数据库
+    /// 增加订单，插入订单表、订单明细表、修改商品库存量
     /// </summary>
+    /// <param name="po"></param>
+    /// <returns></returns>
     public static ProductOrder AddOrder(ProductOrder po)
     {
         try
@@ -521,6 +549,12 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramCancelDate.SqlValue = po.CancelDate;
                         cmdAddOrder.Parameters.Add(paramCancelDate);
 
+                        SqlParameter paramFreight = cmdAddOrder.CreateParameter();
+                        paramFreight.ParameterName = "@Freight";
+                        paramFreight.SqlDbType = System.Data.SqlDbType.Decimal;
+                        paramFreight.SqlValue = po.Freight;
+                        cmdAddOrder.Parameters.Add(paramFreight);
+
                         foreach (SqlParameter param in cmdAddOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -530,7 +564,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -543,13 +577,12 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
                         else
                         {
-                            throw new Exception("插入订单错误");
+                            throw new Exception(string.Format("插入“{0}”订单错误", po.ProductNames));
                         }
                     }
 
                     using (SqlCommand cmdAddDetail = conn.CreateCommand())
                     {
-
                         cmdAddDetail.Transaction = trans;
 
                         SqlParameter paramDetailPoID = cmdAddDetail.CreateParameter();
@@ -596,8 +629,6 @@ public class ProductOrder : IComparable<ProductOrder>
                             //插入订单明细表
                             cmdAddDetail.CommandText = "INSERT INTO [dbo].[OrderDetail] ([PoID], [ProductID], [OrderProductName], [PurchaseQty], [PurchasePrice], [PurchaseUnit]) VALUES (@PoID,@ProductID,@OrderProductName,@PurchaseQty,@PurchasePrice,@PurchaseUnit);select SCOPE_IDENTITY() as 'NewOrderDetailID'";
 
-                            Log.Debug("插入订单明细表", cmdAddDetail.CommandText);
-
                             var newOrderDetailID = cmdAddDetail.ExecuteScalar();
 
                             //新增的订单详情ID
@@ -607,12 +638,39 @@ public class ProductOrder : IComparable<ProductOrder>
                             }
                             else
                             {
-                                trans.Rollback();
-                                throw new Exception("订单明细表插入错误");
+                                throw new Exception(string.Format("插入订单{0}明细表错误", po.ID));
+                            }
+
+                            //如果不是无限量，且库存量>=购买量，则消耗商品库存数
+                            if (od.InventoryQty != -1 && od.InventoryQty >= od.PurchaseQty)
+                            {
+                                using (SqlCommand cmdConsumeInventory = conn.CreateCommand())
+                                {
+                                    cmdConsumeInventory.Transaction = trans;
+
+                                    SqlParameter paramId = cmdConsumeInventory.CreateParameter();
+                                    paramId.ParameterName = "@Id";
+                                    paramId.SqlDbType = System.Data.SqlDbType.Int;
+                                    paramId.Value = od.ProductID;
+                                    cmdConsumeInventory.Parameters.Add(paramId);
+
+                                    SqlParameter paramInventoryQty = cmdConsumeInventory.CreateParameter();
+                                    paramInventoryQty.ParameterName = "@InventoryQty";
+                                    paramInventoryQty.SqlDbType = System.Data.SqlDbType.Int;
+                                    paramInventoryQty.Value = od.InventoryQty - od.PurchaseQty;
+                                    cmdConsumeInventory.Parameters.Add(paramInventoryQty);
+
+                                    cmdConsumeInventory.CommandText = "update Product set InventoryQty=@InventoryQty where Id=@Id";
+
+                                    if (cmdConsumeInventory.ExecuteNonQuery() != 1)
+                                    {
+                                        throw new Exception(string.Format("更新商品“{0}”库存量错误", od.FruitName));
+                                    }
+                                }
                             }
                         });
-
                     }
+
                     trans.Commit();
 
                 }
@@ -628,7 +686,6 @@ public class ProductOrder : IComparable<ProductOrder>
                         conn.Close();
                     }
                 }
-
             }
         }
         catch (Exception ex)
@@ -636,6 +693,7 @@ public class ProductOrder : IComparable<ProductOrder>
             Log.Error("ProductOrder:AddOrder", ex.ToString());
             throw ex;
         }
+
         return po;
     }
 
@@ -723,6 +781,7 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
@@ -760,227 +819,42 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 分页查询订单，指定：条件字句、排序字句、起始行数、每页行数、总记录数（out）
-    /// </summary>
-    /// <param name="strWhere"></param>
-    /// <param name="strOrder"></param>
-    /// <param name="totalRows"></param>
-    /// <param name="startRowIndex"></param>
-    /// <param name="maximumRows"></param>
-    /// <returns>符合条件的记录集</returns>
-    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
-    {
-        return FindProductOrderPager(true, "ProductOrder", "Id", "*", strWhere, strOrder, out totalRows, startRowIndex, maximumRows);
-    }
-
-    /// <summary>
-    /// 分页查询订单，指定：表名、主键、字段名、条件字句、排序字句、起始行数、每页行数、总记录数（out）
-    /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="pk"></param>
-    /// <param name="fieldsName"></param>
-    /// <param name="strWhere"></param>
-    /// <param name="strOrder"></param>
-    /// <param name="totalRows"></param>
-    /// <param name="startRowIndex"></param>
-    /// <param name="maximumRows"></param>
-    /// <returns>符合条件的记录集</returns>
-    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
-    {
-        List<ProductOrder> poPerPage = new List<ProductOrder>();
-        ProductOrder po;
-
-        totalRows = 0;
-
-        try
-        {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
-            {
-                conn.Open();
-
-                try
-                {
-                    using (SqlCommand cmdOrder = conn.CreateCommand())
-                    {
-                        cmdOrder.CommandText = "spSqlPageByRowNum";
-                        cmdOrder.CommandType = CommandType.StoredProcedure;
-
-                        SqlParameter paramTableName = cmdOrder.CreateParameter();
-                        paramTableName.ParameterName = "@tbName";
-                        paramTableName.SqlDbType = SqlDbType.VarChar;
-                        paramTableName.Size = 255;
-                        paramTableName.Direction = ParameterDirection.Input;
-                        paramTableName.SqlValue = tableName;
-                        cmdOrder.Parameters.Add(paramTableName);
-
-                        SqlParameter paramPK = cmdOrder.CreateParameter();
-                        paramPK.ParameterName = "@PK";
-                        paramPK.SqlDbType = SqlDbType.VarChar;
-                        paramPK.Size = 50;
-                        paramPK.Direction = ParameterDirection.Input;
-                        paramPK.SqlValue = pk;
-                        cmdOrder.Parameters.Add(paramPK);
-
-                        SqlParameter paramFields = cmdOrder.CreateParameter();
-                        paramFields.ParameterName = "@tbFields";
-                        paramFields.SqlDbType = SqlDbType.VarChar;
-                        paramFields.Size = 1000;
-                        paramFields.Direction = ParameterDirection.Input;
-                        paramFields.SqlValue = fieldsName;
-                        cmdOrder.Parameters.Add(paramFields);
-
-                        SqlParameter paramMaximumRows = cmdOrder.CreateParameter();
-                        paramMaximumRows.ParameterName = "@MaximumRows";
-                        paramMaximumRows.SqlDbType = SqlDbType.Int;
-                        paramMaximumRows.Direction = ParameterDirection.Input;
-                        paramMaximumRows.SqlValue = maximumRows;
-                        cmdOrder.Parameters.Add(paramMaximumRows);
-
-                        SqlParameter paramStartRowIndex = cmdOrder.CreateParameter();
-                        paramStartRowIndex.ParameterName = "@StartRowIndex";
-                        paramStartRowIndex.SqlDbType = SqlDbType.Int;
-                        paramStartRowIndex.Direction = ParameterDirection.Input;
-                        paramStartRowIndex.SqlValue = startRowIndex;
-                        cmdOrder.Parameters.Add(paramStartRowIndex);
-
-                        SqlParameter paramWhere = cmdOrder.CreateParameter();
-                        paramWhere.ParameterName = "@strWhere";
-                        paramWhere.SqlDbType = SqlDbType.VarChar;
-                        paramWhere.Size = 1000;
-                        paramWhere.Direction = ParameterDirection.Input;
-                        paramWhere.SqlValue = strWhere;
-                        cmdOrder.Parameters.Add(paramWhere);
-
-                        SqlParameter paramOrder = cmdOrder.CreateParameter();
-                        paramOrder.ParameterName = "@strOrder";
-                        paramOrder.SqlDbType = SqlDbType.VarChar;
-                        paramOrder.Size = 1000;
-                        paramOrder.Direction = ParameterDirection.Input;
-                        paramOrder.SqlValue = strOrder;
-                        cmdOrder.Parameters.Add(paramOrder);
-
-                        SqlParameter paramTotalRows = cmdOrder.CreateParameter();
-                        paramTotalRows.ParameterName = "@TotalRows";
-                        paramTotalRows.SqlDbType = SqlDbType.Int;
-                        paramTotalRows.Direction = ParameterDirection.Output;
-                        cmdOrder.Parameters.Add(paramTotalRows);
-
-                        foreach (SqlParameter param in cmdOrder.Parameters)
-                        {
-                            if (param.Value == null)
-                            {
-                                param.Value = DBNull.Value;
-                            }
-                        }
-
-                        Log.Debug("分页查询订单", cmdOrder.CommandText);
-
-                        using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
-                        {
-                            while (sdrOrder.Read())
-                            {
-                                po = new ProductOrder();
-
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.IsDelivered = sdrOrder["IsDelivered"] != DBNull.Value ? bool.Parse(sdrOrder["IsDelivered"].ToString()) : false;
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = sdrOrder["IsAccept"] != DBNull.Value ? bool.Parse(sdrOrder["IsAccept"].ToString()) : false;
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-
-                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
-
-                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
-
-                                poPerPage.Add(po);
-
-                            }
-                            sdrOrder.Close();
-                        }
-
-                        if (!int.TryParse(paramTotalRows.SqlValue.ToString(), out totalRows))
-                        {
-                            totalRows = 0;
-                        }
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Log.Error("分页查询指定订单", ex.ToString());
-            throw ex;
-        }
-
-        return poPerPage;
-    }
-
-    /// <summary>
     /// 按条件加载订单信息、订单所属下单人信息
     /// 用于ManageOrder.aspx后台订单管理页面里的分页显示订单，需要加载订单的下单人信息，用于显示订单的下单人微信昵称等信息
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="pk"></param>
-    /// <param name="fieldsName"></param>
     /// <param name="strWhere"></param>
     /// <param name="strOrder"></param>
     /// <param name="totalRows"></param>
     /// <param name="payingOrderCount"></param>
     /// <param name="deliveringOrderCount"></param>
     /// <param name="acceptingOrderCount"></param>
+    /// <param name="cancelledOrderCount"></param>
+    /// <param name="orderPrice"></param>
     /// <param name="startRowIndex"></param>
     /// <param name="maximumRows"></param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
     {
         //默认加载每个订单所属的用户信息
-        return FindProductOrderPager(true, tableName, pk, fieldsName, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, startRowIndex, maximumRows);
+        return FindProductOrderPager(true, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, out cancelledOrderCount, out orderPrice, startRowIndex, maximumRows);
     }
 
     /// <summary>
     /// 分页查询订单，可指定是否加载订单的下单人信息，用于前台MyOrders.aspx我的订单页面，不需要加载订单的下单人信息，避免对象转换JSON数据出错
     /// </summary>
     /// <param name="isLoadPurchaser">是否加载订单所属的下单人信息</param>
-    /// <param name="tableName">待查询表名，可关联</param>
-    /// <param name="pk">主键</param>
-    /// <param name="fieldsName">待查询字段名</param>
     /// <param name="strWhere">条件SQL字句</param>
     /// <param name="strOrder">排序SQL字句</param>
     /// <param name="totalRows">总记录数</param>
     /// <param name="payingOrderCount">未支付订单数</param>
     /// <param name="deliveringOrderCount">未配送订单数</param>
     /// <param name="acceptingOrderCount">未签收订单数</param>
+    /// <param name="cancelledOrderCount">已撤单订单数</param>
+    /// <param name="orderPrice">订单总金额</param>
     /// <param name="startRowIndex">每页开始行号</param>
     /// <param name="maximumRows">每页行数</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount,out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -989,6 +863,8 @@ public class ProductOrder : IComparable<ProductOrder>
         payingOrderCount = 0;
         deliveringOrderCount = 0;
         acceptingOrderCount = 0;
+        cancelledOrderCount = 0;
+        orderPrice = 0;
 
         try
         {
@@ -1002,30 +878,6 @@ public class ProductOrder : IComparable<ProductOrder>
                     {
                         cmdOrder.CommandText = "spOrderQuery";
                         cmdOrder.CommandType = CommandType.StoredProcedure;
-
-                        SqlParameter paramTableName = cmdOrder.CreateParameter();
-                        paramTableName.ParameterName = "@tbName";
-                        paramTableName.SqlDbType = SqlDbType.VarChar;
-                        paramTableName.Size = 255;
-                        paramTableName.Direction = ParameterDirection.Input;
-                        paramTableName.SqlValue = tableName;
-                        cmdOrder.Parameters.Add(paramTableName);
-
-                        SqlParameter paramPK = cmdOrder.CreateParameter();
-                        paramPK.ParameterName = "@PK";
-                        paramPK.SqlDbType = SqlDbType.VarChar;
-                        paramPK.Size = 50;
-                        paramPK.Direction = ParameterDirection.Input;
-                        paramPK.SqlValue = pk;
-                        cmdOrder.Parameters.Add(paramPK);
-
-                        SqlParameter paramFields = cmdOrder.CreateParameter();
-                        paramFields.ParameterName = "@tbFields";
-                        paramFields.SqlDbType = SqlDbType.VarChar;
-                        paramFields.Size = 1000;
-                        paramFields.Direction = ParameterDirection.Input;
-                        paramFields.SqlValue = fieldsName;
-                        cmdOrder.Parameters.Add(paramFields);
 
                         SqlParameter paramMaximumRows = cmdOrder.CreateParameter();
                         paramMaximumRows.ParameterName = "@MaximumRows";
@@ -1081,6 +933,20 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramAcceptingOrderCount.Direction = ParameterDirection.Output;
                         cmdOrder.Parameters.Add(paramAcceptingOrderCount);
 
+                        SqlParameter paramCancelledOrderCount = cmdOrder.CreateParameter();
+                        paramCancelledOrderCount.ParameterName = "@CancelledOrderCount";
+                        paramCancelledOrderCount.SqlDbType = SqlDbType.Int;
+                        paramCancelledOrderCount.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramCancelledOrderCount);
+
+                        SqlParameter paramOrderPrice = cmdOrder.CreateParameter();
+                        paramOrderPrice.ParameterName = "@OrderPrice";
+                        paramOrderPrice.SqlDbType = SqlDbType.Decimal;
+                        paramOrderPrice.Precision = (byte)18;
+                        paramOrderPrice.Scale = (byte)2;
+                        paramOrderPrice.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramOrderPrice);
+
                         foreach (SqlParameter param in cmdOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -1117,6 +983,7 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
                                 po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
 
                                 if (isLoadPurchaser)
                                 {
@@ -1152,6 +1019,16 @@ public class ProductOrder : IComparable<ProductOrder>
                         {
                             acceptingOrderCount = 0;
                         }
+
+                        if (!int.TryParse(paramCancelledOrderCount.SqlValue.ToString(), out cancelledOrderCount))
+                        {
+                            cancelledOrderCount = 0;
+                        }
+
+                        if (!decimal.TryParse(paramOrderPrice.SqlValue.ToString(), out orderPrice))
+                        {
+                            orderPrice = 0;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -1181,10 +1058,9 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <summary>
     /// 查询订单表记录数
     /// </summary>
-    /// <param name="tableName"></param>
     /// <param name="strWhere"></param>
     /// <returns></returns>
-    public static int FindProductOrderCount(string tableName, string strWhere)
+    public static int FindProductOrderCount(string strWhere)
     {
         int totalRows = 0;
 
@@ -1200,11 +1076,11 @@ public class ProductOrder : IComparable<ProductOrder>
                     {
                         if (string.IsNullOrEmpty(strWhere))
                         {
-                            cmdOrder.CommandText = string.Format("select count(*) from {0}", tableName);
+                            cmdOrder.CommandText = string.Format("select count(*) from ProductOrder");
                         }
                         else
                         {
-                            cmdOrder.CommandText = string.Format("select count(*) from {0} where {1}", tableName, strWhere);
+                            cmdOrder.CommandText = string.Format("select count(*) from ProductOrder where {0}", strWhere);
                         }
 
                         Log.Debug("查询订单表记录数", cmdOrder.CommandText);
@@ -1288,6 +1164,7 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.ClientIP = sdrOrder["ClientIP"].ToString();
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+                                this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -1380,6 +1257,7 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.ClientIP = sdrOrder["ClientIP"].ToString();
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+                                this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -1479,6 +1357,7 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.ClientIP = sdrOrder["ClientIP"].ToString();
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
+                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -2079,7 +1958,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 订单状态变动事件
+    /// 触发订单状态变动事件
     /// </summary>
     /// <param name="os"></param>
     protected void OnOrderStateChanged(OrderState os)
@@ -2156,7 +2035,23 @@ public enum OrderState
 }
 
 /// <summary>
-/// 微信支付状态，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
+/// 付款方式
+/// </summary>
+public enum PaymentTerm
+{
+    /// <summary>
+    /// 微信支付
+    /// </summary>
+    WECHAT = 1,
+
+    /// <summary>
+    /// 现金支付
+    /// </summary>
+    CASH = 2
+}
+
+/// <summary>
+/// 订单支付状态，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
 /// 1~7是微信支付状态
 /// 8~9是现金支付状态
 /// </summary>
@@ -2208,18 +2103,3 @@ public enum TradeState
     CASHNOTPAID = 9
 }
 
-/// <summary>
-/// 付款方式
-/// </summary>
-public enum PaymentTerm
-{
-    /// <summary>
-    /// 微信支付
-    /// </summary>
-    WECHAT = 1,
-
-    /// <summary>
-    /// 现金支付
-    /// </summary>
-    CASH = 2
-}

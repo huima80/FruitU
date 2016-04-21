@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Web;
 using System.Data;
 using System.Data.SqlClient;
+using LitJson;
 
 /// <summary>
 /// Fruit 的摘要说明
@@ -67,6 +68,50 @@ public class Fruit : IComparable<Fruit>
     {
         this.Category = new Category();
         this.FruitImgList = new List<FruitImg>();
+    }
+
+    public Fruit(int id, string fruitName, Category category, decimal fruitPrice, string fruitUnit, List<FruitImg> fruitImgList, string fruitDesc, int inventoryQty, bool onSale, bool isSticky, int priority)
+    {
+        this.ID = id;
+        this.Category = category;
+        this.FruitName = fruitName;
+        this.FruitPrice = fruitPrice;
+        this.FruitUnit = fruitUnit;
+        this.FruitImgList = fruitImgList;
+        this.FruitDesc = fruitDesc;
+        this.InventoryQty = inventoryQty;
+        this.OnSale = onSale;
+        this.IsSticky = isSticky;
+        this.Priority = priority;
+    }
+
+    /// <summary>
+    /// 商品库存量报警事件
+    /// </summary>
+    public event EventHandler InventoryWarn;
+
+    /// <summary>
+    /// 触发商品库存量报警事件
+    /// </summary>
+    public void OnInventoryWarn()
+    {
+        //商品库存量报警事件异步回调函数，不阻塞主流程
+        if (this.InventoryWarn != null)
+        {
+            IAsyncResult ar = this.InventoryWarn.BeginInvoke(this, new EventArgs(), InventoryWarnComplete, this.InventoryWarn);
+        }
+    }
+
+    /// <summary>
+    /// 事件完成异步回调
+    /// </summary>
+    /// <param name="ar"></param>
+    private void InventoryWarnComplete(IAsyncResult ar)
+    {
+        if (ar != null)
+        {
+            (ar.AsyncState as EventHandler).EndInvoke(ar);
+        }
     }
 
     /// <summary>
@@ -148,10 +193,9 @@ public class Fruit : IComparable<Fruit>
     /// <summary>
     /// 根据条件查询商品记录数
     /// </summary>
-    /// <param name="tableName"></param>
     /// <param name="strWhere"></param>
     /// <returns></returns>
-    public static int FindProductCount(string tableName, string strWhere)
+    public static int FindProductCount(string strWhere)
     {
         int totalRows = 0;
 
@@ -167,11 +211,11 @@ public class Fruit : IComparable<Fruit>
                     {
                         if (string.IsNullOrEmpty(strWhere))
                         {
-                            cmdFruit.CommandText = string.Format("select count(*) from {0}", tableName);
+                            cmdFruit.CommandText = string.Format("select count(*) from Product");
                         }
                         else
                         {
-                            cmdFruit.CommandText = string.Format("select count(*) from {0} where {1}", tableName, strWhere);
+                            cmdFruit.CommandText = string.Format("select count(*) from Product where {0}", strWhere);
                         }
 
                         Log.Debug("查询商品表记录数", cmdFruit.CommandText);
@@ -205,171 +249,8 @@ public class Fruit : IComparable<Fruit>
     }
 
     /// <summary>
-    /// 分页查询商品，用于后台商品管理页面调用
-    /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="pk"></param>
-    /// <param name="fieldsName"></param>
-    /// <param name="strWhere"></param>
-    /// <param name="strOrder"></param>
-    /// <param name="totalRows"></param>
-    /// <param name="startRowIndex"></param>
-    /// <param name="maximumRows"></param>
-    /// <returns></returns>
-    public static List<Fruit> FindFruitPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, out int totalRows, int startRowIndex, int maximumRows = 10)
-    {
-        List<Fruit> fruitPerPage = new List<Fruit>();
-        Fruit fruit;
-
-        totalRows = 0;
-
-        try
-        {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
-            {
-                conn.Open();
-
-                try
-                {
-                    using (SqlCommand cmdFruit = conn.CreateCommand())
-                    {
-                        cmdFruit.CommandText = "spSqlPageByRowNum";
-                        cmdFruit.CommandType = CommandType.StoredProcedure;
-
-                        SqlParameter paramTableName = cmdFruit.CreateParameter();
-                        paramTableName.ParameterName = "@tbName";
-                        paramTableName.SqlDbType = SqlDbType.VarChar;
-                        paramTableName.Size = 255;
-                        paramTableName.Direction = ParameterDirection.Input;
-                        paramTableName.SqlValue = tableName;
-                        cmdFruit.Parameters.Add(paramTableName);
-
-                        SqlParameter paramPK = cmdFruit.CreateParameter();
-                        paramPK.ParameterName = "@PK";
-                        paramPK.SqlDbType = SqlDbType.VarChar;
-                        paramPK.Size = 50;
-                        paramPK.Direction = ParameterDirection.Input;
-                        paramPK.SqlValue = pk;
-                        cmdFruit.Parameters.Add(paramPK);
-
-                        SqlParameter paramFields = cmdFruit.CreateParameter();
-                        paramFields.ParameterName = "@tbFields";
-                        paramFields.SqlDbType = SqlDbType.VarChar;
-                        paramFields.Size = 1000;
-                        paramFields.Direction = ParameterDirection.Input;
-                        paramFields.SqlValue = fieldsName;
-                        cmdFruit.Parameters.Add(paramFields);
-
-                        SqlParameter paramMaximumRows = cmdFruit.CreateParameter();
-                        paramMaximumRows.ParameterName = "@MaximumRows";
-                        paramMaximumRows.SqlDbType = SqlDbType.Int;
-                        paramMaximumRows.Direction = ParameterDirection.Input;
-                        paramMaximumRows.SqlValue = maximumRows;
-                        cmdFruit.Parameters.Add(paramMaximumRows);
-
-                        SqlParameter paramStartRowIndex = cmdFruit.CreateParameter();
-                        paramStartRowIndex.ParameterName = "@StartRowIndex";
-                        paramStartRowIndex.SqlDbType = SqlDbType.Int;
-                        paramStartRowIndex.Direction = ParameterDirection.Input;
-                        paramStartRowIndex.SqlValue = startRowIndex;
-                        cmdFruit.Parameters.Add(paramStartRowIndex);
-
-                        SqlParameter paramWhere = cmdFruit.CreateParameter();
-                        paramWhere.ParameterName = "@strWhere";
-                        paramWhere.SqlDbType = SqlDbType.VarChar;
-                        paramWhere.Size = 1000;
-                        paramWhere.Direction = ParameterDirection.Input;
-                        paramWhere.SqlValue = strWhere;
-                        cmdFruit.Parameters.Add(paramWhere);
-
-                        SqlParameter paramOrder = cmdFruit.CreateParameter();
-                        paramOrder.ParameterName = "@strOrder";
-                        paramOrder.SqlDbType = SqlDbType.VarChar;
-                        paramOrder.Size = 1000;
-                        paramOrder.Direction = ParameterDirection.Input;
-                        paramOrder.SqlValue = strOrder;
-                        cmdFruit.Parameters.Add(paramOrder);
-
-                        SqlParameter paramTotalRows = cmdFruit.CreateParameter();
-                        paramTotalRows.ParameterName = "@TotalRows";
-                        paramTotalRows.SqlDbType = SqlDbType.Int;
-                        paramTotalRows.Direction = ParameterDirection.Output;
-                        cmdFruit.Parameters.Add(paramTotalRows);
-
-                        foreach (SqlParameter param in cmdFruit.Parameters)
-                        {
-                            if (param.Value == null)
-                            {
-                                param.Value = DBNull.Value;
-                            }
-                        }
-
-                        using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
-                        {
-                            while (sdrFruit.Read())
-                            {
-                                fruit = new Fruit();
-
-                                fruit.ID = int.Parse(sdrFruit["Id"].ToString());
-                                fruit.FruitName = sdrFruit["ProductName"].ToString();
-                                fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
-                                fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
-                                fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
-                                fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
-                                fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
-                                fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
-                                fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
-
-                                //fruit所属的category信息
-                                fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
-                                fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
-                                fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
-
-                                //fruit包含的图片信息
-                                fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
-
-                                fruitPerPage.Add(fruit);
-
-                            }
-                            sdrFruit.Close();
-                        }
-
-                        if (!int.TryParse(paramTotalRows.SqlValue.ToString(), out totalRows))
-                        {
-                            totalRows = 0;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Log.Error("分页查询指定商品", ex.ToString());
-            throw ex;
-        }
-
-        return fruitPerPage;
-
-    }
-
-    /// <summary>
     /// 分页查询商品，本周、本月爆款商品，用于前端查询商品页面调用
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="pk"></param>
-    /// <param name="fieldsName"></param>
     /// <param name="strWhere"></param>
     /// <param name="strOrder"></param>
     /// <param name="categoryOfTopSelling">查询爆款商品的类别</param>
@@ -379,7 +260,7 @@ public class Fruit : IComparable<Fruit>
     /// <param name="startRowIndex"></param>
     /// <param name="maximumRows"></param>
     /// <returns></returns>
-    public static List<Fruit> FindFruitPager(string tableName, string pk, string fieldsName, string strWhere, string strOrder, int categoryOfTopSelling, out int topSellingIDOnWeek, out int topSellingIDOnMonth, out int totalRows, int startRowIndex, int maximumRows = 10)
+    public static List<Fruit> FindFruitPager(string strWhere, string strOrder, int categoryOfTopSelling, out int topSellingIDOnWeek, out int topSellingIDOnMonth, out int totalRows, int startRowIndex, int maximumRows = 10)
     {
         List<Fruit> fruitPerPage = new List<Fruit>();
         Fruit fruit;
@@ -400,30 +281,6 @@ public class Fruit : IComparable<Fruit>
                     {
                         cmdFruit.CommandText = "spProductQuery";
                         cmdFruit.CommandType = CommandType.StoredProcedure;
-
-                        SqlParameter paramTableName = cmdFruit.CreateParameter();
-                        paramTableName.ParameterName = "@tbName";
-                        paramTableName.SqlDbType = SqlDbType.VarChar;
-                        paramTableName.Size = 255;
-                        paramTableName.Direction = ParameterDirection.Input;
-                        paramTableName.SqlValue = tableName;
-                        cmdFruit.Parameters.Add(paramTableName);
-
-                        SqlParameter paramPK = cmdFruit.CreateParameter();
-                        paramPK.ParameterName = "@PK";
-                        paramPK.SqlDbType = SqlDbType.VarChar;
-                        paramPK.Size = 50;
-                        paramPK.Direction = ParameterDirection.Input;
-                        paramPK.SqlValue = pk;
-                        cmdFruit.Parameters.Add(paramPK);
-
-                        SqlParameter paramFields = cmdFruit.CreateParameter();
-                        paramFields.ParameterName = "@tbFields";
-                        paramFields.SqlDbType = SqlDbType.VarChar;
-                        paramFields.Size = 1000;
-                        paramFields.Direction = ParameterDirection.Input;
-                        paramFields.SqlValue = fieldsName;
-                        cmdFruit.Parameters.Add(paramFields);
 
                         SqlParameter paramMaximumRows = cmdFruit.CreateParameter();
                         paramMaximumRows.ParameterName = "@MaximumRows";

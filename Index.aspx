@@ -2,6 +2,7 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/index.css" rel="stylesheet" />
+    <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container">
@@ -31,8 +32,45 @@
             </div>
         </div>
     </div>
+    <div class="md-modal md-effect-3" id="divModal">
+        <div class="md-content">
+            <p>系统升级中</p>
+            <p>敬请期待  <i class="fa fa-smile-o fa-lg"></i></p>
+            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-3x"></i></div>
+        </div>
+    </div>
+
+    <div class="md-overlay"></div>
+    <!-- the overlay element -->
 
     <script>
+
+        requirejs(['jquery'], function ($) {
+            $(function () {
+                //$(".category-items a").on("click", switchModalShow);
+
+                $(".md-overlay").on("click", closeModal);
+
+                $("#btnClose").on("click", function () {
+                    closeModal();
+                    event.stopPropagation();
+                });
+
+
+            });
+        })
+
+
+        //显示模式窗口，在图片load事件完成后回调
+        function switchModalShow() {
+            $("#divModal").addClass("md-show");
+            event.preventDefault();
+        }
+
+        //关闭模式对话框
+        function closeModal() {
+            $("#divModal").removeClass("md-show");
+        }
 
 
     </script>

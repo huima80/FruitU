@@ -79,6 +79,13 @@
 
 }
 
+.inventory-qty{
+    text-align:left;
+    color:lightgrey;
+    font-size:smaller;
+    padding:4px;
+}
+
 .cart-footer {
     width: 100%;
     height: 56px;

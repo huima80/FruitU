@@ -2,6 +2,17 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="../css/ManageOrder.css" rel="stylesheet" />
+    <style>
+        .fa-check {
+            color: red;
+            font-size: 20px;
+        }
+
+        .fa-close {
+            color: grey;
+            font-size: 20px;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container-fluid">
@@ -99,10 +110,12 @@
                         </div>
                     </div>
                     <div class="panel-footer">
+                        查询订单总金额：<asp:Label ID="lblOrderPrice" runat="server" CssClass="badge" Text=""></asp:Label>
                         查询订单总数：<asp:Label ID="lblTotalRows" runat="server" CssClass="badge" Text=""></asp:Label>
                         待支付：<asp:Label ID="lblPayingOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
                         待发货：<asp:Label ID="lblDeliveringOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
                         待签收：<asp:Label ID="lblAcceptingOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
+                        已撤单：<asp:Label ID="lblCancelledOrderCount" runat="server" CssClass="badge" Text=""></asp:Label>
                     </div>
                 </div>
             </div>
@@ -113,7 +126,7 @@
                     <Columns>
                         <asp:TemplateField HeaderText="订单信息" SortExpression="OrderID">
                             <ItemTemplate>
-                                <p title="下单人微信昵称"><i class="fa fa-wechat"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# Eval("Purchaser.Nickname") + ((bool)Eval("Purchaser.Sex")?"&nbsp;<i class=\"fa fa-mars\" style=\"color:blue;\"></i>":"&nbsp;<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>") %>'></asp:Label></p>
+                                <p title="下单人微信昵称"><i class="fa fa-wechat"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# (Eval("Purchaser")!=null?Eval("Purchaser.Nickname"):string.Empty) + (Eval("Purchaser")!=null?((bool)Eval("Purchaser.Sex")?"&nbsp;<i class=\"fa fa-mars\" style=\"color:blue;\"></i>":"&nbsp;<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>"):string.Empty) %>'></asp:Label></p>
                                 <p title="订单编号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="Label1" runat="server" Text='<%# Eval("OrderID") %>'></asp:Label></p>
                                 <p title="下单时间"><i class="fa fa-calendar"></i>&nbsp;<asp:Label ID="Label4" runat="server" Text='<%# Eval("OrderDate") %>'></asp:Label></p>
                                 <p id="pCancelDate" runat="server" title="撤单时间"><i class="fa fa-close"></i>&nbsp;<asp:Label ID="Label2" runat="server" Text='<%# Eval("CancelDate") %>'></asp:Label></p>
@@ -123,6 +136,8 @@
                             <ItemTemplate>
                                 <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-pencil-square-o\"></i>&nbsp;"+Server.HtmlEncode(Eval("OrderMemo").ToString())+"</p>" %>'></asp:Label>
                             </ItemTemplate>
+
+                            <ItemStyle CssClass="col-lg-3"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField ConvertEmptyStringToNull="False" HeaderText="订单商品详情" SortExpression="OrderDetailList">
                             <ItemTemplate>
@@ -138,9 +153,13 @@
                                 </asp:DataList>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="OrderPrice" DataFormatString="{0:c}" HeaderText="订单金额" ReadOnly="True" SortExpression="OrderPrice" ItemStyle-CssClass="order-price">
-                            <ItemStyle CssClass="order-price"></ItemStyle>
-                        </asp:BoundField>
+                        <asp:TemplateField HeaderText="订单金额" SortExpression="OrderPrice">
+                            <ItemTemplate>
+                                <asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label><br />
+                                <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label>
+                            </ItemTemplate>
+                            <ItemStyle CssClass="order-price" />
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="支付状态" SortExpression="PaymentTerm">
                             <ItemTemplate>
                                 <p>
@@ -152,7 +171,7 @@
                                         </label>
                                     </span>
                                 </p>
-                                <p id="pTransactionID" runat="server" title="微信支付订单号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
+                                <p id="pTransactionID" runat="server" title="微信支付流水号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
                                 <p id="pTransactionTime" runat="server" title="微信支付时间"><i class="fa fa-calendar"></i>&nbsp;<asp:Label ID="lblTransactionTime" runat="server" Text='<%# Eval("TransactionTime") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
@@ -163,6 +182,7 @@
                                         <asp:CheckBox ID="cbIsDelivery" runat="server" Checked='<%# Bind("IsDelivered") %>' AutoPostBack="True" onclick="if(!confirm('点击发货后将不能修改，确认发货吗？')){return false;}" OnCheckedChanged="cbIsDelivery_CheckedChanged" POID='<%# Eval("ID") %>' />
                                     </label>
                                 </div>
+                                <i runat="server" id="faIsDelivery" class="fa fa-check"></i>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="是否签收" SortExpression="IsAccept">
@@ -172,6 +192,7 @@
                                         <asp:CheckBox ID="cbIsAccept" runat="server" Checked='<%# Bind("IsAccept") %>' AutoPostBack="True" onclick="if(!confirm('点击签收后将不能修改，确认签收吗？')){return false;}" POID='<%# Eval("ID") %>' OnCheckedChanged="cbIsAccept_CheckedChanged" />
                                     </label>
                                 </div>
+                                <i runat="server" id="faIsAccept" class="fa fa-check"></i>
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
