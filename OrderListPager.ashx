@@ -5,7 +5,7 @@ using System.Web;
 using System.Collections.Generic;
 using LitJson;
 
-public class OrderListPager : IHttpHandler, System.Web.SessionState.IRequiresSessionState
+public class OrderListPager : IHttpHandler, System.Web.SessionState.IReadOnlySessionState
 {
 
     public void ProcessRequest(HttpContext context)

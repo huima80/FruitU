@@ -1,5 +1,13 @@
-﻿.random-category img{
+﻿html, body{
+    background:white;
+}
+
+.random-category img{
     max-width:100%;
+}
+
+.random-category div{
+    padding:2px;
 }
 
 .input-group, .form-control {
@@ -18,4 +26,8 @@
     font-size: 10px;
     color: orange;
     text-align: left;
+}
+
+.add-to-cart-button{
+    text-align:right;
 }

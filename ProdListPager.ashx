@@ -16,7 +16,7 @@ public class ProdListPager : IHttpHandler
         List<Fruit> prodListPerPage;
         JsonData jProdListPerPage;
         List<string> listWhere = new List<string>();
-        int categoryID = 0, topSellingOnMonth, topSellingOnWeek;
+        int categoryID = 0, topSellingMonthly, topSellingWeekly;
 
         try
         {
@@ -69,7 +69,7 @@ public class ProdListPager : IHttpHandler
             strOrder = "IsSticky desc, Priority desc";
 
             //查询分页数据，本周、本月爆款
-            prodListPerPage = Fruit.FindFruitPager(strWhere, strOrder, categoryID, out topSellingOnWeek, out topSellingOnMonth, out totalRows, startRowIndex, maximumRows);
+            prodListPerPage = Fruit.FindFruitPager(strWhere, strOrder, categoryID, out topSellingWeekly, out topSellingMonthly, out totalRows, startRowIndex, maximumRows);
 
             //把List<>对象集合转换成JSON数据格式
             jProdListPerPage = JsonMapper.ToObject(JsonMapper.ToJson(prodListPerPage));
@@ -77,14 +77,14 @@ public class ProdListPager : IHttpHandler
             //在JsonData中标记本周、本月爆款商品
             for (int i = 0; i < jProdListPerPage.Count; i++)
             {
-                if (jProdListPerPage[i]["ID"].ToString() == topSellingOnWeek.ToString())
+                if (jProdListPerPage[i]["ID"].ToString() == topSellingWeekly.ToString())
                 {
-                    jProdListPerPage[i]["TopSellingOnWeek"] = "1";
+                    jProdListPerPage[i]["TopSellingWeekly"] = "1";
                 }
 
-                if (jProdListPerPage[i]["ID"].ToString() == topSellingOnMonth.ToString())
+                if (jProdListPerPage[i]["ID"].ToString() == topSellingMonthly.ToString())
                 {
-                    jProdListPerPage[i]["TopSellingOnMonth"] = "1";
+                    jProdListPerPage[i]["TopSellingMonthly"] = "1";
                 }
             }
 

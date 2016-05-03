@@ -117,11 +117,11 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         isNewUser = false;
                         if (!wxUser.IsApproved)
                         {
-                            throw new Exception("您没有权限登录，请联系管理员 13770696350。");
+                            throw new Exception("您没有权限登录，请联系微信客服申诉。");
                         }
                     }
 
-                    //无论新老用户，都要使用当前登录信息刷新。微信用户关键信息：OpenID和客户端IP，后续微信支付时需要！！！
+                    //无论新老用户，都要使用当前的微信用户信息刷新数据库。微信用户关键信息：OpenID和客户端IP，后续微信支付时需要！！！
                     wxUser.OpenID = jAuthInfo["openid"].ToString();
                     wxUser.ClientIP = !string.IsNullOrEmpty(context.Request.UserHostAddress) ? context.Request.UserHostAddress : "127.0.0.1";
 
@@ -205,6 +205,8 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
 
                     if (isNewUser)
                     {
+                        //新用户的会员积分默认为0
+                        wxUser.MemberPoints = 0;
                         //如果是新用户则插入微信用户表
                         WeChatUserDAO.InsertUser(wxUser);
                     }

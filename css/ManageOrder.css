@@ -1,46 +1,60 @@
-﻿.form-group{
+﻿.form-group {
     padding: 4px;
 }
 
 input[type=checkbox] {
-    cursor:pointer;
+    cursor: pointer;
 }
 
-.panel-footer{
-    color:red;
+.panel-footer {
+    color: red;
 }
 
-.purchase-price{
-    font-size:14px;
-    color:darkorange;
+.purchase-price {
+    font-size: 14px;
+    color: darkorange;
 }
 
-.purchase-unit{
-    font-size:10px;
-    color:darkgrey;
+.purchase-unit {
+    font-size: 10px;
+    color: darkgrey;
 }
 
-.purchase-qty{
-    font-size:10px;
-    font-style:italic;
-    color:blue;
+.purchase-qty {
+    font-size: 10px;
+    font-style: italic;
+    color: blue;
 }
 
-.order-price{
-    font-size:large;
-    color:red;
+.order-price {
+    font-size: large;
+    color: red;
 }
 
-.freight{
-    font-size:small;
-    color:orange;
+.freight {
+    font-size: small;
+    color: orange;
 }
 
-.fa-wechat{
-    color:#00CD00;
+.member-points-discount {
+    font-size: small;
+    color: orange;
 }
 
-.fa-money{
-    color:red;
+.fa-wechat {
+    color: #00CD00;
 }
 
+.fa-money {
+    color: red;
+}
+
+.fa-check {
+    color: red;
+    font-size: 20px;
+}
+
+.fa-close {
+    color: grey;
+    font-size: 20px;
+}

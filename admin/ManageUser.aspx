@@ -115,7 +115,8 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="微信昵称" SortExpression="NickName">
                             <ItemTemplate>
-                                <asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label>
+                                <p><asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label></p>
+                                <p><asp:Label ID="lblMemberPoints" runat="server" Text='<%# "会员积分："+Eval("MemberPoints") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="地区" SortExpression="Country">

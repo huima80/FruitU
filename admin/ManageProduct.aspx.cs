@@ -42,8 +42,8 @@ public partial class ManageProduct : System.Web.UI.Page
             this.odsFruitList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
             this.odsFruitList.SelectParameters.Add("categoryOfTopSelling", DbType.Int32, string.Empty);
             this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("totalRows", DbType.Int32, "0")].Direction = ParameterDirection.Output;
-            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDOnWeek", DbType.Int32, "0")].Direction = ParameterDirection.Output;
-            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDOnMonth", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDWeekly", DbType.Int32, "0")].Direction = ParameterDirection.Output;
+            this.odsFruitList.SelectParameters[this.odsFruitList.SelectParameters.Add("topSellingIDMonthly", DbType.Int32, "0")].Direction = ParameterDirection.Output;
 
             this.gvFruitList.AllowPaging = true;
             this.gvFruitList.AllowCustomPaging = true;
@@ -703,6 +703,18 @@ public partial class ManageProduct : System.Web.UI.Page
                 this.ddlCategory.Style.Clear();
             }
 
+            //查询条件：是否缺货
+            if (this.ddlOutOfStock.SelectedIndex != 0)
+            {
+                UtilityHelper.AntiSQLInjection(this.ddlOutOfStock.SelectedValue);
+                listWhere.Add(string.Format("(InventoryQty <> -1 and InventoryQty <= {0})", Config.ProductInventoryWarn));
+                this.ddlOutOfStock.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+            }
+            else
+            {
+                this.ddlOutOfStock.Style.Clear();
+            }
+
             //查询条件：是否置顶
             if (this.ddlIsSticky.SelectedIndex != 0)
             {
@@ -756,6 +768,9 @@ public partial class ManageProduct : System.Web.UI.Page
     {
         this.ddlCategory.SelectedIndex = 0;
         this.ddlCategory.Style.Clear();
+
+        this.ddlOutOfStock.SelectedIndex = 0;
+        this.ddlOutOfStock.Style.Clear();
 
         this.ddlIsSticky.SelectedIndex = 0;
         this.ddlIsSticky.Style.Clear();

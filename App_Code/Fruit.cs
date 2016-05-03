@@ -91,9 +91,20 @@ public class Fruit : IComparable<Fruit>
     public event EventHandler InventoryWarn;
 
     /// <summary>
-    /// 触发商品库存量报警事件
+    /// 同步触发商品库存量报警事件
     /// </summary>
     public void OnInventoryWarn()
+    {
+        if (this.InventoryWarn != null)
+        {
+            this.InventoryWarn(this, new EventArgs());
+        }
+    }
+
+    /// <summary>
+    /// 异步触发商品库存量报警事件
+    /// </summary>
+    public void OnInventoryWarnAsyn()
     {
         //商品库存量报警事件异步回调函数，不阻塞主流程
         if (this.InventoryWarn != null)
@@ -115,13 +126,16 @@ public class Fruit : IComparable<Fruit>
     }
 
     /// <summary>
-    /// 查询所有的水果
+    /// 按商品类别查询商品，并返回周/月销量最高的商品ID
     /// </summary>
+    /// <param name="categoryID"></param>
+    /// <param name="topSellingIDWeekly"></param>
+    /// <param name="topSellingIDMonthly"></param>
     /// <returns></returns>
-    public static List<Fruit> FindAllFruit()
+    public static List<Fruit> FindFruitByCategoryID(string categoryID, out int topSellingIDWeekly, out int topSellingIDMonthly)
     {
-        List<Fruit> fruitList = new List<Fruit>();
-        Fruit fruit;
+        List<Fruit> prodList = new List<Fruit>();
+        Fruit product;
 
         try
         {
@@ -133,37 +147,69 @@ public class Fruit : IComparable<Fruit>
                 {
                     using (SqlCommand cmdFruit = conn.CreateCommand())
                     {
-                        cmdFruit.CommandText = "select Product.*,Category.ParentID,Category.CategoryName from Product left join Category on Product.CategoryID = Category.Id";
+                        cmdFruit.CommandText = "spProductQuery";
+                        cmdFruit.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter paramCategoryID = cmdFruit.CreateParameter();
+                        paramCategoryID.ParameterName = "@CategoryID";
+                        paramCategoryID.SqlDbType = SqlDbType.VarChar;
+                        paramCategoryID.Size = 500;
+                        paramCategoryID.Direction = ParameterDirection.Input;
+                        paramCategoryID.SqlValue = categoryID;
+                        cmdFruit.Parameters.Add(paramCategoryID);
+
+                        SqlParameter paramTopSellingIDWeekly = cmdFruit.CreateParameter();
+                        paramTopSellingIDWeekly.ParameterName = "@TopSellingIDWeekly";
+                        paramTopSellingIDWeekly.SqlDbType = SqlDbType.Int;
+                        paramTopSellingIDWeekly.Direction = ParameterDirection.Output;
+                        cmdFruit.Parameters.Add(paramTopSellingIDWeekly);
+
+                        SqlParameter paramTopSellingIDMonthly = cmdFruit.CreateParameter();
+                        paramTopSellingIDMonthly.ParameterName = "@TopSellingIDMonthly";
+                        paramTopSellingIDMonthly.SqlDbType = SqlDbType.Int;
+                        paramTopSellingIDMonthly.Direction = ParameterDirection.Output;
+                        cmdFruit.Parameters.Add(paramTopSellingIDMonthly);
 
                         using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
                         {
                             while (sdrFruit.Read())
                             {
-                                fruit = new Fruit();
+                                product = new Fruit();
 
-                                fruit.ID = int.Parse(sdrFruit["Id"].ToString());
-                                fruit.FruitName = sdrFruit["ProductName"].ToString();
-                                fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
-                                fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
-                                fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
-                                fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
-                                fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
-                                fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
-                                fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
+                                product.ID = int.Parse(sdrFruit["Id"].ToString());
+                                product.FruitName = sdrFruit["ProductName"].ToString();
+                                product.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
+                                product.FruitUnit = sdrFruit["ProductUnit"].ToString();
+                                product.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
+                                product.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
+                                product.FruitDesc = sdrFruit["ProductDesc"].ToString();
+                                product.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
+                                product.Priority = int.Parse(sdrFruit["Priority"].ToString());
 
                                 //fruit所属的category信息
-                                fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
-                                fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
-                                fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
+                                product.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
+                                product.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
+                                product.Category.CategoryName = sdrFruit["CategoryName"].ToString();
 
                                 //fruit包含的图片信息
-                                fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
+                                product.FruitImgList = FindFruitImgByProdID(conn, product.ID);
 
-                                fruitList.Add(fruit);
+                                prodList.Add(product);
 
                             }
                             sdrFruit.Close();
                         }
+
+                        if (!int.TryParse(paramTopSellingIDWeekly.SqlValue.ToString(), out topSellingIDWeekly))
+                        {
+                            topSellingIDWeekly = 0;
+                        }
+
+                        if (!int.TryParse(paramTopSellingIDMonthly.SqlValue.ToString(), out topSellingIDMonthly))
+                        {
+                            topSellingIDMonthly = 0;
+                        }
+
 
                     }
                 }
@@ -182,11 +228,11 @@ public class Fruit : IComparable<Fruit>
         }
         catch (Exception ex)
         {
-            Log.Error("查询所有水果", ex.ToString());
+            Log.Error("FindProductList", ex.ToString());
             throw ex;
         }
 
-        return fruitList;
+        return prodList;
 
     }
 
@@ -254,20 +300,20 @@ public class Fruit : IComparable<Fruit>
     /// <param name="strWhere"></param>
     /// <param name="strOrder"></param>
     /// <param name="categoryOfTopSelling">查询爆款商品的类别</param>
-    /// <param name="topSellingIDOnWeek">本周爆款商品ID</param>
-    /// <param name="topSellingIDOnMonth">本月爆款商品ID</param>
+    /// <param name="topSellingIDWeekly">本周爆款商品ID</param>
+    /// <param name="topSellingIDMonthly">本月爆款商品ID</param>
     /// <param name="totalRows"></param>
     /// <param name="startRowIndex"></param>
     /// <param name="maximumRows"></param>
     /// <returns></returns>
-    public static List<Fruit> FindFruitPager(string strWhere, string strOrder, int categoryOfTopSelling, out int topSellingIDOnWeek, out int topSellingIDOnMonth, out int totalRows, int startRowIndex, int maximumRows = 10)
+    public static List<Fruit> FindFruitPager(string strWhere, string strOrder, int categoryOfTopSelling, out int topSellingIDWeekly, out int topSellingIDMonthly, out int totalRows, int startRowIndex, int maximumRows = 10)
     {
         List<Fruit> fruitPerPage = new List<Fruit>();
         Fruit fruit;
 
         totalRows = 0;
-        topSellingIDOnWeek = 0;
-        topSellingIDOnMonth = 0;
+        topSellingIDWeekly = 0;
+        topSellingIDMonthly = 0;
 
         try
         {
@@ -279,7 +325,7 @@ public class Fruit : IComparable<Fruit>
                 {
                     using (SqlCommand cmdFruit = conn.CreateCommand())
                     {
-                        cmdFruit.CommandText = "spProductQuery";
+                        cmdFruit.CommandText = "spProductQueryPager";
                         cmdFruit.CommandType = CommandType.StoredProcedure;
 
                         SqlParameter paramMaximumRows = cmdFruit.CreateParameter();
@@ -325,17 +371,17 @@ public class Fruit : IComparable<Fruit>
                         paramTotalRows.Direction = ParameterDirection.Output;
                         cmdFruit.Parameters.Add(paramTotalRows);
 
-                        SqlParameter paramTopSellingIDOnWeek = cmdFruit.CreateParameter();
-                        paramTopSellingIDOnWeek.ParameterName = "@TopSellingIDOnWeek";
-                        paramTopSellingIDOnWeek.SqlDbType = SqlDbType.Int;
-                        paramTopSellingIDOnWeek.Direction = ParameterDirection.Output;
-                        cmdFruit.Parameters.Add(paramTopSellingIDOnWeek);
+                        SqlParameter paramTopSellingIDWeekly = cmdFruit.CreateParameter();
+                        paramTopSellingIDWeekly.ParameterName = "@TopSellingIDWeekly";
+                        paramTopSellingIDWeekly.SqlDbType = SqlDbType.Int;
+                        paramTopSellingIDWeekly.Direction = ParameterDirection.Output;
+                        cmdFruit.Parameters.Add(paramTopSellingIDWeekly);
 
-                        SqlParameter paramTopSellingIDOnMonth = cmdFruit.CreateParameter();
-                        paramTopSellingIDOnMonth.ParameterName = "@TopSellingIDOnMonth";
-                        paramTopSellingIDOnMonth.SqlDbType = SqlDbType.Int;
-                        paramTopSellingIDOnMonth.Direction = ParameterDirection.Output;
-                        cmdFruit.Parameters.Add(paramTopSellingIDOnMonth);
+                        SqlParameter paramTopSellingIDMonthly = cmdFruit.CreateParameter();
+                        paramTopSellingIDMonthly.ParameterName = "@TopSellingIDMonthly";
+                        paramTopSellingIDMonthly.SqlDbType = SqlDbType.Int;
+                        paramTopSellingIDMonthly.Direction = ParameterDirection.Output;
+                        cmdFruit.Parameters.Add(paramTopSellingIDMonthly);
 
                         foreach (SqlParameter param in cmdFruit.Parameters)
                         {
@@ -380,14 +426,14 @@ public class Fruit : IComparable<Fruit>
                             totalRows = 0;
                         }
 
-                        if (!int.TryParse(paramTopSellingIDOnWeek.SqlValue.ToString(), out topSellingIDOnWeek))
+                        if (!int.TryParse(paramTopSellingIDWeekly.SqlValue.ToString(), out topSellingIDWeekly))
                         {
-                            topSellingIDOnWeek = 0;
+                            topSellingIDWeekly = 0;
                         }
 
-                        if (!int.TryParse(paramTopSellingIDOnMonth.SqlValue.ToString(), out topSellingIDOnMonth))
+                        if (!int.TryParse(paramTopSellingIDMonthly.SqlValue.ToString(), out topSellingIDMonthly))
                         {
-                            topSellingIDOnMonth = 0;
+                            topSellingIDMonthly = 0;
                         }
                     }
                 }
@@ -1733,37 +1779,37 @@ public class Fruit : IComparable<Fruit>
     {
         if (this.IsSticky && !other.IsSticky)
         {
-            return 1;
+            return -1;
         }
         else
         {
             if (!this.IsSticky && other.IsSticky)
             {
-                return -1;
+                return 1;
             }
             else
             {
                 if (this.Priority > other.Priority)
                 {
-                    return 1;
+                    return -1;
                 }
                 else
                 {
                     if (this.Priority < other.Priority)
                     {
-                        return -1;
+                        return 1;
                     }
                     else
                     {
                         if (this.ID > other.ID)
                         {
-                            return 1;
+                            return -1;
                         }
                         else
                         {
                             if (this.ID < other.ID)
                             {
-                                return -1;
+                                return 1;
                             }
                             else
                             {

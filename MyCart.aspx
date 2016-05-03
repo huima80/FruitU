@@ -40,7 +40,7 @@
         //刷新购物车里的商品总价、结算按钮状态
         function refreshSubTotal(event, data) {
 
-            $("span.sub-total-price").text("￥" + parseFloat(data.subTotal).toFixed(2));
+            $("span.sub-total-price").text("￥" + data.subTotal.toFixed(2));
 
             //如果购物车为空，则禁用结算按钮
             if (data.prodQty == 0) {
@@ -108,7 +108,7 @@
             prodItem.prodID = prodId;
             prodItem.qty = currQty;
             if ($.cart.updateProdItem(prodItem)) {
-                //显示更新的数量
+                //购物车更新成功，再刷新界面显示数量
                 $txtQty.val(currQty);
             }
         }
@@ -131,6 +131,7 @@
             prodItem.prodID = prodId;
             prodItem.qty = currQty;
             if ($.cart.updateProdItem(prodItem)) {
+                //购物车更新成功，再刷新界面显示数量
                 $txtQty.val(currQty);
             }
         }
@@ -140,7 +141,7 @@
 
             //删除购物车里的商品项
             if ($.cart.deleteProdItem(prodId)) {
-                //删除购物车界面商品项
+                //购物车更新成功，再刷新界面显示数量
                 $("#ProdItem" + prodId).fadeOut("slow");
             }
 

@@ -14,6 +14,8 @@ public partial class Checkout : System.Web.UI.Page
 
             //当前session中的认证信息
             WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+            //在微信用户表和成员资格表中查找此用户信息，并刷新最近活动时间，获取最新的用户积分信息
+            Session["WxUser"] = wxUser = WeChatUserDAO.FindUserByOpenID(wxUser.OpenID, true);
 
             //如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
             if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
@@ -51,11 +53,11 @@ public partial class Checkout : System.Web.UI.Page
                 }
             }
 
-            //获取“收货地址共享接口参数”，传给前端JS
+            //获取“收货地址共享接口参数”
             string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
 
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
-
+            //定义前端JS全局变量：收货地址接口参数、会议积分兑换比率、会员积分余额
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsVar", string.Format("var wxEditAddrParam = {0}, memberPointsExchangeRate = {1}, validMemberPoints = {2};", wxEditAddrParam, Config.MemberPointsExchangeRate, wxUser.MemberPoints), true);
         }
         catch (System.Threading.ThreadAbortException)
         {

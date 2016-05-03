@@ -70,16 +70,26 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-8">
-                <div class="price-freight">
-                    <div><i class="fa fa-check-circle"></i>&nbsp;商品价格：￥<span id="spanSubTotal"></span>元</div>
-                    <div><i class="fa fa-check-circle"></i>&nbsp;运费：￥<span id="spanFreight"></span>元（订单满99元包邮）</div>
+            <div class="col-sm-8 ">
+                <div class="sub-price">
+                    <div><i class="fa fa-check-circle"></i>&nbsp;商品价格：￥<span id="spSubTotal"></span>元</div>
+                    <div><i class="fa fa-check-circle"></i>&nbsp;运费：￥<span id="spFreight"></span>元（订单满99元包邮）</div>
+                    <div class="checkbox">
+                        <label>
+                            <input id="cbMemberPoints" type="checkbox" />&nbsp;使用积分
+                        </label>
+                        <span class="form-group">
+                            <label class="sr-only" for="txtUsedMemberPoints">会员积分</label>
+                            <asp:TextBox ID="txtUsedMemberPoints" runat="server" CssClass="form-control input-sm" disabled="disabled" TextMode="Number" Text="0"></asp:TextBox> 优惠￥<span id="spMemberPointsDiscount">0.00</span>元
+                        </span>
+                        <div class="help-block">* 您现有<span id="spValidMemberPoints"></span>积分，本订单最多可使用<span id="spMaxDiscountMemberPoints"></span>积分</div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="row sub-total">
             <div class="col-xs-12">
-                <div>总金额：￥<span class="sub-total-price" id="spanOrderPrice"></span>元</div>
+                <div>总金额：￥<span class="sub-total-price" id="spOrderPrice"></span>元</div>
             </div>
         </div>
         <div class="row pay-button">
@@ -110,10 +120,49 @@
         requirejs(['jquery', 'ladda'], function ($, ladda) {
 
             $(function () {
-
                 requirejs(['cart'], function () {
+                    try {
+                        if ($.cart.prodAmount() == 0) {
+                            alert("您的购物车空空的哦，先去买点什么吧。");
+                            location.href = ".";
+                        }
 
-                    showProdItemsAndCalPrice();
+                        //显示购物车里的商品项
+                        showProdItems();
+
+                        //初始化购物车里的会员积分兑换比率
+                        if (memberPointsExchangeRate != null && memberPointsExchangeRate != undefined && !isNaN(memberPointsExchangeRate) && memberPointsExchangeRate > 0) {
+                            $.cart.updateMemberPointsExchangeRate(memberPointsExchangeRate);
+                        }
+                        else {
+                            throw new Error("参数错误：会员积分兑换比率");
+                        }
+
+                        //初始化购物车里的会员积分余额
+                        if (validMemberPoints != null && validMemberPoints != undefined && !isNaN(validMemberPoints) && validMemberPoints >= 0) {
+                            $.cart.updateValidMemberPoints(validMemberPoints);
+                        }
+                        else {
+                            throw new Error("参数错误：会员积分余额");
+                        }
+
+                        //初始化购物车里的使用会员积分点数，默认为0
+                        $.cart.updateUsedMemberPoints(0);
+
+                        //注册购物车的积分变动后事件处理函数
+                        $($.cart).on("onUsedMemberPointsUpdated", refreshOrderPrice);
+
+                        //显示商品价格、运费、账户积分余额、订单最大可抵扣金额、订单总价
+                        $("#spSubTotal").text($.cart.subTotal().toFixed(2));
+                        $("#spFreight").text($.cart.calFreight());
+                        $("#spValidMemberPoints").text(validMemberPoints);
+                        $("#spMaxDiscountMemberPoints").text($.cart.getMaxDiscountMemberPoints());
+                        $("#spOrderPrice").text($.cart.orderPrice().toFixed(2));
+                    }
+                    catch (error) {
+                        alert(error.message);
+                        return false;
+                    }
 
                     //加载显示购物车里的收货人信息
                     //if ($.cart) {
@@ -149,17 +198,23 @@
                     //}
                 });
 
-                lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
-                lBtnPayCash = ladda.create(document.querySelector('#btnPayCash'));
+                //注册使用积分单选框点击事件处理函数
+                $("#cbMemberPoints").on("click", switchMemberPoints);
+
+                //注册积分变动事件处理函数
+                $("#txtUsedMemberPoints").on({ "focus tap": function () { this.select(); }, "change": useMemberPoints });
 
                 //点击遮罩层关闭模式窗口
                 $(".md-overlay").on("click", closeModal);
 
+                lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
+                lBtnPayCash = ladda.create(document.querySelector('#btnPayCash'));
+
             });
         });
 
-        //展示购物车里的商品，计算商品价格、运费、订单总金额
-        function showProdItemsAndCalPrice() {
+        //展示购物车里的商品
+        function showProdItems() {
             var htmlItem = "";
             //遍历购物车，显示所有的商品项
             $.cart.getProdItems().each(function () {
@@ -168,23 +223,49 @@
                     + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>';
             });
             $("div.prod-items").append(htmlItem);
+        }
 
-            //根据购物车中的商品价格计算运费，并更新购物车中的运费
-            var subTotal, freight;
-            subTotal = parseFloat($.cart.subTotal());
-            if (subTotal < 99) {
-                freight = 10;
+        //购物车事件处理函数，积分变动后，刷新界面上的订单总金额
+        function refreshOrderPrice(event, data) {
+            $("#spMemberPointsDiscount").text(data.memberPointsDiscount.toFixed(2));
+            $("#spOrderPrice").text(data.orderPrice.toFixed(2));
+        }
+
+        //点击使用积分按钮时，填写当前可用的最大积分
+        function switchMemberPoints() {
+            var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
+            if ($("#cbMemberPoints").is(":checked")) {
+                var maxDiscountMemberPoints = $.cart.getMaxDiscountMemberPoints();
+                $txtUsedMemberPoints.val(maxDiscountMemberPoints);
+                $.cart.updateUsedMemberPoints(maxDiscountMemberPoints);
+                $txtUsedMemberPoints.removeAttr("disabled");
             }
             else {
-                freight = 0;
+                $txtUsedMemberPoints.val(0);
+                $.cart.updateUsedMemberPoints(0);
+                $txtUsedMemberPoints.attr("disabled", "disabled");
             }
-            $.cart.updateFreight(freight);
+        }
 
-            //显示商品价格、运费、总金额
-            $("#spanSubTotal").text(subTotal.toFixed(2));
-            $("#spanFreight").text(freight);
-            $("#spanOrderPrice").text((subTotal + freight).toFixed(2));
-
+        //校验用户输入的积分数，并更新购物车里的会员积分，触发积分变动事件，回调刷新显示订单总价格
+        function useMemberPoints() {
+            try {
+                var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
+                var usedMemberPoints = parseInt($txtUsedMemberPoints.val().trim());
+                var maxDiscountMemberPoints = $.cart.getMaxDiscountMemberPoints();
+                if (!isNaN(usedMemberPoints) && usedMemberPoints >= 0 && usedMemberPoints <= maxDiscountMemberPoints) {
+                    $.cart.updateUsedMemberPoints(usedMemberPoints);
+                }
+                else {
+                    alert("本订单可使用的积分范围：0~" + maxDiscountMemberPoints);
+                    $txtUsedMemberPoints.val(maxDiscountMemberPoints);
+                    $.cart.updateUsedMemberPoints(maxDiscountMemberPoints);
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
         }
 
         //微信用户地址信息

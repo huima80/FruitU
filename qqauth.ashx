@@ -151,7 +151,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                             if (mUser == null)
                             {
                                 isNewUser = true;
-                                //使用QQ用户的openid和随机密码新建用户
+                                //使用QQ用户的openid和随机密码新建成员资格用户
                                 mUser = Membership.CreateUser(jAuthInfo["openid"].ToString(), Membership.GeneratePassword(10, 1));
                                 if (mUser != null)
                                 {

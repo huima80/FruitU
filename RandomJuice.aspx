@@ -5,14 +5,18 @@
     <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    <div class="container text-center">
-        <div class="row random-category">
+    <div class="container text-center random-category">
+        <div class="row">
             <div class="col-xs-12">
                 <img src="images/random-banner.gif" />
             </div>
+        </div>
+        <div class="row">
             <div class="col-xs-12">
                 <img id="imgRandomJuice" src="images/selective-barrier.gif" />
             </div>
+        </div>
+        <div class="row">
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
@@ -24,16 +28,19 @@
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="" />
+            <i id="faLoading" class="fa fa-refresh fa-spin"></i>
+            <div class="prod-info"><i class="fa fa-check-circle"></i>&nbsp;单价：<span class="prod-price"></span>&nbsp;&nbsp;<i class="fa fa-check-circle"></i>&nbsp;库存数：<span id="spanInventory" class="inventory"></span><input type="hidden" id="hfInventory" /></div>
+            <hr />
             <div>
-                <div class="prod-info"><i class="fa fa-check-circle"></i>&nbsp;单价：<span class="prod-price"></span>&nbsp;&nbsp;<i class="fa fa-check-circle"></i>&nbsp;库存数：<span id="spanInventory" class="inventory"></span><input type="hidden" id="hfInventory" /></div>
-                <hr />
                 <label class="sr-only" for="txtQty">购买数量</label>
                 <span class="input-group">
                     <span id="btnDesc" class="input-group-addon">-</span>
                     <input class="form-control" type="text" id="txtQty" value="1" />
                     <span id="btnAsc" class="input-group-addon">+</span>
                 </span>
-                <button id="btnAddToCart" class="btn btn-danger" type="button" data-prodid="" onclick="addToCart();"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
+                <div class="add-to-cart-button">
+                    <button id="btnAddToCart" class="btn btn-danger" type="button"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
+                </div>
             </div>
             <div id="btnClose" class="btn-close"><i class="fa fa-close fa-3x"></i></div>
         </div>
@@ -50,7 +57,7 @@
                 requirejs(['cart'], function () {
                     //超出库存事件处理函数
                     $($.cart).on("onOutOfStock", function (event, data) {
-                        alert("您已购买最大库存数了哦。");
+                        alert("您购买的数量超过库存数了哦。");
                     });
                 });
             });
@@ -111,15 +118,18 @@
                 event.stopPropagation();
             });
 
-            $("#imgDetailImg").on("load", switchModalShow);
+            $("#imgDetailImg").on("load", function () {
+                $("#faLoading").hide();
+                $("#imgDetailImg").show();
+            });
 
         });
 
-        //在所有商品中随机选一个，并淡入
+        //在所有商品中随机选一个
         function randomJuice() {
             var ri, thisImg = this, mainImg, jLen;
 
-            if (juiceList && Array.isArray(juiceList)) {
+            if (juiceList && Array.isArray(juiceList) && juiceList.length > 0) {
                 jLen = juiceList.length;
 
                 do {
@@ -161,7 +171,7 @@
                                 coords = x + "," + y + "," + imgWidth + "," + imgHeight;
                                 $("map#buyButton area").attr({
                                     "coords": coords,
-                                    "href": "javascript:openModal(juiceList[" + ri + "].ID);"
+                                    "href": "javascript:openModal(juiceList[" + ri + "]);"
                                 });
                             }).animate(
                                 { opacity: 1 },
@@ -170,107 +180,83 @@
                     }
                 );
             }
-        }
-
-        //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
-        function openModal(prodID) {
-            var detailImg, jLen;
-            //把当前商品ProdID放入btn按钮
-            $("#btnAddToCart").data("prodid", prodID);
-
-            if (juiceList && Array.isArray(juiceList)) {
-                jLen = juiceList.length;
-                for (var i = 0; i < jLen; i++) {
-                    if (juiceList[i]["ID"] == prodID && juiceList[i]["FruitImgList"] && Array.isArray(juiceList[i]["FruitImgList"])) {
-                        //查找商品详图
-                        for (var j = 0; j < juiceList[i]["FruitImgList"].length; j++) {
-                            if (juiceList[i]["FruitImgList"][j]["DetailImg"]) {
-                                detailImg = juiceList[i]["FruitImgList"][j]["ImgName"];
-                                break;
-                            }
-                        }
-
-                        if (!detailImg) {
-                            detailImg = webConfig.defaultImg;
-                        }
-
-                        //商品库存量
-                        $("#spanInventory").text(juiceList[i]["InventoryQty"] == -1 ? "无限量" : juiceList[i]["InventoryQty"]);
-                        $("#hfInventory").val(juiceList[i]["InventoryQty"]);
-
-                        //商品单价
-                        $("span.prod-price").text("￥" + juiceList[i]["FruitPrice"] + "元/" + juiceList[i]["FruitUnit"]);
-
-                        $("input#txtQty").val(1);
-
-                        //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
-                        $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg);
-
-                        break;
-                    }
-                }
-            }
             else {
                 alert("商品数据异常");
                 console.warn("var juiceList=" + juiceList);
             }
         }
 
-        //显示模式窗口，在图片load事件完成后回调
-        function switchModalShow() {
-            $("#divModal").addClass("md-show");
-            if ($(event.target).hasClass("md-setperspective")) {
-                setTimeout(function () {
-                    $(document).addClass("md-perspective");
-                }, 25);
+        //根据选中的商品，设置modal窗口中的图片src、库存数、单价、购买数量，注册购买按钮单击事件函数
+        function openModal(prod) {
+            var detailImg;
+            //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
+            $("#btnAddToCart").off("click").on("click", prod, addToCart);
+
+            //查找商品详图
+            for (var i = 0; i < prod.FruitImgList.length; i++) {
+                if (prod.FruitImgList[i]["DetailImg"]) {
+                    detailImg = prod.FruitImgList[i]["ImgName"];
+                    break;
+                }
             }
+
+            if (!detailImg) {
+                detailImg = webConfig.defaultImg;
+            }
+
+            //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
+            $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg).hide();
+            $("#faLoading").show();
+
+            //商品库存量
+            $("#spanInventory").text(prod.InventoryQty == -1 ? "无限量" : prod.InventoryQty);
+            $("#hfInventory").val(prod.InventoryQty);
+
+            //商品单价
+            $("span.prod-price").text("￥" + prod.FruitPrice + "元/" + prod.FruitUnit);
+
+            //默认购买数量默认为1
+            $("input#txtQty").val(1);
+
+            //显示模式窗口
+            $("#divModal").addClass("md-show");
+
         }
 
         //关闭模式对话框
         function closeModal() {
             $("#divModal").removeClass("md-show");
-
-            if ($(event.target).hasClass("md-setperspective")) {
-                $(document).removeClass("md-perspective");
-            }
         }
 
         //加入购物车
-        function addToCart() {
-            var prodID, mainImg, jLen;
-            prodID = $("#btnAddToCart").data("prodid");
+        function addToCart(event) {
+            var prod, mainImg;
+            prod = event.data;
 
-            if (prodID && juiceList && Array.isArray(juiceList)) {
-                jLen = juiceList.length;
-
-                for (var i = 0; i < jLen; i++) {
-                    if (juiceList[i]["ID"] == prodID && juiceList[i]["FruitImgList"] && Array.isArray(juiceList[i]["FruitImgList"])) {
-                        //查找商品主图
-                        for (var j = 0; j < juiceList[i]["FruitImgList"].length; j++) {
-                            if (juiceList[i]["FruitImgList"][j]["MainImg"]) {
-                                mainImg = juiceList[i]["FruitImgList"][j]["ImgName"];
-                                break;
-                            }
-                        }
-
-                        if (!mainImg) {
-                            mainImg = webConfig.defaultImg;
-                        }
-
-                        //购物车里添加商品
-                        var prodItem = new $.cart.ProdItem(prodID, juiceList[i]["FruitName"], juiceList[i]["FruitDesc"], "images/" + mainImg, juiceList[i]["FruitPrice"], parseInt($("input#txtQty").val()), juiceList[i]["InventoryQty"]);
-                        $.cart.insertProdItem(prodItem);
-
+            if (prod) {
+                //查找商品主图
+                for (var i = 0; i < prod.FruitImgList.length; i++) {
+                    if (prod.FruitImgList[i]["MainImg"]) {
+                        mainImg = prod.FruitImgList[i]["ImgName"];
                         break;
                     }
+                }
+
+                if (!mainImg) {
+                    mainImg = webConfig.defaultImg;
+                }
+
+                //购物车里添加商品
+                var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, prod.FruitPrice, parseInt($("input#txtQty").val()), prod.InventoryQty);
+                if ($.cart.insertProdItem(prodItem)) {
+                    closeModal();
                 }
             }
             else {
                 alert("商品数据异常");
-                console.warn("var juiceList=" + juiceList);
+                console.warn("var juiceList=" + fruitList);
             }
 
-            closeModal();
         }
 
     </script>

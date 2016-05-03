@@ -164,6 +164,7 @@ public partial class ManageOrder : System.Web.UI.Page
             HtmlGenericControl pTransactionTime = e.Row.FindControl("pTransactionTime") as HtmlGenericControl;
             HtmlGenericControl divCashTradeState = e.Row.FindControl("divCashTradeState") as HtmlGenericControl;
             CheckBox cbCashTradeState = e.Row.FindControl("cbCashTradeState") as CheckBox;
+            HtmlGenericControl faCashTradeState = e.Row.FindControl("faCashTradeState") as HtmlGenericControl;
 
             //显示支付方式文本值
             lblPaymentTerm.Text = paymentTerm(po.PaymentTerm);
@@ -177,24 +178,25 @@ public partial class ManageOrder : System.Web.UI.Page
                     pTransactionID.Visible = !string.IsNullOrEmpty(po.TransactionID);
                     pTransactionTime.Visible = po.TransactionTime.HasValue;
                     divCashTradeState.Visible = false;
+                    faCashTradeState.Visible = false;
                     break;
                 case PaymentTerm.CASH:
                     lblWxTradeState.Visible = false;
                     pTransactionID.Visible = false;
                     pTransactionTime.Visible = false;
-                    divCashTradeState.Visible = true;
-                    cbCashTradeState.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
                     lblCashTradeState.Text = tradeState(po.TradeState);
-                    if (po.TradeState == TradeState.CASHPAID)
+                    switch (po.TradeState)
                     {
-                        cbCashTradeState.Checked = true;
-                    }
-                    else
-                    {
-                        if (po.TradeState == TradeState.CASHNOTPAID)
-                        {
+                        case TradeState.CASHPAID:
+                            cbCashTradeState.Visible = false;
+                            faCashTradeState.Visible = true;
+                            break;
+                        case TradeState.CASHNOTPAID:
+                            faCashTradeState.Visible = false;
+                            cbCashTradeState.Visible = true;
+                            cbCashTradeState.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
                             cbCashTradeState.Checked = false;
-                        }
+                            break;
                     }
                     break;
             }
@@ -233,7 +235,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 faIsAccept.Visible = false;
             }
 
-            //如果已撤单则屏蔽发货、签收按钮，显示发货时间
+            //如果已撤单则屏蔽发货、签收按钮，显示撤单时间
             HtmlGenericControl pCancelDate = e.Row.FindControl("pCancelDate") as HtmlGenericControl;
             if (po.IsCancel)
             {
@@ -304,17 +306,24 @@ public partial class ManageOrder : System.Web.UI.Page
                 case "DeliverOrder":
                     po.IsDelivered = isDelivered;
                     po.DeliverDate = DateTime.Now;
+                    //注册订单发货事件处理函数，通知用户
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                    po.OrderDetailList.ForEach(od =>
+                    {
+                        //注册商品库存量报警事件，通知管理员
+                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
+                    });
                     break;
                 case "UpdateTradeState":
                     po.TradeState = tradeState;
+                    //注册订单的货到付款状态变动事件处理函数，给予下单人会员积分
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WeChatUserDAO.EarnMemberPoints);
+                    //注册会员积分变动事件处理函数，通知用户
+                    po.Purchaser.MemberPointsChanged += WxTmplMsg.SendMsgOnMemberPoints;
                     break;
                 default:
                     throw new Exception("不能识别的更新方法");
             }
-
-            //注册订单发货事件处理函数
-            po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-
         }
     }
 

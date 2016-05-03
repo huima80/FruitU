@@ -63,12 +63,12 @@
     font-size: 12px;
 }
 
-.panel{
-    margin:4px;
+.panel {
+    margin: 4px;
 }
 
-.order-memo{
-    margin:4px;
+.order-memo {
+    margin: 4px;
 }
 
 .wx-user-addr-info {
@@ -102,16 +102,34 @@ hr {
     color: white !important;
 }
 
-.price-freight{
-    font-size:10px;
-    padding:6px;
-    margin:4px;
-    background-color:white;
-    border:dotted;
-    border-width:1px;
-    border-color:grey;
-    border-radius:5px;
+.sub-price {
+    font-size: 10px;
+    padding: 6px;
+    margin: 4px;
+    background-color: white;
+    border: dotted;
+    border-width: 1px;
+    border-color: grey;
+    border-radius: 5px;
 }
+
+    .sub-price input[type=number] {
+        display: inline;
+        width: 50px;
+        height: 20px;
+        text-align: center;
+        padding:0;
+    }
+
+    .sub-price input[type=checkbox] {
+        position:static;
+        vertical-align: text-bottom;
+    }
+
+
+    .sub-price div {
+        margin: 6px;
+    }
 
 .md-content {
     max-width: 50%;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LitJson;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -84,6 +85,93 @@ public class WeChatUser : User, IComparable<WeChatUser>
     /// 微信用户登录后事件
     /// </summary>
     public event UserLoggedEventHandler UserLogged;
+
+
+    public delegate JsonData MemberPointsChangedEventHandler(object sender, MemberPointsChangedEventArgs e);
+
+    /// <summary>
+    /// 会员积分变动事件
+    /// </summary>
+    public event MemberPointsChangedEventHandler MemberPointsChanged;
+
+    public class MemberPointsChangedEventArgs
+    {
+        /// <summary>
+        /// 新增的会员积分
+        /// </summary>
+        public int increasedMemberPoints { get; set; }
+
+        /// <summary>
+        /// 消耗的会员积分
+        /// </summary>
+        public int usedMemberPoints { get; set; }
+
+        /// <summary>
+        /// 会员积分余额
+        /// </summary>
+        public int balance { get; set; }
+
+        public MemberPointsChangedEventArgs()
+        {
+
+        }
+
+        public MemberPointsChangedEventArgs(int increasedMemberPoints, int usedMemberPoints, int balance)
+        {
+            this.increasedMemberPoints = increasedMemberPoints;
+            this.usedMemberPoints = usedMemberPoints;
+            this.balance = balance;
+        }
+    }
+
+    /// <summary>
+    /// 同步触发会员积分变动事件处理函数
+    /// </summary>
+    /// <param name="increasedMemberPoints"></param>
+    /// <param name="usedMemberPoints"></param>
+    /// <param name="balance"></param>
+    public void OnMemberPointsChanged(int increasedMemberPoints, int usedMemberPoints, int balance)
+    {
+        if (this.MemberPointsChanged != null)
+        {
+            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, balance);
+            this.MemberPointsChanged(this, e);
+        }
+    }
+
+    /// <summary>
+    /// 异步触发会员积分变动事件处理函数
+    /// </summary>
+    /// <param name="increasedMemberPoints"></param>
+    /// <param name="usedMemberPoints"></param>
+    /// <param name="balance"></param>
+    public void OnMemberPointsChangedAsyn(int increasedMemberPoints, int usedMemberPoints, int balance)
+    {
+        //订单状态变化事件异步回调函数，不阻塞主流程
+        if (this.MemberPointsChanged != null)
+        {
+            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, balance);
+            IAsyncResult ar = this.MemberPointsChanged.BeginInvoke(this, e, MemberPointsChangedComplete, this.MemberPointsChanged);
+        }
+    }
+
+    /// <summary>
+    /// 事件完成异步回调
+    /// </summary>
+    /// <param name="ar"></param>
+    private void MemberPointsChangedComplete(IAsyncResult ar)
+    {
+        if (ar != null)
+        {
+            JsonData jRet;
+            jRet = (ar.AsyncState as MemberPointsChangedEventHandler).EndInvoke(ar);
+            if (jRet != null)
+            {
+                Log.Info("event MemberPointsChanged", jRet.ToJson());
+            }
+        }
+    }
+
 
     public int CompareTo(WeChatUser other)
     {

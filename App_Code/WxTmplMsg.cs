@@ -39,36 +39,35 @@ public static class WxTmplMsg
     /// <summary>
     /// 订单提交成功通知模板
     /// {{first.DATA}}
-    //下单时间：{{keyword1.DATA}}
-    //订单总金额：{{keyword2.DATA}}
-    //订单详情：{{keyword3.DATA}}
-    //详细地址：{{keyword4.DATA}}
-    //{{remark.DATA}}
+    /// 下单时间：{{keyword1.DATA}}
+    /// 订单总金额：{{keyword2.DATA}}
+    /// 订单详情：{{keyword3.DATA}}
+    /// 详细地址：{{keyword4.DATA}}
+    /// {{remark.DATA}}
     /// </summary>
     private const string TMPL_ORDER_SUCCESS = "zYBc-cvsf_7cllTNbXE_Y-55jU4owKAhqfEHAxVhDbU";
 
     /// <summary>
     /// 收到微信支付成功订单模板
-    //{{first.DATA
-    //}}
-    //消费金额：{{keyword1.DATA}}
-    //付款用户：{{keyword2.DATA}}
-    //成功支付码：{{keyword3.DATA}}
-    //消费时间：{{keyword4.DATA}}
-    //商户单号：{{keyword5.DATA}}
-    //{{remark.DATA}}
+    /// {{first.DATA}}
+    /// 消费金额：{{keyword1.DATA}}
+    /// 付款用户：{{keyword2.DATA}}
+    /// 成功支付码：{{keyword3.DATA}}
+    /// 消费时间：{{keyword4.DATA}}
+    /// 商户单号：{{keyword5.DATA}}
+    /// {{remark.DATA}}
     /// </summary>
     private const string TMPL_WXPAY = "xyxsgmpRd5dOJD4Cn-WUV6ZQJ6wBbQADhXkrN2gJ-0Q";
 
     /// <summary>
     /// 发货通知
-    //{{first.DATA}}
-    //品名：{{keyword1.DATA}}
-    //数量：{{keyword2.DATA}}
-    //金额：{{keyword3.DATA}}
-    //配送员姓名：{{keyword4.DATA}}
-    //联系电话：{{keyword5.DATA}}
-    //{{remark.DATA}}    
+    /// {{first.DATA}}
+    /// 品名：{{keyword1.DATA}}
+    /// 数量：{{keyword2.DATA}}
+    /// 金额：{{keyword3.DATA}}
+    /// 配送员姓名：{{keyword4.DATA}}
+    /// 联系电话：{{keyword5.DATA}}
+    /// {{remark.DATA}}    
     /// </summary>
     private const string TMPL_DELIVER = "j7vyhylFGhIHoFfPe6S7dgLIyojTIBb2oBSS_iswo1c";
 
@@ -83,13 +82,24 @@ public static class WxTmplMsg
 
     /// <summary>
     /// 商品库存量提醒
-    //{{first.DATA}}
-    //商品编码：{{keyword1.DATA}}
-    //商品名称：{{keyword2.DATA}}
-    //现有库存量：{{keyword3.DATA}}
-    //{{remark.DATA}} 
+    /// {{first.DATA}}
+    /// 商品编码：{{keyword1.DATA}}
+    /// 商品名称：{{keyword2.DATA}}
+    /// 现有库存量：{{keyword3.DATA}}
+    /// {{remark.DATA}} 
     /// </summary>
     private const string TMPL_INVENTORY_WARN = "u4JPyu1tlv_JUlM4U7hN0__iUT8NzswQMCvf1DEU7pM";
+
+    /// <summary>
+    /// 积分通知
+    //{{first.DATA}}
+    //会员姓名：{{keyword1.DATA}}
+    //会员账号：{{keyword2.DATA}}
+    //积分变更：{{keyword3.DATA}}
+    //剩余积分：{{keyword4.DATA}}
+    //{{remark.DATA}} 
+    /// </summary>
+    private const string TMPL_MEMBER_POINTS_NOTIFY = "iSX4_ghQqpXxS3GxtbQWdDC7wE5V5D_BiBJR13ICEso";
 
     /// <summary>
     /// 消息头颜色
@@ -431,17 +441,17 @@ public static class WxTmplMsg
             jTmplMsgData["first"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = string.Format("商品ID：{0}", od.ProductID);
+            jTmplMsgDataValue["value"] = od.ProductID;
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["keyword1"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = string.Format("商品名称：{0}", od.OrderProductName);
+            jTmplMsgDataValue["value"] = od.OrderProductName;
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = string.Format("库存数量：{0}", od.InventoryQty - od.PurchaseQty);
+            jTmplMsgDataValue["value"] = od.InventoryQty - od.PurchaseQty;
             jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
             jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
@@ -466,6 +476,79 @@ public static class WxTmplMsg
             Log.Info("SendMsgOnInventoryWarn", jRet.ToJson());
         }
     }
+
+    public static JsonData SendMsgOnMemberPoints(object sender, WeChatUser.MemberPointsChangedEventArgs e)
+    {
+        if (sender == null || !(sender is WeChatUser) || e == null)
+        {
+            throw new ArgumentNullException("sender或事件参数对象不能为null");
+        }
+        
+        JsonData jRet;
+        WeChatUser wxUser = sender as WeChatUser;
+
+        try
+        {
+            List<string> listReceiver;
+            listReceiver = new List<string>(new string[] { wxUser.OpenID });
+
+            JsonData jTmplMsg = new JsonData(), jTmplMsgData = new JsonData(), jTmplMsgDataValue;
+
+            //构造模板消息
+            jTmplMsg["touser"] = string.Empty;
+            jTmplMsg["template_id"] = TMPL_MEMBER_POINTS_NOTIFY;
+            jTmplMsg["url"] = @"http://mahui.me/Index.aspx";
+            jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = "您的FruitU会员积分信息变更如下";
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["first"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = wxUser.NickName;
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = "微信用户";
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = string.Format("本次消费增加{0}积分，使用{1}积分", e.increasedMemberPoints, e.usedMemberPoints);
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = string.Format("{0}积分（={1}元）", e.balance, (decimal)e.balance / Config.MemberPointsExchangeRate);
+            jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+            jTmplMsgData["keyword4"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = "如有疑问，请及时与FruitU微信客服联系";
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["remark"] = jTmplMsgDataValue;
+
+            jTmplMsg["data"] = jTmplMsgData;
+
+            //发送模板消息
+            jRet = SendTmplMsg(listReceiver, jTmplMsg);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("SendMsgOnMemberPoints", ex.Message);
+            throw ex;
+        }
+
+        if (jRet != null)
+        {
+            Log.Info("SendMsgOnMemberPoints", jRet.ToJson());
+        }
+
+        return jRet;
+    }
+
 
     /// <summary>
     /// 发送模板消息

@@ -5,7 +5,6 @@
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
     <title>下拉滚动条滚到底部了吗？</title>
-    <link href="css/loading.css" rel="stylesheet" />
     <script src="http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>
 
 </head>

@@ -57,10 +57,13 @@
                     {{/for}}
                 </ul>
                 <div class="order-price-freight">
-                    <span class="order-total">合计：￥<span class="order-price">{{:OrderPrice}}</span>元<span class="freight">（含运费{{:Freight}}元)</span>
+                    <div class="order-total">
+                        合计：￥<span class="order-price">{{:OrderPrice}}</span>元
                 {{if IsCancel==0 && (TradeState!=1 && TradeState!=8)}}
-                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><span class="ladda-label"><i class="fa fa-wechat fa-fw"></i>微信支付</span><span class="ladda-spinner"></span></button>
-                        {{/if}}</span>
+                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
+                        {{/if}}
+                    </div>
+                    <div><span class="freight">（含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</span></div>
                 </div>
                 <hr />
                 <div class="order-state">
@@ -254,7 +257,6 @@
                     error: function (jqXHR, textStatus, errorThrown) {
                         Ladda.stopAll();   //停止按钮loading动画
                         console.warn(errorThrown + ":" + textStatus);
-
                     }
                 });
             }

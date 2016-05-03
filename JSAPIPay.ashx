@@ -43,10 +43,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //--------------校验表单信息关键字段-------------------
                     JsonData jOrderInfo = JsonMapper.ToObject(orderInfo);
                     if (jOrderInfo == null || !jOrderInfo.Keys.Contains("name") || !jOrderInfo.Keys.Contains("phone") || !jOrderInfo.Keys.Contains("address")
-                            || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm") || !jOrderInfo.Keys.Contains("freight")
+                            || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm") || !jOrderInfo.Keys.Contains("usedMemberPoints")
                             || !jOrderInfo.Keys.Contains("prodItems") || !jOrderInfo["prodItems"].IsArray || jOrderInfo["prodItems"].Count < 1)
                     {
-                        throw new Exception("订单姓名、电话、地址、支付方式、运费、备注、商品项信息不完整。");
+                        throw new Exception("订单姓名、电话、地址、支付方式、会员积分、备注、商品项信息不完整。");
                     }
 
                     //--------------生成订单业务对象START-----------------
@@ -107,9 +107,6 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                                         od.PurchasePrice = fruit.FruitPrice;
                                         od.PurchaseUnit = fruit.FruitUnit;
 
-                                        //注册商品库存量事件，通知管理员
-                                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
-
                                         newPO.OrderDetailList.Add(od);
                                     }
                                     else
@@ -124,7 +121,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //校验订单中是否有超出库存量的商品
                     if (outOfStockProdItems.Count > 0)
                     {
-                        throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请调整后重新下单。", string.Join<string>(",", outOfStockProdItems)));
+                        throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请修改购买数量后重新下单。", string.Join<string>(",", outOfStockProdItems)));
                     }
 
                     //根据订单商品项金额计算运费，满99元包邮
@@ -135,6 +132,28 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     else
                     {
                         newPO.Freight = 0;
+                    }
+
+                    //订单所需支付金额=商品价格+运费
+                    decimal subTotalAndFreight = newPO.OrderDetailPrice + newPO.Freight;
+                    //订单所需支付金额折算成会员积分，积分使用上限为订单实付金额的50%
+                    decimal equivalentMemberPointsOfOrder = Math.Floor(subTotalAndFreight / 2 * Config.MemberPointsExchangeRate);
+                    //判断此订单最大可使用积分与用户积分账户的可使用积分相比，孰小者决定了用户可使用的积分上限
+                    decimal maxDiscountMemberPoints = equivalentMemberPointsOfOrder < wxUser.MemberPoints ? equivalentMemberPointsOfOrder : wxUser.MemberPoints;
+
+                    //根据用户选择的会员积分点数，校验可用积分，计算积分折扣
+                    int usedMemberPoints;
+                    if (int.TryParse(jOrderInfo["usedMemberPoints"].ToString(), out usedMemberPoints) && (usedMemberPoints <= maxDiscountMemberPoints && usedMemberPoints >= 0))
+                    {
+                        newPO.UsedMemberPoints = usedMemberPoints;
+                        //由于会员积分兑换规则可能发生变动，所以需要单独记录每笔订单的积分抵扣金额
+                        newPO.MemberPointsDiscount = (decimal)usedMemberPoints / Config.MemberPointsExchangeRate;
+                        //新订单的积分默认为没有累加到积分账户余额，待订单确认支付后，再计入积分账户余额
+                        newPO.IsCalMemberPoints = false;
+                    }
+                    else
+                    {
+                        throw new Exception(string.Format("本订单可使用的积分范围：0~{0}", maxDiscountMemberPoints));
                     }
 
                     //--------------生成订单业务对象END-----------------

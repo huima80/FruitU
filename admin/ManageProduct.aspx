@@ -33,6 +33,13 @@
                             </asp:DropDownList>
                         </div>
                         <div class="form-group">
+                            <label for="ddlOutOfStock" class="sr-only">按是否缺货查询</label>
+                            <asp:DropDownList ID="ddlOutOfStock" runat="server" CssClass="form-control">
+                                <asp:ListItem Selected="True" Value="-1">===是否缺货===</asp:ListItem>
+                                <asp:ListItem Value="1">缺货</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+                        <div class="form-group">
                             <label for="ddlIsOnSale" class="sr-only">按是否上架查询</label>
                             <asp:DropDownList ID="ddlIsOnSale" runat="server" CssClass="form-control">
                                 <asp:ListItem Selected="True" Value="-1">===是否上架===</asp:ListItem>
@@ -229,11 +236,11 @@
                                         <span class="panel-title">上传图片（<%# Config.AllowedUploadFileExt %>）</span>
                                         <div class="form-group">
                                             <label for="btnAddImgEdit" class="sr-only">增加图片</label>
-                                            <button id="btnAddImgEdit" type="button" class="btn btn-default" onclick="addImg('Edit')">增加图片</button>
+                                            <button id="btnAddImgEdit" type="button" class="btn btn-default" onclick="addImg('Edit')"><i class="fa fa-plus fa-lg fa-fw"></i>增加图片</button>
                                         </div>
                                         <div class="form-group">
                                             <label for="btnDelImgEdit" class="sr-only">减少图片</label>
-                                            <button id="btnDelImgEdit" type="button" class="btn btn-default" onclick="removeImg('Edit')" disabled="disabled">减少图片</button>
+                                            <button id="btnDelImgEdit" type="button" class="btn btn-default" onclick="removeImg('Edit')" disabled="disabled"><i class="fa fa-minus fa-lg fa-fw"></i>减少图片</button>
                                         </div>
                                         <a href="http://zhitu.isux.us/" target="_blank">腾讯图片处理工具</a>
                                         <a href="http://www.uupoop.com/" target="_blank">在线PS</a>
@@ -291,11 +298,11 @@
                                         <span class="panel-title">上传图片（<%# Config.AllowedUploadFileExt %>）</span>
                                         <div class="form-group">
                                             <label for="btnAddImgInsert" class="sr-only">增加图片</label>
-                                            <button id="btnAddImgInsert" type="button" class="btn btn-default btn-sm" onclick="addImg('Insert')">增加图片</button>
+                                            <button id="btnAddImgInsert" type="button" class="btn btn-default btn-sm" onclick="addImg('Insert')"><i class="fa fa-plus fa-lg fa-fw"></i>增加图片</button>
                                         </div>
                                         <div class="form-group">
                                             <label for="btnDelImgInsert" class="sr-only">减少图片</label>
-                                            <button id="btnDelImgInsert" type="button" class="btn btn-default btn-sm" onclick="removeImg('Insert')" disabled="disabled">减少图片</button>
+                                            <button id="btnDelImgInsert" type="button" class="btn btn-default btn-sm" onclick="removeImg('Insert')" disabled="disabled"><i class="fa fa-minus fa-lg fa-fw"></i>减少图片</button>
                                         </div>
                                         <a href="http://zhitu.isux.us/" target="_blank">腾讯图片处理工具</a>
                                         <a href="http://www.uupoop.com/" target="_blank">在线PS</a>
@@ -464,7 +471,7 @@
         }
 
         //校验是否选择了商品类别
-        function validateCategory(sender, args){
+        function validateCategory(sender, args) {
             if (args.Value == "0") {
                 args.IsValid = false;
             }

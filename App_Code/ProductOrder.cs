@@ -149,13 +149,28 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 根据订单商品价格+运费，计算总价格
+    /// 会员积分抵扣的订单金额
+    /// </summary>
+    public decimal MemberPointsDiscount { get; set; }
+
+    /// <summary>
+    /// 订单使用的会员积分点数
+    /// </summary>
+    public int UsedMemberPoints { get; set; }
+
+    /// <summary>
+    /// 订单金额是否计算过会员积分
+    /// </summary>
+    public bool IsCalMemberPoints { get; set; }
+
+    /// <summary>
+    /// 订单总价格 = 商品价格+运费-会员积分抵扣
     /// </summary>
     public decimal OrderPrice
     {
         get
         {
-            return OrderDetailPrice + Freight;
+            return OrderDetailPrice + Freight - MemberPointsDiscount;
         }
     }
 
@@ -305,15 +320,6 @@ public class ProductOrder : IComparable<ProductOrder>
                 throw new Exception("不支持的支付方式。");
         }
 
-        //如果订单中每项商品的库存量低于警戒线，则触发商品库存量报警事件
-        po.OrderDetailList.ForEach(od =>
-        {
-            if ((od.InventoryQty - od.PurchaseQty) <= Config.ProductInventoryWarn)
-            {
-                od.OnInventoryWarn();
-            }
-        });
-
         //触发订单提交状态事件
         po.OnOrderStateChanged(OrderState.Submitted);
 
@@ -413,7 +419,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 增加订单，插入订单表、订单明细表、修改商品库存量
+    /// 增加订单，插入订单表、订单明细表
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
@@ -555,6 +561,24 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramFreight.SqlValue = po.Freight;
                         cmdAddOrder.Parameters.Add(paramFreight);
 
+                        SqlParameter paramMemberPointsDiscount = cmdAddOrder.CreateParameter();
+                        paramMemberPointsDiscount.ParameterName = "@MemberPointsDiscount";
+                        paramMemberPointsDiscount.SqlDbType = System.Data.SqlDbType.Decimal;
+                        paramMemberPointsDiscount.SqlValue = po.MemberPointsDiscount;
+                        cmdAddOrder.Parameters.Add(paramMemberPointsDiscount);
+
+                        SqlParameter paramUsedMemberPoints = cmdAddOrder.CreateParameter();
+                        paramUsedMemberPoints.ParameterName = "@UsedMemberPoints";
+                        paramUsedMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
+                        paramUsedMemberPoints.SqlValue = po.UsedMemberPoints;
+                        cmdAddOrder.Parameters.Add(paramUsedMemberPoints);
+
+                        SqlParameter paramIsCalMemberPoints = cmdAddOrder.CreateParameter();
+                        paramIsCalMemberPoints.ParameterName = "@IsCalMemberPoints";
+                        paramIsCalMemberPoints.SqlDbType = System.Data.SqlDbType.Bit;
+                        paramIsCalMemberPoints.SqlValue = po.IsCalMemberPoints;
+                        cmdAddOrder.Parameters.Add(paramIsCalMemberPoints);
+
                         foreach (SqlParameter param in cmdAddOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -564,7 +588,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -639,34 +663,6 @@ public class ProductOrder : IComparable<ProductOrder>
                             else
                             {
                                 throw new Exception(string.Format("插入订单{0}明细表错误", po.ID));
-                            }
-
-                            //如果不是无限量，且库存量>=购买量，则消耗商品库存数
-                            if (od.InventoryQty != -1 && od.InventoryQty >= od.PurchaseQty)
-                            {
-                                using (SqlCommand cmdConsumeInventory = conn.CreateCommand())
-                                {
-                                    cmdConsumeInventory.Transaction = trans;
-
-                                    SqlParameter paramId = cmdConsumeInventory.CreateParameter();
-                                    paramId.ParameterName = "@Id";
-                                    paramId.SqlDbType = System.Data.SqlDbType.Int;
-                                    paramId.Value = od.ProductID;
-                                    cmdConsumeInventory.Parameters.Add(paramId);
-
-                                    SqlParameter paramInventoryQty = cmdConsumeInventory.CreateParameter();
-                                    paramInventoryQty.ParameterName = "@InventoryQty";
-                                    paramInventoryQty.SqlDbType = System.Data.SqlDbType.Int;
-                                    paramInventoryQty.Value = od.InventoryQty - od.PurchaseQty;
-                                    cmdConsumeInventory.Parameters.Add(paramInventoryQty);
-
-                                    cmdConsumeInventory.CommandText = "update Product set InventoryQty=@InventoryQty where Id=@Id";
-
-                                    if (cmdConsumeInventory.ExecuteNonQuery() != 1)
-                                    {
-                                        throw new Exception(string.Format("更新商品“{0}”库存量错误", od.FruitName));
-                                    }
-                                }
                             }
                         });
                     }
@@ -782,9 +778,13 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
+                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
+                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
+                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+
+                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
                                 poList.Add(po);
 
@@ -876,7 +876,7 @@ public class ProductOrder : IComparable<ProductOrder>
                 {
                     using (SqlCommand cmdOrder = conn.CreateCommand())
                     {
-                        cmdOrder.CommandText = "spOrderQuery";
+                        cmdOrder.CommandText = "spOrderQueryPager";
                         cmdOrder.CommandType = CommandType.StoredProcedure;
 
                         SqlParameter paramMaximumRows = cmdOrder.CreateParameter();
@@ -984,6 +984,9 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
+                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
+                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
+                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 if (isLoadPurchaser)
                                 {
@@ -1165,6 +1168,9 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
+                                this.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
+                                this.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
+                                this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -1258,6 +1264,9 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
+                                this.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
+                                this.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
+                                this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -1358,6 +1367,9 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
                                 po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
                                 po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
+                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
+                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
+                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -1668,7 +1680,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 更新订单发货状态和发货时间
+    /// 更新订单发货状态和发货时间，并消耗订单商品的库存量
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
@@ -1681,12 +1693,13 @@ public class ProductOrder : IComparable<ProductOrder>
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
+                SqlTransaction trans = conn.BeginTransaction();
 
                 try
                 {
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
-
+                        cmdOrderID.Transaction = trans;
                         cmdOrderID.CommandText = "update ProductOrder set IsDelivered = @IsDelivered, DeliverDate = @DeliverDate where Id=@Id";
 
                         SqlParameter paramId;
@@ -1719,9 +1732,51 @@ public class ProductOrder : IComparable<ProductOrder>
 
                         result = cmdOrderID.ExecuteNonQuery();
                     }
+
+                    using (SqlCommand cmdConsumeInventory = conn.CreateCommand())
+                    {
+                        cmdConsumeInventory.Transaction = trans;
+                        cmdConsumeInventory.CommandText = "update Product set InventoryQty=@InventoryQty where Id=@Id";
+
+                        SqlParameter paramId = cmdConsumeInventory.CreateParameter();
+                        paramId.ParameterName = "@Id";
+                        paramId.SqlDbType = System.Data.SqlDbType.Int;
+                        cmdConsumeInventory.Parameters.Add(paramId);
+
+                        SqlParameter paramInventoryQty = cmdConsumeInventory.CreateParameter();
+                        paramInventoryQty.ParameterName = "@InventoryQty";
+                        paramInventoryQty.SqlDbType = System.Data.SqlDbType.Int;
+                        cmdConsumeInventory.Parameters.Add(paramInventoryQty);
+
+                        //发货后，消耗商品库存量
+                        po.OrderDetailList.ForEach(od =>
+                        {
+                            //如果不是无限量，且库存量>=购买量，则消耗商品库存数
+                            if (od.InventoryQty != -1)
+                            {
+                                paramId.Value = od.ProductID;
+                                if (od.InventoryQty >= od.PurchaseQty)
+                                {
+                                    paramInventoryQty.Value = od.InventoryQty - od.PurchaseQty;
+                                }
+                                else
+                                {
+                                    paramInventoryQty.Value = 0;
+                                }
+                            }
+                            if (cmdConsumeInventory.ExecuteNonQuery() != 1)
+                            {
+                                throw new Exception(string.Format("更新商品“{0}”库存量错误", od.FruitName));
+                            }
+                        });
+                    }
+
+                    trans.Commit();
+
                 }
                 catch (Exception ex)
                 {
+                    trans.Rollback();
                     throw ex;
                 }
                 finally
@@ -1732,6 +1787,15 @@ public class ProductOrder : IComparable<ProductOrder>
                     }
                 }
             }
+
+            po.OrderDetailList.ForEach(od =>
+            {
+                //如果发货后商品剩余库存量不足，则触发报警事件
+                if (od.InventoryQty != -1 && ((od.InventoryQty - od.PurchaseQty) <= Config.ProductInventoryWarn))
+                {
+                    od.OnInventoryWarn();
+                }
+            });
 
             if (result == 1)
             {
@@ -1916,7 +1980,6 @@ public class ProductOrder : IComparable<ProductOrder>
 
                         }
 
-
                         foreach (SqlParameter param in cmdTradeState.Parameters)
                         {
                             if (param.Value == null)
@@ -1925,7 +1988,7 @@ public class ProductOrder : IComparable<ProductOrder>
                             }
                         }
 
-                        Log.Debug("根据微信支付通知，更新数据库中的订单支付状态", cmdTradeState.CommandText);
+                        Log.Debug("更新数据库中的订单支付状态", cmdTradeState.CommandText);
 
                         result = cmdTradeState.ExecuteNonQuery();
                     }
@@ -1958,10 +2021,23 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 触发订单状态变动事件
+    /// 同步触发订单状态变动事件
     /// </summary>
     /// <param name="os"></param>
     protected void OnOrderStateChanged(OrderState os)
+    {
+        if (this.OrderStateChanged != null)
+        {
+            OrderStateEventArgs ose = new OrderStateEventArgs(os);
+            this.OrderStateChanged(this, ose);
+        }
+    }
+
+    /// <summary>
+    /// 异步触发订单状态变动事件
+    /// </summary>
+    /// <param name="os"></param>
+    protected void OnOrderStateChangedAsyn(OrderState os)
     {
         //订单状态变化事件异步回调函数，不阻塞主流程
         if (this.OrderStateChanged != null)

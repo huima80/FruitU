@@ -192,8 +192,14 @@ public class PayResultHandler : IHttpHandler
                         //更新为微信支付方式
                         po.PaymentTerm = PaymentTerm.WECHAT;
 
-                        //注册微信支付状态变动事件处理函数，通知管理员
+                        //注册订单的微信支付状态变动事件处理函数，通知管理员
                         po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+
+                        //注册订单的微信支付状态变动事件处理函数，给予下单人会员积分
+                        po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WeChatUserDAO.EarnMemberPoints);
+                        
+                        //注册会员积分变动事件处理函数，通知用户
+                        po.Purchaser.MemberPointsChanged += WxTmplMsg.SendMsgOnMemberPoints;
 
                         //更新订单的微信支付状态
                         ProductOrder.UpdateTradeState(po);

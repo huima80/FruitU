@@ -53,6 +53,27 @@ public abstract class User : MembershipUser, IComparable<User>
     /// </summary>
     public List<ProductOrder> ProductOrderList { get; set; }
 
+    /// <summary>
+    /// 会员积分
+    /// </summary>
+    public int MemberPoints { get; set; }
+
+    public class MemberPointsEventArgs : EventArgs
+    {
+        public int MemberPointsChanged { get; set; }
+
+        public MemberPointsEventArgs()
+        {
+
+        }
+
+        public MemberPointsEventArgs(int memberPointsChanged)
+        {
+            this.MemberPointsChanged = memberPointsChanged;
+        }
+
+    }
+
     public User()
     {
         //

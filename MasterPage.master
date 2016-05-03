@@ -64,6 +64,7 @@
                 'flexslider': ['jquery'],
                 'jssorslider': ['jquery']
             }
+            //,urlArgs: "bust=" + (new Date()).getTime()
         });
 
         requirejs.onError = function (err) {

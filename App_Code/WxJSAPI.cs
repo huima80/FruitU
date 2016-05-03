@@ -198,7 +198,7 @@ public class WxJSAPI
     }
 
     /// <summary>
-    /// 刷新微信票据APITicket
+    /// 刷新微信卡券APITicket
     /// </summary>
     /// <returns></returns>
     public static string RefreshAPITicket()

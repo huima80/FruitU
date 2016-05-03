@@ -170,6 +170,11 @@ public static class Config
     /// </summary>
     public const string GuestRoleName = "guests";
 
+    /// <summary>
+    /// 会员积分兑换比率
+    /// </summary>
+    public static readonly int MemberPointsExchangeRate;
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
@@ -197,7 +202,7 @@ public static class Config
         }
 
         int orderListPageSize;
-        if (!int.TryParse(ConfigurationManager.AppSettings["OrderListPageSize"].ToString(),out orderListPageSize))
+        if (!int.TryParse(ConfigurationManager.AppSettings["OrderListPageSize"].ToString(), out orderListPageSize))
         {
             //默认pagesize
             Config.OrderListPageSize = 10;
@@ -219,7 +224,7 @@ public static class Config
         }
 
         int uoTimeout;
-        if(!int.TryParse(ConfigurationManager.AppSettings["WeChatAPITimeout"].ToString(),out uoTimeout))
+        if (!int.TryParse(ConfigurationManager.AppSettings["WeChatAPITimeout"].ToString(), out uoTimeout))
         {
             //默认超时5秒
             Config.WeChatAPITimeout = 5;
@@ -253,7 +258,7 @@ public static class Config
 
         Config.WxTmplMsgReceiver = new List<string>();
         string strWxTmplMsgReceiver = ConfigurationManager.AppSettings["WxTmplMsgReceiver"].ToString();
-        if(!string.IsNullOrEmpty(strWxTmplMsgReceiver))
+        if (!string.IsNullOrEmpty(strWxTmplMsgReceiver))
         {
             string[] arrWxTmplMsgReceiver = strWxTmplMsgReceiver.Split('|');
             for (int i = 0; i < arrWxTmplMsgReceiver.Length; i++)
@@ -261,6 +266,18 @@ public static class Config
                 Config.WxTmplMsgReceiver.Add(arrWxTmplMsgReceiver[i]);
             }
         }
+
+        int memberPointsExchangeRate;
+        if (!int.TryParse(ConfigurationManager.AppSettings["MemberPointsExchangeRate"].ToString(), out memberPointsExchangeRate))
+        {
+            //默认兑换比率
+            Config.MemberPointsExchangeRate = 20;
+        }
+        else
+        {
+            Config.MemberPointsExchangeRate = memberPointsExchangeRate;
+        }
+
 
     }
 }

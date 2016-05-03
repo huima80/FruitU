@@ -7,9 +7,13 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container">
         <div class="row header">
-            <div class="col-xs-12">
-                <asp:Image ID="imgPortrait" runat="server" CssClass="user-portrait" />
-                &nbsp;<asp:Label ID="lblNickName" runat="server"></asp:Label>
+            <div class="col-xs-4 user-portrait">
+                <asp:Image ID="imgPortrait" runat="server" />
+            </div>
+            <div class="col-xs-8 user-info">
+                <asp:Label ID="lblNickName" runat="server" CssClass="nick-name"></asp:Label>
+                <br />
+                <span class="my-points">我的积分：<asp:Label ID="lblMemberPoints" CssClass="member-points" runat="server"></asp:Label></span>
                 <br />
                 <asp:Label ID="lblPrivilege" runat="server"></asp:Label>
             </div>
@@ -20,12 +24,17 @@
             </div>
         </div>
         <div class="row text-center">
+            <div class="col-xs-12" onclick="openModal('MemberPoints');">
+                <div class="info-block memberpoints-block">积分规则</div>
+            </div>
+        </div>
+        <div class="row text-center">
             <div class="col-xs-12" onclick="selectDeliverAddress();">
                 <div class="info-block deliver-addr-block">收货地址</div>
             </div>
         </div>
         <div class="row">
-            <div class="col-xs-12" onclick="openModal();">
+            <div class="col-xs-12" onclick="openModal('QRCode');">
                 <div class="info-block wx-qrcode-block">微信客服</div>
             </div>
         </div>
@@ -46,8 +55,18 @@
     </div>
     <div class="md-modal md-effect-13" id="divModal">
         <div class="md-content">
-            <img id="imgQRCode" src="images/FruitUQRCode.jpg" />
-            <h5 class="text-danger">长按二维码关注我们，接收订单即时消息</h5>
+            <div id="QRCode">
+                <img id="imgQRCode" src="images/FruitUQRCode.jpg" />
+                <h5 class="text-danger">长按二维码关注我们，接收订单即时消息</h5>
+            </div>
+            <div id="MemberPoints" class="text-left">
+                <h4 class="text-center">Fruit U 积分规则</h4>
+                <p>您在Fruit U消费成功后，消费金额将自动转化为积分</p>
+                <p>每消费1元可累计1积分，积分终身有效，可在下次消费时直接抵扣现金</p>
+                <p>
+                    <asp:Label CssClass="member-points-exchage-rate" ID="lblMemberPointsExchageRate" runat="server" Text=""></asp:Label>积分抵扣1元，单次消费最多抵扣订单总金额的50%</p>
+                <p>（您的累计积分将记录在用户中心，可随时查看）</p>
+            </div>
         </div>
     </div>
 
@@ -66,7 +85,17 @@
         });
 
         //显示模式窗口
-        function openModal() {
+        function openModal(content) {
+            switch (content) {
+                case 'MemberPoints':
+                    $("#MemberPoints").show();
+                    $("#QRCode").hide();
+                    break;
+                case 'QRCode':
+                    $("#MemberPoints").hide();
+                    $("#QRCode").show();
+                    break;
+            }
             $("#divModal").addClass("md-show");
         }
 
