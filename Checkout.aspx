@@ -2,7 +2,7 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/Checkout.css" rel="stylesheet" />
-    <link href="css/ladda-themeless.min.css" rel="stylesheet" />
+    <link href="Scripts/ladda/ladda-themeless.min.css" rel="stylesheet" />
     <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -80,7 +80,8 @@
                         </label>
                         <span class="form-group">
                             <label class="sr-only" for="txtUsedMemberPoints">会员积分</label>
-                            <asp:TextBox ID="txtUsedMemberPoints" runat="server" CssClass="form-control input-sm" disabled="disabled" TextMode="Number" Text="0"></asp:TextBox> 优惠￥<span id="spMemberPointsDiscount">0.00</span>元
+                            <asp:TextBox ID="txtUsedMemberPoints" runat="server" CssClass="form-control input-sm" disabled="disabled" TextMode="Number" Text="0"></asp:TextBox>
+                            优惠￥<span id="spMemberPointsDiscount">0.00</span>元
                         </span>
                         <div class="help-block">* 您现有<span id="spValidMemberPoints"></span>积分，本订单最多可使用<span id="spMaxDiscountMemberPoints"></span>积分</div>
                     </div>
@@ -202,7 +203,7 @@
                 $("#cbMemberPoints").on("click", switchMemberPoints);
 
                 //注册积分变动事件处理函数
-                $("#txtUsedMemberPoints").on({ "focus tap": function () { this.select(); }, "change": useMemberPoints });
+                $("#txtUsedMemberPoints").on({ "focus": function () { this.select(); }, "change": useMemberPoints });
 
                 //点击遮罩层关闭模式窗口
                 $(".md-overlay").on("click", closeModal);
@@ -286,9 +287,16 @@
                           wxAddrCounty = res.addressCountiesThirdStageName;
                           wxAddrDetailInfo = res.addressDetailInfo;
                           wxPostalCode = res.addressPostalCode;
+                          //对于直辖市，则省略省份信息
+                          if (wxAddrProvince == wxAddrCity) {
+                              wxAddrProvince = '';
+                          }
+                          if (wxPostalCode != undefined && wxPostalCode != '') {
+                              wxPostalCode = "[" + wxPostalCode + "]";
+                          }
                           $("span.wx-user-name").text(wxUserName);
                           $("span.wx-tel-number").text(wxTelNumber);
-                          $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]");
+                          $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
                           $("#divCustomizeAddrInfo").hide();
                           $("#divWxAddrInfo").slideDown();
                       }
@@ -410,7 +418,7 @@
                             //获取微信地址信息
                             txtName = wxUserName;
                             txtPhone = wxTelNumber;
-                            txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + "[" + wxPostalCode + "]";
+                            txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode;
                         }
                     } else {
                         //获取手工输入的地址信息

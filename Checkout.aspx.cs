@@ -7,13 +7,15 @@ public partial class Checkout : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
+        //获取“微信收货地址共享接口参数”
+        string wxEditAddrParam = string.Empty;
+        WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+
         try
         {
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
 
-            //当前session中的认证信息
-            WeChatUser wxUser = Session["WxUser"] as WeChatUser;
             //在微信用户表和成员资格表中查找此用户信息，并刷新最近活动时间，获取最新的用户积分信息
             Session["WxUser"] = wxUser = WeChatUserDAO.FindUserByOpenID(wxUser.OpenID, true);
 
@@ -53,11 +55,8 @@ public partial class Checkout : System.Web.UI.Page
                 }
             }
 
-            //获取“收货地址共享接口参数”
-            string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
+            wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
 
-            //定义前端JS全局变量：收货地址接口参数、会议积分兑换比率、会员积分余额
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsVar", string.Format("var wxEditAddrParam = {0}, memberPointsExchangeRate = {1}, validMemberPoints = {2};", wxEditAddrParam, Config.MemberPointsExchangeRate, wxUser.MemberPoints), true);
         }
         catch (System.Threading.ThreadAbortException)
         {
@@ -65,6 +64,11 @@ public partial class Checkout : System.Web.UI.Page
         catch (Exception ex)
         {
             Log.Error(this.GetType().ToString(), ex.Message);
+        }
+        finally
+        {
+            //定义前端JS全局变量：收货地址接口参数、会议积分兑换比率、会员积分余额
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsVar", string.Format("var wxEditAddrParam = {0}, memberPointsExchangeRate = {1}, validMemberPoints = {2};", !string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined", Config.MemberPointsExchangeRate, wxUser.MemberPoints), true);
         }
     }
 }

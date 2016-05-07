@@ -1763,10 +1763,11 @@ public class ProductOrder : IComparable<ProductOrder>
                                 {
                                     paramInventoryQty.Value = 0;
                                 }
-                            }
-                            if (cmdConsumeInventory.ExecuteNonQuery() != 1)
-                            {
-                                throw new Exception(string.Format("更新商品“{0}”库存量错误", od.FruitName));
+
+                                if (cmdConsumeInventory.ExecuteNonQuery() != 1)
+                                {
+                                    throw new Exception(string.Format("更新商品“{0}”库存量错误", od.FruitName));
+                                }
                             }
                         });
                     }

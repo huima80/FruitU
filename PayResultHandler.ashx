@@ -16,7 +16,7 @@ public class PayResultHandler : IHttpHandler
     public void ProcessRequest(HttpContext context)
     {
 
-        Log.Info(this.GetType().ToString(), "微信支付通知回调开始...");
+        Log.Info(this.GetType().ToString(), "微信支付通知回调开始...请求方IP：" + context.Request.UserHostAddress);
 
         //微信的“支付结果通知”回调消息
         WeChatPayData notifyPayData = new WeChatPayData();
@@ -197,7 +197,7 @@ public class PayResultHandler : IHttpHandler
 
                         //注册订单的微信支付状态变动事件处理函数，给予下单人会员积分
                         po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WeChatUserDAO.EarnMemberPoints);
-                        
+
                         //注册会员积分变动事件处理函数，通知用户
                         po.Purchaser.MemberPointsChanged += WxTmplMsg.SendMsgOnMemberPoints;
 
@@ -231,7 +231,7 @@ public class PayResultHandler : IHttpHandler
             //发生异常，也反馈给微信通知接口
             replyPayData.SetValue("return_code", "FAIL");
             replyPayData.SetValue("return_msg", ex.Message);
-            Log.Error(this.GetType().ToString(), "微信支付通知出错 : " + ex.Message + ex.StackTrace);
+            Log.Error(this.GetType().ToString(), string.Format("微信支付通知出错 :{0}\n请求方IP：{1}", ex.Message + ex.StackTrace, context.Request.UserHostAddress));
         }
 
         //向微信通知接口同步返回消息

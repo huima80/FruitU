@@ -49,7 +49,11 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                 //QQ回调redirect_uri?code=CODE&state=STATE
 
                 Log.Info("QQ CODE", code);
-                Log.Info("state in session", context.Session["state"].ToString());
+                if (context.Session["state"] == null)
+                {
+                    //如果自上次请求CODE后，session 已超时，则重新请求CODE
+                    context.Response.Redirect(redirectUri);
+                }
 
                 if (context.Request.QueryString["state"] == context.Session["state"].ToString())
                 {

@@ -2,7 +2,7 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="../css/ManageOrder.css" rel="stylesheet" />
-    <link href="../css/ladda-themeless.min.css" rel="stylesheet" />
+    <link href="../Scripts/ladda/ladda-themeless.min.css" rel="stylesheet" />
     <link href="../Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -145,11 +145,9 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单金额" SortExpression="OrderPrice">
                             <ItemTemplate>
-                                <asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label>
-                                <li>
-                                    <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label></li>
-                                <li>
-                                    <asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label></li>
+                                <p><asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label></p>
+                                <p><asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label></p>
+                                <p><asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label></p>
                             </ItemTemplate>
                             <ItemStyle CssClass="order-price" />
                         </asp:TemplateField>
@@ -227,16 +225,20 @@
                         <table class="table table-condensed">
                             <tr>
                                 <td class="text-center">商品名称</td>
-                                <td class="text-center">单价</td>
                                 <td class="text-center">数量</td>
+                                <td class="text-center">单价</td>
                             </tr>
                             {{for OrderDetailList}}
                     <tr>
                         <td class="text-center">{{:OrderProductName}}</td>
+                        <td class="text-center">{{:PurchaseQty}}{{:PurchaseUnit}}</td>
                         <td class="text-center">{{:PurchasePrice}}元</td>
-                        <td class="text-center">{{:PurchaseQty}}</td>
                     </tr>
                             {{/for}}
+                            <tr>
+                                <td class="text-center">小计：</td>
+                                <td class="text-right" colspan="2">{{:OrderDetailPrice}}元</td>
+                            </tr>
                         </table>
                     </p>
                     <p class="text-right">运费：￥<span>{{:Freight}}</span></p>
@@ -278,9 +280,9 @@
 
             $(function () {
                 //设为全局对象，方便后面调用
-                window.Ladda = ladda;
+                Ladda = ladda;
 
-                require(['jsrender'], function () {
+                requirejs(['jsrender'], function () {
                     tmplPO = $.templates("#tmplPrintOrder");
                 });
 

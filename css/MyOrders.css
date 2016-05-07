@@ -112,6 +112,7 @@ span.order-price{
     background-color:#00CD00 !important;
     color:white !important;
     margin-left:10px;
+    overflow:visible !important;
 }
 
 .pay-success{
@@ -120,6 +121,13 @@ span.order-price{
 
 .not-pay{
     color:orange;
+}
+
+.btn-cancel{
+    background-color:green;
+    color:white !important;
+    padding:3px;
+    border-radius:4px;
 }
 
 .form-control, #btnSearch{

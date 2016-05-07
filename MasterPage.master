@@ -44,7 +44,7 @@
                 bootstrap: ['bootstrap-3.3.6.min', 'http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min'],
                 easyui: 'easyui-1.4.4',
                 modernizr: 'modernizr',
-                gridstack: ['gridstack/gridstack-0.2.4.min', '//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.4/gridstack.min'],
+                gridstack: ['gridstack/gridstack-0.2.5.min', '//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.5/gridstack.min'],
                 ladda: 'ladda/ladda.min',
                 spin: 'ladda/spin.min',
                 masonry: ['masonry.pkgd.min', 'https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.min'],

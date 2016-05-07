@@ -29,6 +29,7 @@ input[type=checkbox] {
 .order-price {
     font-size: large;
     color: red;
+    text-align:right;
 }
 
 .freight {

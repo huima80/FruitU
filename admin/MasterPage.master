@@ -7,8 +7,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="../images/FruitU.ico" type="image/x-icon" />
     <link href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css" rel="stylesheet" />
-    <link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="http://apps.bdimg.com/libs/fontawesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="../css/bootstrap.min-3.3.5.css" rel="stylesheet" />
+    <link href="../css/font-awesome.min.css" rel="stylesheet" />
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <style>
@@ -32,6 +32,7 @@
         input[type=checkbox] {
             cursor: pointer;
         }
+
         .pager td {
             padding: 8px;
             font-size: 18px;
@@ -55,14 +56,14 @@
             //never includes a ".js" extension since
             //the paths config could be for a directory.
             paths: {
-                jquery: ['jquery/jquery-1.12.2', 'http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min'],
+                jquery: ['jquery/jquery-1.12.2.min', 'http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min'],
                 jqueryui: ['jquery/jquery-ui-1.11.4.min', 'http://apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min'],
                 bootstrap: ['bootstrap-3.3.6.min', 'http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min'],
                 easyui: 'easyui-1.4.4',
                 modernizr: 'modernizr',
                 gridstack: ['gridstack/gridstack-0.2.5.min', '//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.5/gridstack.min'],
-                ladda: 'ladda/ladda',
-                spin: 'ladda/spin',
+                ladda: 'ladda/ladda.min',
+                spin: 'ladda/spin.min',
                 masonry: ['masonry.pkgd.min', 'https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.min'],
                 jweixin: 'http://res.wx.qq.com/open/js/jweixin-1.0.0',
                 lodash: 'lodash.min',
@@ -70,7 +71,7 @@
                 respond: 'http://apps.bdimg.com/libs/respond.js/1.4.2/respond',
                 jsrender: 'jsrender',
                 flexslider: 'jquery.flexslider-min',
-                cart: 'jquery.cart',
+                cart: 'cart',
                 pager: 'pager',
                 webConfig: 'webConfig',
                 JTreeMask: 'JTree/jquery.mask',

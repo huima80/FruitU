@@ -641,7 +641,7 @@ public partial class ManageProduct : System.Web.UI.Page
 
         int totalWidth = 0;
 
-        kvpList.Add(new KeyValuePair<int, string>(0, "===请选择类别==="));
+        kvpList.Add(new KeyValuePair<int, string>(-1, "===商品类别==="));
 
         this.GetChildCategory(0, categoryList, kvpList, totalWidth);
 
@@ -659,26 +659,23 @@ public partial class ManageProduct : System.Web.UI.Page
         if (childCategoryList.Count != 0)
         {
             totalWidth += 2;
+            string branchStr;
 
             if (parentID == 0)
             {
-                childCategoryList.ForEach(childCategory =>
-                {
-                    kvpList.Add(new KeyValuePair<int, string>(childCategory.ID, "╋".PadLeft(totalWidth, (char)0xA0) + childCategory.CategoryName));
-
-                    this.GetChildCategory(childCategory.ID, categoryList, kvpList, totalWidth);
-                });
-
+                branchStr = "╋";
             }
             else
             {
-                childCategoryList.ForEach(childCategory =>
-                {
-                    kvpList.Add(new KeyValuePair<int, string>(childCategory.ID, "├".PadLeft(totalWidth, (char)0xA0) + childCategory.CategoryName));
-
-                    this.GetChildCategory(childCategory.ID, categoryList, kvpList, totalWidth);
-                });
+                branchStr = "├";
             }
+
+            childCategoryList.ForEach(childCategory =>
+            {
+                kvpList.Add(new KeyValuePair<int, string>(childCategory.ID, branchStr.PadLeft(totalWidth, (char)0xA0) + childCategory.CategoryName));
+
+                this.GetChildCategory(childCategory.ID, categoryList, kvpList, totalWidth);
+            });
         }
     }
 

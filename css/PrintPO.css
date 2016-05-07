@@ -1,14 +1,17 @@
-﻿@page {
-    size: auto portrait;
+﻿@page  {
+    size:auto portrait;
+    margin:0;
+
 }
 
 @media print, screen {
     .print-po {
         page-break-before: always;
+        margin:0;
     }
 
     .print-po, table {
-        font-size: 9px;
+        font-size:smaller;
         color: black;
     }
 

@@ -428,6 +428,8 @@ public static class WxTmplMsg
             listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
 
             JsonData jTmplMsg = new JsonData(), jTmplMsgData = new JsonData(), jTmplMsgDataValue;
+            int restInventory = od.InventoryQty - od.PurchaseQty;
+            restInventory = restInventory >= 0 ? restInventory : 0;
 
             //构造模板消息
             jTmplMsg["touser"] = string.Empty;
@@ -451,12 +453,12 @@ public static class WxTmplMsg
             jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = od.InventoryQty - od.PurchaseQty;
+            jTmplMsgDataValue["value"] = restInventory;
             jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
             jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "请尽快补货。";
+            jTmplMsgDataValue["value"] = "请尽快补货";
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["remark"] = jTmplMsgDataValue;
 

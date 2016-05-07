@@ -2,7 +2,7 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/MyOrders.css" rel="stylesheet" />
-    <link href="css/ladda-themeless.min.css" rel="stylesheet" />
+    <link href="Scripts/ladda/ladda-themeless.min.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -63,7 +63,7 @@
                 <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
                         {{/if}}
                     </div>
-                    <div><span class="freight">（含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</span></div>
+                    <div><span class="freight">(含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</span></div>
                 </div>
                 <hr />
                 <div class="order-state">
@@ -71,7 +71,8 @@
                         <i class="fa fa-file-o"></i>&nbsp;下单
                     </span>
                     {{if IsCancel==0 && (TradeState!=1 && TradeState!=8) && IsDelivered==0 && IsAccept==0}}
-                       <span id="CancelOrder{{:ID}}" class="doing" onclick="cancelOrder({{:ID}});">(<i class="fa fa-close"></i>&nbsp;撤单)
+                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">
+                           取消订单
                            {{else IsCancel==1}}
                         <span class="done">(已撤单)
                            {{else TradeState==1 || IsDelivered==1 || IsAccept==1}}
@@ -107,7 +108,7 @@
                 requirejs(['pager', 'ladda'], function (pager, ladda) {
 
                     //设为全局对象，方便后面调用
-                    window.Ladda = ladda;
+                    Ladda = ladda;
 
                     $.pager.init({
                         pageSize: pageSize,
@@ -119,7 +120,7 @@
                     $($.pager).on("onPageLoaded", function (event, data) {
                         //刷新订单各状态统计数
                         if (data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
-                            $(data.originalDataPerPage).each(function () {
+                            $.each(data.originalDataPerPage, function () {
                                 if (this.TotalRows != undefined) {
                                     $("#spanOrderSubmitted").text(this.TotalRows);
                                 }
@@ -141,6 +142,7 @@
                     });
 
                     $.pager.loadPage();
+
                 });
 
                 $("#btnSearch").on("click", searchOrder);

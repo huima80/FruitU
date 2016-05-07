@@ -1,4 +1,4 @@
-﻿//分页模块
+﻿//分页模块，依赖jQuery, jsrender, Bootstrap, Font-Awesome
 ; (function (root, factory) {
 
     // CommonJS
@@ -59,7 +59,7 @@
             //是否应用masonry，默认false
             isMasonry: false,
             //加载时loading提示，默认使用Font-Awesome图标，CSS3动画，不支持IE8-IE9
-            loadingHints: '<div style="text-align:center;"><i class="fa fa-spinner fa-pulse"</i></div>',
+            loadingHints: '<div style="text-align:center;display:none;"><i class="fa fa-spinner fa-pulse"</i></div>',
             //加载完成后提示
             loadedHints: '<div style="text-align:center;font-size:12px;color:orange;display:none;"></div>',
             //分页页码参数
