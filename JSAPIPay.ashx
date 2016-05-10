@@ -54,10 +54,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     newPO.OrderID = ProductOrder.MakeOrderID();    //生成OrderID
                     newPO.Purchaser = wxUser;
                     newPO.ClientIP = wxUser.ClientIP;
-                    newPO.DeliverName = jOrderInfo["name"].ToString();
-                    newPO.DeliverPhone = jOrderInfo["phone"].ToString();
-                    newPO.DeliverAddress = jOrderInfo["address"].ToString();
-                    newPO.OrderMemo = jOrderInfo["memo"].ToString();
+                    newPO.DeliverName = jOrderInfo["name"].ToString().Trim();
+                    newPO.DeliverPhone = jOrderInfo["phone"].ToString().Trim();
+                    newPO.DeliverAddress = jOrderInfo["address"].ToString().Trim();
+                    newPO.OrderMemo = jOrderInfo["memo"].ToString().Trim();
                     newPO.OrderDate = DateTime.Now;
                     newPO.PaymentTerm = (PaymentTerm)int.Parse(jOrderInfo["paymentTerm"].ToString());
 
@@ -73,6 +73,12 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                         case PaymentTerm.CASH:
                             newPO.TradeState = TradeState.CASHNOTPAID;
                             break;
+                    }
+
+                    //查找下单用户的推荐人，且不是下单人，则写入订单对象
+                    if (!string.IsNullOrEmpty(wxUser.AgentOpenID) && wxUser.AgentOpenID != wxUser.OpenID)
+                    {
+                        newPO.Agent = WeChatUserDAO.FindUserByOpenID(wxUser.AgentOpenID);
                     }
 
                     //订单商品项信息
@@ -121,7 +127,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //校验订单中是否有超出库存量的商品
                     if (outOfStockProdItems.Count > 0)
                     {
-                        throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请修改购买数量后重新下单。", string.Join<string>(",", outOfStockProdItems)));
+                        throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请调整购买数量后重新下单。", string.Join<string>(",", outOfStockProdItems)));
                     }
 
                     //根据订单商品项金额计算运费，满99元包邮
@@ -137,9 +143,9 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     //订单所需支付金额=商品价格+运费
                     decimal subTotalAndFreight = newPO.OrderDetailPrice + newPO.Freight;
                     //订单所需支付金额折算成会员积分，积分使用上限为订单实付金额的50%
-                    decimal equivalentMemberPointsOfOrder = Math.Floor(subTotalAndFreight / 2 * Config.MemberPointsExchangeRate);
+                    int equivalentMemberPointsOfOrder = (int)Math.Floor(subTotalAndFreight / 2 * Config.MemberPointsExchangeRate);
                     //判断此订单最大可使用积分与用户积分账户的可使用积分相比，孰小者决定了用户可使用的积分上限
-                    decimal maxDiscountMemberPoints = equivalentMemberPointsOfOrder < wxUser.MemberPoints ? equivalentMemberPointsOfOrder : wxUser.MemberPoints;
+                    int maxDiscountMemberPoints = equivalentMemberPointsOfOrder < wxUser.MemberPoints ? equivalentMemberPointsOfOrder : wxUser.MemberPoints;
 
                     //根据用户选择的会员积分点数，校验可用积分，计算积分折扣
                     int usedMemberPoints;

@@ -71,13 +71,8 @@
                         <i class="fa fa-file-o"></i>&nbsp;下单
                     </span>
                     {{if IsCancel==0 && (TradeState!=1 && TradeState!=8) && IsDelivered==0 && IsAccept==0}}
-                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">
-                           取消订单
-                           {{else IsCancel==1}}
-                        <span class="done">(已撤单)
-                           {{else TradeState==1 || IsDelivered==1 || IsAccept==1}}
-                         <span>{{/if}}
-                         </span><span class="done">—</span>
+                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">&nbsp;取消订单&nbsp;{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
+                           <span class="done">—</span>
                             {{if TradeState==1 || TradeState==8}}
                      <span class="done">{{else}}
                        <span id="WxPayOrder{{:ID}}" class="doing">{{/if}}
@@ -136,9 +131,13 @@
                             });
                         }
 
-                        //绑定页面上所有的ladda button
-                        Ladda.bind('button.ladda-button');
-
+                        //绑定分页新生成的ladda button
+                        var $lButtons = $("button.ladda-button").filter(function (index, element) {
+                            return $(".ladda-spinner", this).length == 0;
+                        });
+                        $.each($lButtons, function () {
+                            Ladda.bind(this);
+                        });
                     });
 
                     $.pager.loadPage();

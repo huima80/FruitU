@@ -186,7 +186,7 @@
                                 <asp:TextBox ID="txtInventoryQty" runat="server" Text='<%# Bind("InventoryQty") %>' ClientIDMode="Static" onchange="validateInventory();" CssClass="form-control"></asp:TextBox>
                                 <div class="checkbox">
                                     <label>
-                                        <asp:CheckBox ID="cbInventoryQty" runat="server" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="无限量" />
+                                        <asp:CheckBox ID="cbInventoryQty" runat="server" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="不限量" />
                                     </label>
                                 </div>
                             </EditItemTemplate>
@@ -194,7 +194,7 @@
                                 <asp:TextBox ID="txtInventoryQty" runat="server" Style="display: none;" Text='<%# Bind("InventoryQty") %>' ClientIDMode="Static" onchange="validateInventory();" CssClass="form-control"></asp:TextBox>
                                 <div class="checkbox">
                                     <label>
-                                        <asp:CheckBox ID="cbInventoryQty" runat="server" Checked="true" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="无限量" />
+                                        <asp:CheckBox ID="cbInventoryQty" runat="server" Checked="true" onclick="switchInventoryInfinite();" ClientIDMode="Static" Text="不限量" />
                                     </label>
                                 </div>
                             </InsertItemTemplate>
@@ -451,7 +451,7 @@
             }
         }
 
-        //切换商品是否无限库存量
+        //切换商品是否不限库存量
         function switchInventoryInfinite(event) {
             if ($("#cbInventoryQty").is(":checked")) {
                 $("#txtInventoryQty").val(-1).hide();

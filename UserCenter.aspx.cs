@@ -15,9 +15,7 @@ public partial class UserCenter : System.Web.UI.Page
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
 
-            //重新加载当前用户的信息，获取最新的积分等信息
             WeChatUser wxUser = Session["WxUser"] as WeChatUser;
-            Session["WxUser"] = wxUser = WeChatUserDAO.FindUserByOpenID(wxUser.OpenID, true);
 
             //如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
             if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
@@ -58,6 +56,9 @@ public partial class UserCenter : System.Web.UI.Page
             //获取“收货地址共享接口参数”，传给前端JS
             string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
+
+            //获取最新的用户积分信息
+            wxUser.MemberPoints = WeChatUserDAO.FindMemberPointsByOpenID(wxUser.OpenID);
 
             ////开始：显示当前微信用户信息：用户头像、昵称、特权、积分
             this.imgPortrait.ImageUrl = wxUser.HeadImgUrl;

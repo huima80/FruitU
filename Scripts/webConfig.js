@@ -15,13 +15,13 @@
     }
 }(window, function () {
     function WebConfig() {
-        this.siteDomain = 'mahui.me';
+        this.siteDomain = location.protocol + "//" + location.host;
         this.siteTitle = 'Fruit U';
-        this.siteDesc = '鲜果切';
-        this.siteKeywords = 'fruit,slice,juice,水果,果汁,切片';
-        this.siteIcon = 'images/FruitU.ico';
-        this.siteCopyrights = 'Fruit U';
-        this.defaultImg = 'FruitU.jpg';
+        this.siteDesc = '鲜榨果汁、水果切片，营养又美味！';
+        this.siteKeywords = '';
+        this.siteIcon = '';
+        this.siteCopyrights = '';
+        this.defaultImg = '';
     }
 
     //初始化网站配置
@@ -49,7 +49,6 @@
 
     if (!window.webConfig) {
         window.webConfig = new WebConfig();
-        window.onload = webConfig.init.bind(webConfig);
     }
 
     return window.webConfig;

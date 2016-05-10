@@ -21,13 +21,20 @@ public partial class ManageOrder : System.Web.UI.Page
         {
             try
             {
-                string openID, strWhere = string.Empty;
+                string openID, agentOpenID, strWhere = string.Empty;
 
                 if (Request.QueryString["OpenID"] != null)
                 {
                     UtilityHelper.AntiSQLInjection(Request.QueryString["OpenID"]);
                     openID = Request.QueryString["OpenID"];
                     strWhere = string.Format("OpenID='{0}'", openID);
+                }
+
+                if (Request.QueryString["AgentOpenID"] != null)
+                {
+                    UtilityHelper.AntiSQLInjection(Request.QueryString["AgentOpenID"]);
+                    agentOpenID = Request.QueryString["AgentOpenID"];
+                    strWhere = string.Format("AgentOpenID='{0}'", agentOpenID);
                 }
 
                 this.odsOrderList.TypeName = "ProductOrder";
@@ -154,6 +161,19 @@ public partial class ManageOrder : System.Web.UI.Page
                         e.Row.CssClass = "danger";
                         break;
                 }
+            }
+
+            HtmlGenericControl pAgent = e.Row.FindControl("pAgent") as HtmlGenericControl;
+            if (po.Agent != null)
+            {
+                Label lblAgent = e.Row.FindControl("lblAgent") as Label;
+                string faSex = po.Agent.Sex ? "<i class=\"fa fa-mars\" style=\"color:blue;\"></i>" : "<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>";
+                lblAgent.Text = string.Format("{0}&nbsp;{1}", po.Agent.NickName, faSex);
+                pAgent.Visible = true;
+            }
+            else
+            {
+                pAgent.Visible = false;
             }
 
             //处理订单支付状态
@@ -316,10 +336,10 @@ public partial class ManageOrder : System.Web.UI.Page
                     break;
                 case "UpdateTradeState":
                     po.TradeState = tradeState;
-                    //注册订单的货到付款状态变动事件处理函数，给予下单人会员积分
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WeChatUserDAO.EarnMemberPoints);
-                    //注册会员积分变动事件处理函数，通知用户
-                    po.Purchaser.MemberPointsChanged += WxTmplMsg.SendMsgOnMemberPoints;
+                    //注册订单的货到付款状态变动事件处理函数，给予下单人和推荐人会员积分
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(ProductOrder.EarnMemberPoints);
+                    //注册订单的计算积分余额事件处理函数，通知下单人和推荐人
+                    po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
                     break;
                 default:
                     throw new Exception("不能识别的更新方法");

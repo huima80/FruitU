@@ -24,7 +24,7 @@ public partial class FruitList : System.Web.UI.Page
     private string RenderTmpl(List<Fruit> data, int topSellingIDWeekly)
     {
         StringBuilder sbFruitList = new StringBuilder();
-        string tmplFruit = "<div class=\"col-xs-12\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{已售罄}}</div>";
+        string tmplFruit = "<div class=\"col-xs-12\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{今日售罄}}</div>";
         string tmplWeeklyMenu = "<div class=\"col-xs-12\"><img src=\"images/WeeklyMenu.gif\" /></div>";
         string resultStr;
         int inventoryOfFruitAWeek = 0;
@@ -48,7 +48,7 @@ public partial class FruitList : System.Web.UI.Page
             if (fruit.ID == 88 && fruit.InventoryQty != 0)
             {
                 resultStr = resultStr.Replace("{{:ID}}", fruit.ID.ToString());
-                resultStr = resultStr.Replace("{{已售罄}}", string.Empty);
+                resultStr = resultStr.Replace("{{今日售罄}}", string.Empty);
                 resultStr += tmplWeeklyMenu;
             }
             else
@@ -56,7 +56,7 @@ public partial class FruitList : System.Web.UI.Page
                 if (fruit.ID == 88 && fruit.InventoryQty == 0)
                 {
                     resultStr = resultStr.Replace("onclick=\"openModal({{:ID}});\"", string.Empty);
-                    resultStr = resultStr.Replace("{{已售罄}}", "<span class=\"sell-out\">已售罄</span>");
+                    resultStr = resultStr.Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
                     resultStr += tmplWeeklyMenu;
                 }
                 else
@@ -64,12 +64,12 @@ public partial class FruitList : System.Web.UI.Page
                     if (fruit.ID != 88 && inventoryOfFruitAWeek != 0)
                     {
                         resultStr = resultStr.Replace("{{:ID}}", "88");
-                        resultStr = resultStr.Replace("{{已售罄}}", string.Empty);
+                        resultStr = resultStr.Replace("{{今日售罄}}", string.Empty);
                     }
                     else
                     {
                         resultStr = resultStr.Replace("onclick=\"openModal({{:ID}});\"", string.Empty);
-                        resultStr = resultStr.Replace("{{已售罄}}", "<span class=\"sell-out\">已售罄</span>");
+                        resultStr = resultStr.Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
                     }
                 }
             }

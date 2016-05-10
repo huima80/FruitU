@@ -42,7 +42,7 @@ public partial class JuiceList : System.Web.UI.Page
     private string RenderTmpl(List<Fruit> data, int topSellingIDWeekly)
     {
         StringBuilder sbJuiceList = new StringBuilder();
-        string tmplJuice = "<div class=\"col-xs-6\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{本周爆款}}{{已售罄}}</div>";
+        string tmplJuice = "<div class=\"col-xs-6\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{本周爆款}}{{今日售罄}}</div>";
         string resultStr;
 
         data.Sort();
@@ -77,11 +77,11 @@ public partial class JuiceList : System.Web.UI.Page
             }
             if (juice.InventoryQty == 0)
             {
-                resultStr = resultStr.Replace("{{已售罄}}", "<span class=\"sell-out\">已售罄</span>");
+                resultStr = resultStr.Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
             }
             else
             {
-                resultStr = resultStr.Replace("{{已售罄}}", string.Empty);
+                resultStr = resultStr.Replace("{{今日售罄}}", string.Empty);
             }
 
             sbJuiceList.Append(resultStr);

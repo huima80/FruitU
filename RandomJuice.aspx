@@ -209,7 +209,7 @@
             $("#faLoading").show();
 
             //商品库存量
-            $("#spanInventory").text(prod.InventoryQty == -1 ? "无限量" : prod.InventoryQty);
+            $("#spanInventory").text(prod.InventoryQty == -1 ? "不限量" : prod.InventoryQty);
             $("#hfInventory").val(prod.InventoryQty);
 
             //商品单价

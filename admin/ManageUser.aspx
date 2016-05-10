@@ -113,11 +113,13 @@
                                 <asp:HyperLink ID="HyperLink1" runat="server" ImageUrl='<%# Eval("HeadImgUrl") %>' NavigateUrl='<%# Eval("HeadImgUrl") %>' Target="_blank" CssClass="head-img"></asp:HyperLink>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="微信昵称" SortExpression="NickName">
+                        <asp:TemplateField HeaderText="微信昵称" SortExpression="NickName" ItemStyle-CssClass="col-lg-2">
                             <ItemTemplate>
                                 <p><asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label></p>
                                 <p><asp:Label ID="lblMemberPoints" runat="server" Text='<%# "会员积分："+Eval("MemberPoints") %>'></asp:Label></p>
                             </ItemTemplate>
+
+<ItemStyle CssClass="col-lg-2"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="地区" SortExpression="Country">
                             <ItemTemplate>
@@ -153,7 +155,12 @@
                                 </div>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:HyperLinkField DataNavigateUrlFields="OpenID" DataNavigateUrlFormatString="ManageOrder.aspx?OpenID={0}" DataTextField="OrderCount" HeaderText="订单数" />
+                        <asp:TemplateField HeaderText="订单数">
+                            <ItemTemplate>
+                                <p>订单数：<asp:HyperLink ID="HyperLink2" runat="server" NavigateUrl='<%# Eval("OpenID", "ManageOrder.aspx?OpenID={0}") %>' Text='<%# Eval("OrderCount") %>'></asp:HyperLink></p>
+                                <p>推荐数：<asp:HyperLink ID="HyperLink3" runat="server" NavigateUrl='<%# Eval("OpenID", "ManageOrder.aspx?AgentOpenID={0}") %>' Text='<%# Eval("AgentOrderCount") %>'></asp:HyperLink></p>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                         <asp:TemplateField HeaderText="发送微信模板消息">
                             <ItemTemplate>
                                 <asp:TextBox CssClass="form-control" ID="tbTmplMsg" runat="server" Rows="3"></asp:TextBox>

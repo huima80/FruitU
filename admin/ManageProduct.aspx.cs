@@ -115,7 +115,7 @@ public partial class ManageProduct : System.Web.UI.Page
             Label lblInventoryQty = e.Row.FindControl("lblInventoryQty") as Label;
             if (fruit.InventoryQty == -1)
             {
-                lblInventoryQty.Text = "无限量";
+                lblInventoryQty.Text = "不限量";
             }
             else
             {
@@ -287,7 +287,7 @@ public partial class ManageProduct : System.Web.UI.Page
                 UtilityHelper.AntiSQLInjection(e.Values["Priority"].ToString());
             }
 
-            //获取商品库存数量，默认为无限量
+            //获取商品库存数量，默认为不限量
             if (e.Values["InventoryQty"] == null)
             {
                 e.Values["InventoryQty"] = -1;
@@ -833,7 +833,7 @@ public partial class ManageProduct : System.Web.UI.Page
                 break;
             case DetailsViewMode.Insert:
                 txtFruitName.Focus();
-                //插入记录时，默认显示无限库存量
+                //插入记录时，默认显示不限库存量
                 txtInventoryQty.Style["display"] = "none";
                 txtInventoryQty.Text = "-1";
                 cbInventoryQty.Checked = true;
@@ -845,7 +845,7 @@ public partial class ManageProduct : System.Web.UI.Page
             case DetailsViewMode.ReadOnly:
                 if (prod != null)
                 {
-                    lblInventoryQty.Text = (prod.InventoryQty == -1 ? "无限量" : prod.InventoryQty.ToString());
+                    lblInventoryQty.Text = (prod.InventoryQty == -1 ? "不限量" : prod.InventoryQty.ToString());
                 }
                 break;
         }

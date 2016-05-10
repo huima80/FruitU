@@ -1,12 +1,14 @@
 ﻿CREATE PROCEDURE [dbo].[spMemberPoints]
 	@OrderID varchar(50),
-	@UpdatedMemberPoints	int,
-	@NewMemberPoints	int output
+	@IncreasedMemberPoints int,
+	@UsedMemberPoints int,
+	@NewMemberPoints	int output,
+	@AgentNewMemberPoints	int output
 AS
 BEGIN
     DECLARE @CurrentMemberPoints	int
     DECLARE @IsCalMemberPoints	bit
-    DECLARE @OpenID	varchar(50)
+    DECLARE @OpenID	varchar(50), @AgentOpenID varchar(50)
 
     DECLARE @ErrorCode     int
     SET @ErrorCode = 0
@@ -23,9 +25,10 @@ BEGIN
     ELSE
     	SET @TranStarted = 0
 
-	--查询此订单是否计算过积分
+	--查询此订单是否计算过积分标志、此订单的下单人和推荐人OpenID
 	SELECT @IsCalMemberPoints = IsCalMemberPoints,
-		   @OpenID = OpenID
+		   @OpenID = OpenID,
+		   @AgentOpenID = AgentOpenID
 	FROM ProductOrder
 	WHERE OrderID = @OrderID
 
@@ -43,7 +46,7 @@ BEGIN
 		FROM WeChatUsers
 		WHERE OpenID = @OpenID
 
-		SET @NewMemberPoints = @CurrentMemberPoints + @UpdatedMemberPoints
+		SET @NewMemberPoints = @CurrentMemberPoints + @IncreasedMemberPoints - @UsedMemberPoints
 
 		--避免积分更新后小于0
 		IF ( @NewMemberPoints < 0 )
@@ -51,7 +54,7 @@ BEGIN
 			SET @NewMemberPoints = 0
 		END
 
-		--更新此用户的会员积分
+		--更新下单人的会员积分
 		UPDATE WeChatUsers
 		SET MemberPoints = @NewMemberPoints
 		WHERE OpenID = @OpenID
@@ -62,7 +65,26 @@ BEGIN
 			GOTO Cleanup
 		END
 
-		--设置此订单已计算过积分，避免重复计算
+		--更新推荐人的会员积分，排除用户给自己推荐的情况
+		IF ( @AgentOpenID <> '' and @AgentOpenID is not null and @AgentOpenID <> @OpenID )
+		BEGIN
+			UPDATE WeChatUsers
+			SET MemberPoints = MemberPoints + @IncreasedMemberPoints
+			WHERE OpenID = @AgentOpenID
+
+			IF( @@ERROR <> 0 )
+			BEGIN
+				SET @ErrorCode = -1
+				GOTO Cleanup
+			END
+
+			--查询推荐人的新会员积分
+			SELECT @AgentNewMemberPoints = MemberPoints
+			FROM WeChatUsers
+			WHERE OpenID = @AgentOpenID
+		END
+
+		--设置此订单已计算过积分标志，避免重复计算
 		UPDATE ProductOrder
 		SET IsCalMemberPoints = 1
 		WHERE OrderID = @OrderID
@@ -85,8 +107,22 @@ BEGIN
 			SET @ErrorCode = 1
 			GOTO Cleanup
 		END
-	END
 
+		IF ( @AgentOpenID <> '' and @AgentOpenID is not null )
+		BEGIN
+			--查询推荐人的新会员积分
+			SELECT @AgentNewMemberPoints = MemberPoints
+			FROM WeChatUsers
+			WHERE OpenID = @AgentOpenID
+
+			IF ( @@rowcount = 0 )
+			BEGIN
+				SET @ErrorCode = 1
+				GOTO Cleanup
+			END
+		END
+
+	END
 
 	IF( @TranStarted = 1 )
     BEGIN

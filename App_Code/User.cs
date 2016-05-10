@@ -11,6 +11,9 @@ public abstract class User : MembershipUser, IComparable<User>
 {
     public int ID { get; set; }
 
+    /// <summary>
+    /// OpenID
+    /// </summary>
     public string OpenID { get; set; }
 
     /// <summary>
@@ -47,6 +50,12 @@ public abstract class User : MembershipUser, IComparable<User>
     /// 订单数
     /// </summary>
     public int OrderCount { get; set; }
+
+    /// <summary>
+    /// 推荐订单数
+    /// </summary>
+    public int AgentOrderCount { get; set; }
+
 
     /// <summary>
     /// 用户订单列表

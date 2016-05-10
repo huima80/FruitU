@@ -118,6 +118,7 @@
                         <asp:TemplateField HeaderText="订单信息" SortExpression="OrderID">
                             <ItemTemplate>
                                 <p title="下单人微信昵称"><i class="fa fa-wechat"></i>&nbsp;<asp:Label ID="Label5" runat="server" Text='<%# (Eval("Purchaser")!=null?Eval("Purchaser.Nickname"):string.Empty) + (Eval("Purchaser")!=null?((bool)Eval("Purchaser.Sex")?"&nbsp;<i class=\"fa fa-mars\" style=\"color:blue;\"></i>":"&nbsp;<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>"):string.Empty) %>'></asp:Label></p>
+                                <p title="推荐人微信昵称" id="pAgent" runat="server"><i class="fa fa-thumbs-o-up"></i>&nbsp;<asp:Label ID="lblAgent" runat="server"></asp:Label></p>
                                 <p title="订单编号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="Label1" runat="server" CssClass="order-id" Text='<%# Eval("OrderID") %>'></asp:Label></p>
                                 <p title="下单时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label4" runat="server" Text='<%# Eval("OrderDate") %>'></asp:Label></p>
                                 <p id="pCancelDate" runat="server" title="撤单时间"><i class="fa fa-close"></i>&nbsp;<asp:Label ID="Label2" runat="server" Text='<%# Eval("CancelDate") %>'></asp:Label></p>
@@ -145,9 +146,12 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单金额" SortExpression="OrderPrice">
                             <ItemTemplate>
-                                <p><asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label></p>
-                                <p><asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label></p>
-                                <p><asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label></p>
+                                <p>
+                                    <asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label></p>
+                                <p>
+                                    <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label></p>
+                                <p>
+                                    <asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label></p>
                             </ItemTemplate>
                             <ItemStyle CssClass="order-price" />
                         </asp:TemplateField>
@@ -242,7 +246,7 @@
                         </table>
                     </p>
                     <p class="text-right">运费：￥<span>{{:Freight}}</span></p>
-                    <p class="text-right">积分优惠：￥<span>{{:MemberPointsDiscount}}</span></p>
+                    <p class="text-right">积分优惠：-￥<span>{{:MemberPointsDiscount}}</span></p>
                     <p class="order-price">订单总金额：￥<span>{{:OrderPrice}}</span></p>
                     <p class="text-right">
                         支付方式：<span>
@@ -258,7 +262,7 @@
             <hr />
             <div class="row text-center">
                 <div class="col-lg-10">
-                    <h4>Fresh Fruit & Juice</h4>
+                    <h4>Fresh Fruits & Juice</h4>
                     <h5>关注FruitU官方微信，尽享鲜果饮品！</h5>
                     <img class="qr-code" src="../images/FruitUQRCode430.jpg" />
                 </div>

@@ -24,7 +24,7 @@
 
 .top-selling-week-prod {
     position: absolute;
-    bottom: 10px;
+    top: 10px;
     left: 10px;
     background-color: red;
     color: white;
@@ -35,7 +35,7 @@
 
 .sell-out {
     position: absolute;
-    top: 10px;
+    bottom: 10px;
     left: 10px;
     background-color: orange;
     color: white;

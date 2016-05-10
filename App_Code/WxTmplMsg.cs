@@ -479,24 +479,28 @@ public static class WxTmplMsg
         }
     }
 
-    public static JsonData SendMsgOnMemberPoints(object sender, WeChatUser.MemberPointsChangedEventArgs e)
+    public static void SendMsgOnMemberPoints(object sender, ProductOrder.MemberPointsCalculatedEventArgs e)
     {
-        if (sender == null || !(sender is WeChatUser) || e == null)
+        if (sender == null || !(sender is ProductOrder) || e == null)
         {
             throw new ArgumentNullException("sender或事件参数对象不能为null");
         }
-        
+
+        ProductOrder po = sender as ProductOrder;
+
         JsonData jRet;
-        WeChatUser wxUser = sender as WeChatUser;
 
         try
         {
             List<string> listReceiver;
-            listReceiver = new List<string>(new string[] { wxUser.OpenID });
+            JsonData jTmplMsg, jTmplMsgData, jTmplMsgDataValue;
 
-            JsonData jTmplMsg = new JsonData(), jTmplMsgData = new JsonData(), jTmplMsgDataValue;
-
+            //给订单的下单人发送积分通知消息
+            listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
             //构造模板消息
+            jTmplMsg = new JsonData();
+            jTmplMsgData = new JsonData();
+
             jTmplMsg["touser"] = string.Empty;
             jTmplMsg["template_id"] = TMPL_MEMBER_POINTS_NOTIFY;
             jTmplMsg["url"] = @"http://mahui.me/Index.aspx";
@@ -508,7 +512,7 @@ public static class WxTmplMsg
             jTmplMsgData["first"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = wxUser.NickName;
+            jTmplMsgDataValue["value"] = po.Purchaser.NickName;
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["keyword1"] = jTmplMsgDataValue;
 
@@ -523,7 +527,7 @@ public static class WxTmplMsg
             jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = string.Format("{0}积分（={1}元）", e.balance, (decimal)e.balance / Config.MemberPointsExchangeRate);
+            jTmplMsgDataValue["value"] = string.Format("{0}积分（={1}元）", e.newMemberPoints, (decimal)e.newMemberPoints / Config.MemberPointsExchangeRate);
             jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
             jTmplMsgData["keyword4"] = jTmplMsgDataValue;
 
@@ -536,6 +540,61 @@ public static class WxTmplMsg
 
             //发送模板消息
             jRet = SendTmplMsg(listReceiver, jTmplMsg);
+
+
+            //如果此订单有推荐人，则也给推荐人发送积分奖励消息
+            if (po.Agent != null && !string.IsNullOrEmpty(po.Agent.OpenID))
+            {
+                WeChatUser wxAgent = WeChatUserDAO.FindUserByOpenID(po.Agent.OpenID);
+                if (wxAgent != null)
+                {
+                    listReceiver = new List<string>(new string[] { po.Agent.OpenID });
+
+                    //构造模板消息
+                    jTmplMsg = new JsonData();
+                    jTmplMsgData = new JsonData();
+
+                    jTmplMsg["touser"] = string.Empty;
+                    jTmplMsg["template_id"] = TMPL_MEMBER_POINTS_NOTIFY;
+                    jTmplMsg["url"] = @"http://mahui.me/Index.aspx";
+                    jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("您推荐好友“{0}”消费，获得了积分奖励哦！", po.Purchaser.NickName);
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = wxAgent.NickName;
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = "微信用户";
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("本次推荐奖励{0}积分", e.increasedMemberPoints);
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("{0}积分（={1}元）", e.agentNewMemberPoints, (decimal)e.agentNewMemberPoints / Config.MemberPointsExchangeRate);
+                    jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                    jTmplMsgData["keyword4"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = "如有疑问，请及时与FruitU微信客服联系";
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["remark"] = jTmplMsgDataValue;
+
+                    jTmplMsg["data"] = jTmplMsgData;
+
+                    //发送模板消息
+                    jRet = SendTmplMsg(listReceiver, jTmplMsg);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -548,7 +607,6 @@ public static class WxTmplMsg
             Log.Info("SendMsgOnMemberPoints", jRet.ToJson());
         }
 
-        return jRet;
     }
 
 

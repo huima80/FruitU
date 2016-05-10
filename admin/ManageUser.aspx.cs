@@ -21,7 +21,7 @@ public partial class admin_ManageUser : System.Web.UI.Page
         {
             this.odsUserList.SelectParameters.Add("tableName", DbType.String, "WeChatUsers");
             this.odsUserList.SelectParameters.Add("pk", DbType.String, "WeChatUsers.Id");
-            this.odsUserList.SelectParameters.Add("fieldsName", DbType.String, "WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount");
+            this.odsUserList.SelectParameters.Add("fieldsName", DbType.String, "WeChatUsers.*,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.OpenID) as OrderCount,(select count(*) from ProductOrder where WeChatUsers.OpenID = ProductOrder.AgentOpenID) as AgentOrderCount");
             this.odsUserList.SelectParameters.Add("strWhere", DbType.String, string.Empty);
             this.odsUserList.SelectParameters.Add("strOrder", DbType.String, string.Empty);
             this.odsUserList.SelectParameters[this.odsUserList.SelectParameters.Add("totalRecords", DbType.Int32, "0")].Direction = ParameterDirection.Output;

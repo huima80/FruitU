@@ -3,6 +3,7 @@
 using System;
 using System.Web;
 using System.Web.Security;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using LitJson;
 
@@ -124,6 +125,14 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                     //无论新老用户，都要使用当前的微信用户信息刷新数据库。微信用户关键信息：OpenID和客户端IP，后续微信支付时需要！！！
                     wxUser.OpenID = jAuthInfo["openid"].ToString();
                     wxUser.ClientIP = !string.IsNullOrEmpty(context.Request.UserHostAddress) ? context.Request.UserHostAddress : "127.0.0.1";
+
+                    //处理用户的推荐人，排除自己推荐自己的情况
+                    wxUser.AgentOpenID = string.Empty;
+                    Match rxAgentOpenID = Regex.Match(urlReferrer, @"AgentOpenID=([^&]*)");
+                    if (rxAgentOpenID != null && rxAgentOpenID.Groups.Count == 2 && rxAgentOpenID.Groups[1].Value != wxUser.OpenID)
+                    {
+                        wxUser.AgentOpenID = rxAgentOpenID.Groups[1].Value;
+                    }
 
                     if (jAuthInfo["scope"].ToString().ToLower() == "snsapi_base")
                     {

@@ -59,7 +59,7 @@
                     <span class="top-selling-week-prod"><i class="fa fa-trophy fa-lg"></i>本周爆款</span>
             {{/if}}
           {{if InventoryQty==0}}
-                    <span class="sell-out">已售罄</span>
+                    <span class="sell-out">今日售罄</span>
             {{/if}}
         </div>
     </script>
@@ -184,7 +184,7 @@
                         $("#faLoading").show();
 
                         //商品库存量
-                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "无限量" : fruitList[i]["InventoryQty"]);
+                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "不限量" : fruitList[i]["InventoryQty"]);
                         $("#hfInventory").val(fruitList[i]["InventoryQty"]);
 
                         //商品单价

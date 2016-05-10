@@ -43,7 +43,7 @@ public class WxPayAPI
             sendPayData.SetValue("device_info", "WEB");
             sendPayData.SetValue("nonce_str", WeChatPayData.MakeNonceStr());    //必填
             sendPayData.SetValue("body", po.ProductNames);  //必填
-            sendPayData.SetValue("detail", po.ProductNames);
+            sendPayData.SetValue("detail", po.OrderDetails);
             sendPayData.SetValue("attach", "订单自定义数据");
             sendPayData.SetValue("out_trade_no", po.OrderID);   //必填
             sendPayData.SetValue("fee_type", "CNY");

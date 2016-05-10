@@ -16,7 +16,7 @@ public partial class RandomJuice : System.Web.UI.Page
         juiceList = Fruit.FindFruitByCategoryID("41,42,43", out topSellingIDWeekly, out topSellingIDMonthly);
         juiceList.RemoveAll(juice =>
         {
-            return (!juice.OnSale || juice.InventoryQty <= 0);
+            return (!juice.OnSale || juice.InventoryQty == 0);
         });
 
         JsonData jJuiceList = JsonMapper.ToJson(juiceList);

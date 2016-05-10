@@ -19,9 +19,14 @@ public class ProductOrder : IComparable<ProductOrder>
     public string OrderID { get; set; }
 
     /// <summary>
-    /// 下单人信息
+    /// 下单人微信信息
     /// </summary>
     public WeChatUser Purchaser { get; set; }
+
+    /// <summary>
+    /// 推荐人微信信息
+    /// </summary>
+    public WeChatUser Agent { get; set; }
 
     /// <summary>
     /// 订单商品明细
@@ -266,6 +271,56 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
+    /// 订单的会员积分被计入会员积分账户事件
+    /// </summary>
+    public event EventHandler<MemberPointsCalculatedEventArgs> MemberPointsCalculated;
+
+    public class MemberPointsCalculatedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// 新增的会员积分
+        /// </summary>
+        public int increasedMemberPoints { get; set; }
+
+        /// <summary>
+        /// 消耗的会员积分
+        /// </summary>
+        public int usedMemberPoints { get; set; }
+
+        /// <summary>
+        /// 下单人的会员积分余额
+        /// </summary>
+        public int newMemberPoints { get; set; }
+
+        /// <summary>
+        /// 推荐人的会员积分余额
+        /// </summary>
+        public int agentNewMemberPoints { get; set; }
+
+        public MemberPointsCalculatedEventArgs()
+        {
+
+        }
+
+        public MemberPointsCalculatedEventArgs(int increasedMemberPoints, int usedMemberPoints, int newMemberPoints, int agentNewMemberPoints)
+        {
+            this.increasedMemberPoints = increasedMemberPoints;
+            this.usedMemberPoints = usedMemberPoints;
+            this.newMemberPoints = newMemberPoints;
+            this.agentNewMemberPoints = agentNewMemberPoints;
+        }
+    }
+
+    public void OnMemberPointsCalculated(MemberPointsCalculatedEventArgs e)
+    {
+        if (this.MemberPointsCalculated != null)
+        {
+            this.MemberPointsCalculated(this, e);
+        }
+    }
+
+
+    /// <summary>
     /// 提交新订单
     /// 1，如果付款方式是微信支付，则调用微信支付统一下单API、获取prepay_id，订单入库，生成JS支付参数
     /// 2，如果付款方式是货到付款，则直接订单入库
@@ -452,6 +507,13 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramOpenID.SqlValue = po.Purchaser.OpenID;
                         cmdAddOrder.Parameters.Add(paramOpenID);
 
+                        SqlParameter paramAgentOpenID = cmdAddOrder.CreateParameter();
+                        paramAgentOpenID.ParameterName = "@AgentOpenID";
+                        paramAgentOpenID.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramAgentOpenID.Size = 50;
+                        paramAgentOpenID.SqlValue = po.Agent != null ? po.Agent.OpenID : null;
+                        cmdAddOrder.Parameters.Add(paramAgentOpenID);
+
                         SqlParameter paramDeliverName = cmdAddOrder.CreateParameter();
                         paramDeliverName.ParameterName = "@DeliverName";
                         paramDeliverName.SqlDbType = System.Data.SqlDbType.NVarChar;
@@ -588,7 +650,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints]) VALUES (@OrderID,@OpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [AgentOpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints]) VALUES (@OrderID,@OpenID,@AgentOpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -783,6 +845,11 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+
+                                if (sdrOrder["AgentOpenID"] != null)
+                                {
+                                    po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                }
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -992,6 +1059,10 @@ public class ProductOrder : IComparable<ProductOrder>
                                 {
                                     //此订单的下单人信息，不需要再加载下单人的所有订单列表信息，也不需要刷新下单人活动时间
                                     po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                    if (sdrOrder["AgentOpenID"] != null)
+                                    {
+                                        po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                    }
                                 }
 
                                 //此订单的商品详情
@@ -1173,6 +1244,10 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                if (sdrOrder["AgentOpenID"] != null)
+                                {
+                                    this.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                }
 
                                 this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
@@ -1269,6 +1344,10 @@ public class ProductOrder : IComparable<ProductOrder>
                                 this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                if (sdrOrder["AgentOpenID"] != null)
+                                {
+                                    this.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                }
 
                                 this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
 
@@ -1372,6 +1451,10 @@ public class ProductOrder : IComparable<ProductOrder>
                                 po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                if (sdrOrder["AgentOpenID"] != null)
+                                {
+                                    po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                }
 
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
@@ -2063,6 +2146,55 @@ public class ProductOrder : IComparable<ProductOrder>
                 Log.Info("event OrderStateChanged", jRet.ToJson());
             }
         }
+    }
+
+    /// <summary>
+    /// 订单支付成功后，给予下单人会员积分
+    /// </summary>
+    /// <param name="po"></param>
+    /// <param name="e"></param>
+    public static JsonData EarnMemberPoints(ProductOrder po, ProductOrder.OrderStateEventArgs e)
+    {
+        JsonData jRet = new JsonData();
+
+        try
+        {
+            if (po == null)
+            {
+                throw new ArgumentNullException("po对象不能为null");
+            }
+
+            //如果订单是支付成功状态才给与积分
+            if (po.TradeState == TradeState.SUCCESS || po.TradeState == TradeState.CASHPAID)
+            {
+                //判断此订单是否计算过会员积分，避免重复计算
+                if (po.Purchaser != null && !po.IsCalMemberPoints)
+                {
+                    int increasedMemberPoints, newMemberPoints, agentNewMemberPoints;
+                    //计算按订单总金额新增的会员积分，1元=1分，从低舍入取整
+                    increasedMemberPoints = (int)Math.Floor(po.OrderPrice);
+
+                    //更新会员积分，并获取会员积分余额
+                    WeChatUserDAO.UpdateMemberPoints(po, increasedMemberPoints, po.UsedMemberPoints, out newMemberPoints, out agentNewMemberPoints);
+
+                    //触发根据订单计算积分余额事件
+                    ProductOrder.MemberPointsCalculatedEventArgs mpce = new ProductOrder.MemberPointsCalculatedEventArgs(increasedMemberPoints, po.UsedMemberPoints, newMemberPoints, agentNewMemberPoints);
+                    po.OnMemberPointsCalculated(mpce);
+
+                    jRet["MemberPoints"] = newMemberPoints;
+                    jRet["AgentMemberPoints"] = agentNewMemberPoints;
+
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("EarnMemberPoints", ex.ToString());
+            throw ex;
+        }
+
+        return jRet;
+
     }
 
     public int CompareTo(ProductOrder other)

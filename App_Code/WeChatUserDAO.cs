@@ -191,7 +191,8 @@ public static class WeChatUserDAO
                                     wxUser.Privilege = sdrUser["Privilege"].ToString();
                                     wxUser.ClientIP = sdrUser["ClientIP"].ToString();
                                     wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                    wxUser.OrderCount = int.Parse(sdrUser["OrderCount"].ToString());
+                                    wxUser.OrderCount = sdrUser["OrderCount"] != null ? int.Parse(sdrUser["OrderCount"].ToString()) : 0;
+                                    wxUser.AgentOrderCount = sdrUser["AgentOrderCount"] != null ? int.Parse(sdrUser["AgentOrderCount"].ToString()) : 0;
                                     wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                                     userPerPage.Add(wxUser);
@@ -492,6 +493,50 @@ public static class WeChatUserDAO
         }
 
         return userList;
+    }
+
+    /// <summary>
+    /// 查询用户的会员积分
+    /// </summary>
+    /// <param name="openID"></param>
+    /// <returns></returns>
+    public static int FindMemberPointsByOpenID(string openID)
+    {
+        int memberPoints = 0;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                using (SqlCommand cmdUser = conn.CreateCommand())
+                {
+                    SqlParameter paramUserID = cmdUser.CreateParameter();
+                    paramUserID.ParameterName = "@OpenID";
+                    paramUserID.SqlDbType = System.Data.SqlDbType.NVarChar;
+                    paramUserID.SqlValue = openID;
+                    cmdUser.Parameters.Add(paramUserID);
+
+                    cmdUser.CommandText = "select MemberPoints from WeChatUsers where OpenID = @OpenID";
+
+                    using (SqlDataReader sdrUser = cmdUser.ExecuteReader())
+                    {
+                        while (sdrUser.Read())
+                        {
+                            memberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                        }
+                        sdrUser.Close();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+
+        return memberPoints;
     }
 
     public static void InsertUser(WeChatUser user)
@@ -940,13 +985,13 @@ public static class WeChatUserDAO
     /// <summary>
     /// 更新会员积分
     /// </summary>
-    /// <param name="po"></param>
-    /// <param name="updatedMemberPoints">变更的会员积分</param>
-    /// <returns>当前最新的会员积分</returns>
-    public static int UpdateMemberPoints(ProductOrder po, int updatedMemberPoints)
+    /// <param name="po">订单</param>
+    /// <param name="increasedMemberPoints">新增的会员积分</param>
+    /// <param name="usedMemberPoints">使用的会员积分</param>
+    /// <param name="newMemberPoints">下单人的会员积分余额</param>
+    /// <param name="agentNewMemberPoints">推荐人的会员积分余额</param>
+    public static void UpdateMemberPoints(ProductOrder po, int increasedMemberPoints, int usedMemberPoints, out int newMemberPoints, out int agentNewMemberPoints)
     {
-        int newMemberPoints = 0;
-
         try
         {
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))
@@ -966,17 +1011,29 @@ public static class WeChatUserDAO
                         paramOrderID.SqlValue = po.OrderID;
                         cmdMemberPoints.Parameters.Add(paramOrderID);
 
-                        SqlParameter paramUpdatedMemberPoints = cmdMemberPoints.CreateParameter();
-                        paramUpdatedMemberPoints.ParameterName = "@UpdatedMemberPoints";
-                        paramUpdatedMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
-                        paramUpdatedMemberPoints.SqlValue = updatedMemberPoints;
-                        cmdMemberPoints.Parameters.Add(paramUpdatedMemberPoints);
+                        SqlParameter paramIncreasedMemberPoints = cmdMemberPoints.CreateParameter();
+                        paramIncreasedMemberPoints.ParameterName = "@IncreasedMemberPoints";
+                        paramIncreasedMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
+                        paramIncreasedMemberPoints.SqlValue = increasedMemberPoints;
+                        cmdMemberPoints.Parameters.Add(paramIncreasedMemberPoints);
+
+                        SqlParameter paramUsedMemberPoints = cmdMemberPoints.CreateParameter();
+                        paramUsedMemberPoints.ParameterName = "@UsedMemberPoints";
+                        paramUsedMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
+                        paramUsedMemberPoints.SqlValue = usedMemberPoints;
+                        cmdMemberPoints.Parameters.Add(paramUsedMemberPoints);
 
                         SqlParameter paramNewMemberPoints = cmdMemberPoints.CreateParameter();
                         paramNewMemberPoints.ParameterName = "@NewMemberPoints";
                         paramNewMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
                         paramNewMemberPoints.Direction = ParameterDirection.Output;
                         cmdMemberPoints.Parameters.Add(paramNewMemberPoints);
+
+                        SqlParameter paramAgentNewMemberPoints = cmdMemberPoints.CreateParameter();
+                        paramAgentNewMemberPoints.ParameterName = "@AgentNewMemberPoints";
+                        paramAgentNewMemberPoints.SqlDbType = System.Data.SqlDbType.Int;
+                        paramAgentNewMemberPoints.Direction = ParameterDirection.Output;
+                        cmdMemberPoints.Parameters.Add(paramAgentNewMemberPoints);
 
                         SqlParameter paramReturnValue = cmdMemberPoints.CreateParameter();
                         paramReturnValue.ParameterName = "@ErrorCode";
@@ -990,7 +1047,12 @@ public static class WeChatUserDAO
                         {
                             if (!int.TryParse(paramNewMemberPoints.Value.ToString(), out newMemberPoints))
                             {
-                                throw new Exception("没有获取到当前的会员积分");
+                                throw new Exception("没有获取到下单人的新会员积分");
+                            }
+
+                            if (!int.TryParse(paramAgentNewMemberPoints.Value.ToString(), out agentNewMemberPoints))
+                            {
+                                agentNewMemberPoints = -1;
                             }
                         }
                         else
@@ -1011,7 +1073,6 @@ public static class WeChatUserDAO
                     }
                 }
             }
-
         }
         catch (Exception ex)
         {
@@ -1019,42 +1080,6 @@ public static class WeChatUserDAO
             throw ex;
         }
 
-        return newMemberPoints;
     }
 
-    /// <summary>
-    /// 订单支付成功后，给予下单人会员积分
-    /// </summary>
-    /// <param name="po"></param>
-    /// <param name="e"></param>
-    public static JsonData EarnMemberPoints(ProductOrder po, ProductOrder.OrderStateEventArgs e)
-    {
-        if (po == null || e == null)
-        {
-            throw new ArgumentNullException("sender或事件参数对象不能为null");
-        }
-        JsonData jRet = new JsonData();
-
-        //如果订单是支付成功状态，则先扣减订单使用的积分点数，再按订单总金额给予下单人会员积分，1元=1积分，从低舍入
-        if (e.OrderState == OrderState.Paid && (po.TradeState == TradeState.SUCCESS || po.TradeState == TradeState.CASHPAID))
-        {
-            //判断此订单是否计算过会员积分，避免重复计算
-            if (po.Purchaser != null && !po.IsCalMemberPoints)
-            {
-                int balance, increasedMemberPoints;
-                //计算按订单总金额新增的会员积分，1元=1分，从低舍入
-                increasedMemberPoints = (int)Math.Floor(po.OrderPrice);
-                //更新会员积分，并获取会员积分余额
-                balance = UpdateMemberPoints(po, increasedMemberPoints - po.UsedMemberPoints);
-                //触发会员积分变动事件
-                po.Purchaser.OnMemberPointsChanged(increasedMemberPoints, po.UsedMemberPoints, balance);
-
-                jRet["MemberPoints"] = balance;
-
-            }
-        }
-
-        return jRet;
-
-    }
 }

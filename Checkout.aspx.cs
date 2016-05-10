@@ -16,9 +16,6 @@ public partial class Checkout : System.Web.UI.Page
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
 
-            //在微信用户表和成员资格表中查找此用户信息，并刷新最近活动时间，获取最新的用户积分信息
-            Session["WxUser"] = wxUser = WeChatUserDAO.FindUserByOpenID(wxUser.OpenID, true);
-
             //如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
             if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
             {
@@ -56,6 +53,9 @@ public partial class Checkout : System.Web.UI.Page
             }
 
             wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
+
+            //获取最新的用户积分信息
+            wxUser.MemberPoints = WeChatUserDAO.FindMemberPointsByOpenID(wxUser.OpenID);
 
         }
         catch (System.Threading.ThreadAbortException)

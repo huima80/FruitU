@@ -156,7 +156,7 @@ public class WxJSAPI
     }
 
     /// <summary>
-    /// Cache删除过期的JsAPITicket缓存后，重新向微信请求缓存
+    /// Cache删除过期的JsAPITicket缓存后，重新向微信请求jsapi_ticket
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>

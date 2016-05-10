@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using LitJson;
+using System.Text.RegularExpressions;
 
 public partial class MasterPage : System.Web.UI.MasterPage
 {
@@ -46,5 +47,28 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 Response.Redirect("~/wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
             }
         }
+    }
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+        string jsTicket, jsSign, timestamp, nonceStr, url;
+
+        url = Request.Url.ToString().Split('#')[0];
+        jsTicket = WxJSAPI.GetJsAPITicket();
+        jsSign = WxJSAPI.MakeJsAPISign(jsTicket, url, out nonceStr, out timestamp);
+
+        //处理用户的推荐人
+        string agentOpenID = Request.QueryString["AgentOpenID"];
+        if (!string.IsNullOrEmpty(agentOpenID) && agentOpenID != wxUser.OpenID)
+        {
+            wxUser.AgentOpenID = agentOpenID;
+        }
+
+        //向前端页面注册全局JS变量
+        ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
+        ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam = {{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}};", Config.APPID, timestamp, nonceStr, jsSign), true);
+        ScriptManager.RegisterStartupScript(Page, this.GetType(), "webConfig", string.Format("var webConfigServer = {{siteDomain:'{0}',siteTitle:'{1}',siteDesc:'{2}',siteKeywords:'{3}',siteIcon:'{4}',siteCopyrights:'{5}',defaultImg:'{6}'}};", Request.Url.Scheme + "://" + Request.Url.Host, Config.SiteTitle, Config.SiteDesc, Config.SiteKeywords, Config.SiteIcon, Config.SiteCopyrights, Config.DefaultImg), true);
+        
     }
 }

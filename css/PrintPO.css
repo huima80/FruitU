@@ -1,19 +1,22 @@
-﻿@page  {
-    size:auto portrait;
-    margin:0;
-
+﻿@page {
+    size: auto portrait;
+    margin: 0;
 }
 
 @media print, screen {
     .print-po {
         page-break-before: always;
-        margin:0;
+        margin: 0;
     }
 
     .print-po, table {
-        font-size:smaller;
+        font-size: smaller;
         color: black;
     }
+
+        .print-po p {
+            line-height: normal;
+        }
 
     .order-price {
         text-align: right;

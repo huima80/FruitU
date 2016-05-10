@@ -65,6 +65,11 @@ public class WeChatUser : User, IComparable<WeChatUser>
     /// </summary>
     public string UnionID { get; set; }
 
+    /// <summary>
+    /// 推荐人微信OpenID
+    /// </summary>
+    public string AgentOpenID { get; set; }
+
     public WeChatUser()
     {
         //
@@ -107,20 +112,26 @@ public class WeChatUser : User, IComparable<WeChatUser>
         public int usedMemberPoints { get; set; }
 
         /// <summary>
-        /// 会员积分余额
+        /// 下单人的会员积分余额
         /// </summary>
-        public int balance { get; set; }
+        public int newMemberPoints { get; set; }
+
+        /// <summary>
+        /// 推荐人的会员积分余额
+        /// </summary>
+        public int agentNewMemberPoints { get; set; }
 
         public MemberPointsChangedEventArgs()
         {
 
         }
 
-        public MemberPointsChangedEventArgs(int increasedMemberPoints, int usedMemberPoints, int balance)
+        public MemberPointsChangedEventArgs(int increasedMemberPoints, int usedMemberPoints, int newMemberPoints, int agentNewMemberPoints)
         {
             this.increasedMemberPoints = increasedMemberPoints;
             this.usedMemberPoints = usedMemberPoints;
-            this.balance = balance;
+            this.newMemberPoints = newMemberPoints;
+            this.agentNewMemberPoints = agentNewMemberPoints;
         }
     }
 
@@ -130,11 +141,11 @@ public class WeChatUser : User, IComparable<WeChatUser>
     /// <param name="increasedMemberPoints"></param>
     /// <param name="usedMemberPoints"></param>
     /// <param name="balance"></param>
-    public void OnMemberPointsChanged(int increasedMemberPoints, int usedMemberPoints, int balance)
+    public void OnMemberPointsChanged(int increasedMemberPoints, int usedMemberPoints, int newMemberPoints, int agentNewMemberPoints)
     {
         if (this.MemberPointsChanged != null)
         {
-            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, balance);
+            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, newMemberPoints, agentNewMemberPoints);
             this.MemberPointsChanged(this, e);
         }
     }
@@ -145,12 +156,12 @@ public class WeChatUser : User, IComparable<WeChatUser>
     /// <param name="increasedMemberPoints"></param>
     /// <param name="usedMemberPoints"></param>
     /// <param name="balance"></param>
-    public void OnMemberPointsChangedAsyn(int increasedMemberPoints, int usedMemberPoints, int balance)
+    public void OnMemberPointsChangedAsyn(int increasedMemberPoints, int usedMemberPoints, int newMemberPoints, int agentNewMemberPoints)
     {
         //订单状态变化事件异步回调函数，不阻塞主流程
         if (this.MemberPointsChanged != null)
         {
-            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, balance);
+            MemberPointsChangedEventArgs e = new MemberPointsChangedEventArgs(increasedMemberPoints, usedMemberPoints, newMemberPoints, agentNewMemberPoints);
             IAsyncResult ar = this.MemberPointsChanged.BeginInvoke(this, e, MemberPointsChangedComplete, this.MemberPointsChanged);
         }
     }

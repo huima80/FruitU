@@ -6,7 +6,6 @@
 <head runat="server">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="images/FruitU.ico" type="image/x-icon" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="keywords" content="fruit,slice,juice,水果,果汁,切片" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -75,6 +74,7 @@
 
             throw err;
         };
+
     </script>
 
 </head>
@@ -104,6 +104,11 @@
         requirejs(['jquery', 'webConfig'], function ($) {
             $(function () {
 
+                if (!!webConfigServer) {
+                    $.extend(webConfig, webConfigServer);
+                }
+                webConfig.init();
+
                 //根据当前页面高亮菜单项
                 if (location.href.toLowerCase().indexOf("index") != -1) {
                     $("#navHomeBtn").addClass("active");
@@ -127,13 +132,93 @@
                 requirejs(['cart'], function () {
                     refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
 
-                    //挂接购物车商品变动前事件处理函数
+                    //注册购物车商品变动前事件处理函数
                     $($.cart).on({
                         "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemClearing": shakeCart,
                         "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemCleared": refreshCartProdQty
                     });
                 });
 
+                requirejs(['jweixin'], function (wx) {
+
+                    $.extend(wxJsApiParam, {
+                        debug: false,
+                        jsApiList: [
+                    'checkJsApi',
+                    'onMenuShareTimeline',
+                    'onMenuShareAppMessage',
+                    'onMenuShareQQ',
+                    'onMenuShareWeibo',
+                    'onMenuShareQZone',
+                    'hideMenuItems',
+                    'showMenuItems',
+                    'hideAllNonBaseMenuItem',
+                    'showAllNonBaseMenuItem',
+                    'translateVoice',
+                    'startRecord',
+                    'stopRecord',
+                    'onVoiceRecordEnd',
+                    'playVoice',
+                    'onVoicePlayEnd',
+                    'pauseVoice',
+                    'stopVoice',
+                    'uploadVoice',
+                    'downloadVoice',
+                    'chooseImage',
+                    'previewImage',
+                    'uploadImage',
+                    'downloadImage',
+                    'getNetworkType',
+                    'openLocation',
+                    'getLocation',
+                    'hideOptionMenu',
+                    'showOptionMenu',
+                    'closeWindow',
+                    'scanQRCode',
+                    'chooseWXPay',
+                    'openProductSpecificView',
+                    'addCard',
+                    'chooseCard',
+                    'openCard'
+                        ]
+                    });
+
+                    //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
+                    wx.config(wxJsApiParam);
+
+                    wx.ready(function () {
+                        var shareInfo = {
+                            title: webConfig.siteTitle + "--" + webConfig.siteDesc, // 分享标题
+                            desc: webConfig.siteDesc, // 分享描述
+                            link: webConfig.siteDomain + "/index.aspx?AgentOpenID=" + openID, // 分享链接
+                            imgUrl: webConfig.siteDomain + "/images/" + webConfig.defaultImg, // 分享图标
+                            success: function () {
+                                // 用户确认分享后执行的回调函数
+                                alert("分享给朋友消费有积分奖励哦！");
+                            },
+                            cancel: function () {
+                                // 用户取消分享后执行的回调函数
+                                alert("分享给朋友消费有积分奖励哦！");
+                            }
+                        };
+
+                        //分享到朋友圈
+                        wx.onMenuShareTimeline(shareInfo);
+
+                        //分享给朋友
+                        wx.onMenuShareAppMessage($.extend({}, shareInfo, { type: 'link', dataUrl: '' }));
+
+                        //分享到QQ
+                        wx.onMenuShareQQ(shareInfo);
+
+                        //分享到腾讯微博
+                        wx.onMenuShareWeibo(shareInfo);
+
+                        //分享到QQ空间
+                        wx.onMenuShareQZone(shareInfo);
+                    });
+
+                });
             });
 
             //购物车抖动
