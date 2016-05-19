@@ -42,7 +42,8 @@
                     <button id="btnAddToCart" class="btn btn-danger" type="button"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
                 </div>
             </div>
-            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-3x"></i></div>
+            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-2x"></i></div>
+            <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼！<i class="fa fa-share-alt fa-2x"></i></div>
         </div>
     </div>
 
@@ -90,7 +91,7 @@
                 if (!isNaN(currQty)) {
                     currQty = parseInt(currQty);
                     inventory = parseInt(inventory);
-                    if (currQty < inventory) {
+                    if (inventory == -1 || currQty < inventory) {
                         currQty++;
                     }
                 }
@@ -188,15 +189,17 @@
 
         //根据选中的商品，设置modal窗口中的图片src、库存数、单价、购买数量，注册购买按钮单击事件函数
         function openModal(prod) {
-            var detailImg;
+            var mainImg, detailImg;
             //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
             $("#btnAddToCart").off("click").on("click", prod, addToCart);
 
             //查找商品详图
             for (var i = 0; i < prod.FruitImgList.length; i++) {
+                if (prod.FruitImgList[i]["MainImg"]) {
+                    mainImg = prod.FruitImgList[i]["ImgName"];
+                }
                 if (prod.FruitImgList[i]["DetailImg"]) {
                     detailImg = prod.FruitImgList[i]["ImgName"];
-                    break;
                 }
             }
 
@@ -220,6 +223,28 @@
 
             //显示模式窗口
             $("#divModal").addClass("md-show");
+
+            //设置微信分享参数
+            requirejs(['jweixin'], function (wx) {
+                wxShareInfo.desc = '我买了【' + prod.FruitName + '】' + prod.FruitDesc;
+                wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
+                wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
+
+                //分享到朋友圈
+                wx.onMenuShareTimeline(wxShareInfo);
+
+                //分享给朋友
+                wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                //分享到QQ
+                wx.onMenuShareQQ(wxShareInfo);
+
+                //分享到腾讯微博
+                wx.onMenuShareWeibo(wxShareInfo);
+
+                //分享到QQ空间
+                wx.onMenuShareQZone(wxShareInfo);
+            });
 
         }
 

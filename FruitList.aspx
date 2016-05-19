@@ -11,6 +11,11 @@
                 <img src="images/fruit-banner.gif" />
             </div>
         </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/ShareIncentive.jpg" />
+            </div>
+        </div>
         <div runat="server" id="divFruitList" class="row">
         </div>
         <div class="row fruit-list text-center">
@@ -36,7 +41,8 @@
                     <button id="btnAddToCart" class="btn btn-danger" type="button"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
                 </div>
             </div>
-            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-3x"></i></div>
+            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-2x"></i></div>
+            <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼！<i class="fa fa-share-alt fa-2x"></i></div>
         </div>
     </div>
 
@@ -161,7 +167,7 @@
 
         //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
         function openModal(prodID) {
-            var detailImg, jLen;
+            var mainImg, detailImg, jLen;
 
             if (fruitList && Array.isArray(fruitList)) {
                 jLen = fruitList.length;
@@ -169,9 +175,11 @@
                     if (fruitList[i]["ID"] == prodID && fruitList[i]["FruitImgList"] && Array.isArray(fruitList[i]["FruitImgList"])) {
                         //查找商品详图
                         for (var j = 0; j < fruitList[i]["FruitImgList"].length; j++) {
+                            if (fruitList[i]["FruitImgList"][j]["MainImg"]) {
+                                mainImg = fruitList[i]["FruitImgList"][j]["ImgName"];
+                            }
                             if (fruitList[i]["FruitImgList"][j]["DetailImg"]) {
                                 detailImg = fruitList[i]["FruitImgList"][j]["ImgName"];
-                                break;
                             }
                         }
 
@@ -198,6 +206,28 @@
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
+
+                        //设置微信分享参数
+                        requirejs(['jweixin'], function (wx) {
+                            wxShareInfo.desc = '我买了【' + fruitList[i].FruitName + '】' + fruitList[i].FruitDesc;
+                            wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
+                            wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
+
+                            //分享到朋友圈
+                            wx.onMenuShareTimeline(wxShareInfo);
+
+                            //分享给朋友
+                            wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                            //分享到QQ
+                            wx.onMenuShareQQ(wxShareInfo);
+
+                            //分享到腾讯微博
+                            wx.onMenuShareWeibo(wxShareInfo);
+
+                            //分享到QQ空间
+                            wx.onMenuShareQZone(wxShareInfo);
+                        });
 
                         break;
                     }

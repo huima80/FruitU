@@ -255,7 +255,23 @@ public partial class ManageOrder : System.Web.UI.Page
                 faIsAccept.Visible = false;
             }
 
-            //如果已撤单则屏蔽发货、签收按钮，显示撤单时间
+            //处理发放积分状态
+            CheckBox cbIsCalMemberPoints = e.Row.FindControl("cbIsCalMemberPoints") as CheckBox;
+            HtmlGenericControl faIsCalMemberPoints = e.Row.FindControl("faIsCalMemberPoints") as HtmlGenericControl;
+            if (po.IsCalMemberPoints)
+            {
+                cbIsCalMemberPoints.Visible = false;
+                faIsCalMemberPoints.Visible = true;
+            }
+            else
+            {
+                cbIsCalMemberPoints.Enabled = true;
+                cbIsCalMemberPoints.ToolTip = "点击发放积分";
+                cbIsCalMemberPoints.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
+                faIsCalMemberPoints.Visible = false;
+            }
+
+            //如果已撤单则屏蔽发货、签收按钮、发放积分按钮，显示撤单时间
             HtmlGenericControl pCancelDate = e.Row.FindControl("pCancelDate") as HtmlGenericControl;
             if (po.IsCancel)
             {
@@ -266,6 +282,10 @@ public partial class ManageOrder : System.Web.UI.Page
                 //屏蔽签收按钮
                 cbIsAccept.Enabled = false;
                 cbIsAccept.ToolTip = "已撤单，不能签收";
+
+                //屏蔽发放积分按钮
+                cbIsCalMemberPoints.Enabled = false;
+                cbIsCalMemberPoints.ToolTip = "已撤单，不能发放积分";
 
                 //显示撤单时间
                 pCancelDate.Visible = true;
@@ -319,9 +339,8 @@ public partial class ManageOrder : System.Web.UI.Page
 
             switch (odsOrderList.UpdateMethod)
             {
-                case "AcceptOrder":
-                    po.IsAccept = isAccept;
-                    po.AcceptDate = DateTime.Now;
+                case "UpdateTradeState":
+                    po.TradeState = tradeState;
                     break;
                 case "DeliverOrder":
                     po.IsDelivered = isDelivered;
@@ -330,21 +349,31 @@ public partial class ManageOrder : System.Web.UI.Page
                     po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
                     po.OrderDetailList.ForEach(od =>
                     {
-                        //注册商品库存量报警事件，通知管理员
+                        //注册商品库存量报警事件处理函数，通知管理员
                         od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
                     });
                     break;
-                case "UpdateTradeState":
-                    po.TradeState = tradeState;
-                    //注册订单的货到付款状态变动事件处理函数，给予下单人和推荐人会员积分
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(ProductOrder.EarnMemberPoints);
-                    //注册订单的计算积分余额事件处理函数，通知下单人和推荐人
+                case "AcceptOrder":
+                    po.IsAccept = isAccept;
+                    po.AcceptDate = DateTime.Now;
+                    break;
+                case "EarnMemberPoints":
+                    //注册订单的发放积分事件处理函数，通知下单人和推荐人
                     po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
                     break;
                 default:
                     throw new Exception("不能识别的更新方法");
             }
         }
+    }
+
+    protected void cbCashTradeState_CheckedChanged(object sender, EventArgs e)
+    {
+        CheckBox cbCashTradeState = sender as CheckBox;
+        int rowIndex = int.Parse(cbCashTradeState.Attributes["RowIndex"]);
+        this.odsOrderList.UpdateMethod = "UpdateTradeState";
+        this.gvOrderList.UpdateRow(rowIndex, false);
+        this.gvOrderList.DataBind();
     }
 
     protected void cbIsDelivery_CheckedChanged(object sender, EventArgs e)
@@ -365,11 +394,11 @@ public partial class ManageOrder : System.Web.UI.Page
         this.gvOrderList.DataBind();
     }
 
-    protected void cbCashTradeState_CheckedChanged(object sender, EventArgs e)
+    protected void cbIsCalMemberPoints_CheckedChanged(object sender, EventArgs e)
     {
-        CheckBox cbCashTradeState = sender as CheckBox;
-        int rowIndex = int.Parse(cbCashTradeState.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "UpdateTradeState";
+        CheckBox cbIsCalMemberPoints = sender as CheckBox;
+        int rowIndex = int.Parse(cbIsCalMemberPoints.Attributes["RowIndex"]);
+        this.odsOrderList.UpdateMethod = "EarnMemberPoints";
         this.gvOrderList.UpdateRow(rowIndex, false);
         this.gvOrderList.DataBind();
     }

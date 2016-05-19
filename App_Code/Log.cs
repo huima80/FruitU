@@ -2,12 +2,22 @@
 using System.Collections.Generic;
 using System.Web;
 using System.IO;
+using Microsoft.Practices.EnterpriseLibrary.Logging;
 
 /// <summary>
 /// 网站日志类
 /// </summary>
-public class Log
+public static class Log
 {
+    private static LogWriterFactory logWriterFactory;
+    private static LogWriter myLogWriter;
+
+    static Log()
+    {
+        logWriterFactory = new LogWriterFactory();
+        myLogWriter = logWriterFactory.Create();
+    }
+
     //在网站根目录下创建日志目录
     public static string path = HttpContext.Current.Request.PhysicalApplicationPath + "logs";
 
@@ -18,10 +28,7 @@ public class Log
      */
     public static void Debug(string className, string content)
     {
-        if (Config.LogLevel >= 3)
-        {
-            WriteLog("DEBUG", className, content);
-        }
+        Write(System.Diagnostics.TraceEventType.Verbose, className, content);
     }
 
     /**
@@ -31,10 +38,7 @@ public class Log
     */
     public static void Info(string className, string content)
     {
-        if (Config.LogLevel >= 2)
-        {
-            WriteLog("INFO", className, content);
-        }
+        Write(System.Diagnostics.TraceEventType.Information, className, content);
     }
 
     /**
@@ -44,10 +48,7 @@ public class Log
     */
     public static void Error(string className, string content)
     {
-        if (Config.LogLevel >= 1)
-        {
-            WriteLog("ERROR", className, content);
-        }
+        Write(System.Diagnostics.TraceEventType.Error, className, content);
     }
 
     /**
@@ -56,7 +57,7 @@ public class Log
     * @param className 类名
     * @param content 写入内容
     */
-    protected static void WriteLog(string type, string className, string content)
+    private static void WriteLog(string type, string className, string content)
     {
         if (!Directory.Exists(path))//如果日志目录不存在就创建
         {
@@ -75,5 +76,15 @@ public class Log
 
         //关闭日志文件
         mySw.Close();
+    }
+
+    private static void Write(System.Diagnostics.TraceEventType severity, string className, string logInfo)
+    {
+        LogEntry logEntry = new LogEntry();
+
+        logEntry.Message = logInfo;
+        logEntry.Severity = severity;
+        myLogWriter.Write(className + ":" + logEntry);
+
     }
 }

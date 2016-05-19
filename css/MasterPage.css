@@ -3,8 +3,8 @@
 
 body {
     background-image: url('../images/bg.jpg');
-    background-size:100%;
-    background-attachment:fixed;
+    background-size: 100%;
+    background-attachment: fixed;
     padding-bottom: 60px;
 }
 
@@ -26,11 +26,6 @@ a:hover {
 a:active {
     COLOR: #ff7f24;
     text-decoration: none;
-}
-
-ol, ul {
-    list-style: none;
-    padding: 0;
 }
 
 hr {
@@ -60,6 +55,7 @@ hr {
 
     .footer ul {
         list-style: none;
+        padding: 0;
     }
 
     .footer li {
@@ -116,11 +112,11 @@ hr {
     border-radius: 50%;
 }
 
-.wx-sticky{
+.wx-sticky {
     position: fixed;
     top: 50px;
     left: 5px;
-    font-size:small;
+    font-size: small;
 }
 
 .qq-login {

@@ -9,8 +9,11 @@ BEGIN
     DECLARE @CurrentMemberPoints	int
     DECLARE @IsCalMemberPoints	bit
     DECLARE @OpenID	varchar(50), @AgentOpenID varchar(50)
-
+	DECLARE @AgentCount int
     DECLARE @ErrorCode     int
+
+	SET @AgentNewMemberPoints = -1
+	SET @AgentCount = 0
     SET @ErrorCode = 0
 
     DECLARE @TranStarted   bit
@@ -37,7 +40,7 @@ BEGIN
 		SET @ErrorCode = 1
 		GOTO Cleanup
 	END
-	
+
 	--如果此订单未计算过积分，再进行计算，避免重复计算
 	IF ( @IsCalMemberPoints = 0 )
 	BEGIN
@@ -65,23 +68,32 @@ BEGIN
 			GOTO Cleanup
 		END
 
-		--更新推荐人的会员积分，排除用户给自己推荐的情况
+		--更新推荐人的会员积分，排除推荐人给自己推荐的情况
 		IF ( @AgentOpenID <> '' and @AgentOpenID is not null and @AgentOpenID <> @OpenID )
 		BEGIN
-			UPDATE WeChatUsers
-			SET MemberPoints = MemberPoints + @IncreasedMemberPoints
-			WHERE OpenID = @AgentOpenID
+			--查询下单人是否被推荐过，同一个下单人只能被推荐一次
+			SELECT @AgentCount = count(*)
+			FROM ProductOrder
+			WHERE OpenID = @OpenID AND AgentOpenID IS NOT NULL
 
-			IF( @@ERROR <> 0 )
+			--下单人是第一次被推荐，才给推荐人积分
+			IF ( @AgentCount = 1 )
 			BEGIN
-				SET @ErrorCode = -1
-				GOTO Cleanup
-			END
+				UPDATE WeChatUsers
+				SET MemberPoints = MemberPoints + 100
+				WHERE OpenID = @AgentOpenID
 
-			--查询推荐人的新会员积分
-			SELECT @AgentNewMemberPoints = MemberPoints
-			FROM WeChatUsers
-			WHERE OpenID = @AgentOpenID
+				IF( @@ERROR <> 0 )
+				BEGIN
+					SET @ErrorCode = -1
+					GOTO Cleanup
+				END
+
+				--查询推荐人的新会员积分
+				SELECT @AgentNewMemberPoints = MemberPoints
+				FROM WeChatUsers
+				WHERE OpenID = @AgentOpenID
+			END
 		END
 
 		--设置此订单已计算过积分标志，避免重复计算

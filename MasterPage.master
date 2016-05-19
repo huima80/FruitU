@@ -100,6 +100,7 @@
     </form>
 
     <script>
+        var wxShareInfo;
 
         requirejs(['jquery', 'webConfig'], function ($) {
             $(function () {
@@ -187,35 +188,35 @@
                     wx.config(wxJsApiParam);
 
                     wx.ready(function () {
-                        var shareInfo = {
+                        wxShareInfo = {
                             title: webConfig.siteTitle + "--" + webConfig.siteDesc, // 分享标题
                             desc: webConfig.siteDesc, // 分享描述
-                            link: webConfig.siteDomain + "/index.aspx?AgentOpenID=" + openID, // 分享链接
-                            imgUrl: webConfig.siteDomain + "/images/" + webConfig.defaultImg, // 分享图标
+                            link: location.origin + "/index.aspx?AgentOpenID=" + openID, // 分享链接
+                            imgUrl: location.origin + "/images/" + webConfig.defaultImg, // 分享图标
                             success: function () {
                                 // 用户确认分享后执行的回调函数
-                                alert("分享给朋友消费有积分奖励哦！");
+                                alert("分享给朋友消费有100积分(5元)奖励哦！");
                             },
                             cancel: function () {
                                 // 用户取消分享后执行的回调函数
-                                alert("分享给朋友消费有积分奖励哦！");
+                                alert("分享给朋友消费有100积分(5元)奖励哦！");
                             }
                         };
 
                         //分享到朋友圈
-                        wx.onMenuShareTimeline(shareInfo);
+                        wx.onMenuShareTimeline(wxShareInfo);
 
                         //分享给朋友
-                        wx.onMenuShareAppMessage($.extend({}, shareInfo, { type: 'link', dataUrl: '' }));
+                        wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
 
                         //分享到QQ
-                        wx.onMenuShareQQ(shareInfo);
+                        wx.onMenuShareQQ(wxShareInfo);
 
                         //分享到腾讯微博
-                        wx.onMenuShareWeibo(shareInfo);
+                        wx.onMenuShareWeibo(wxShareInfo);
 
                         //分享到QQ空间
-                        wx.onMenuShareQZone(shareInfo);
+                        wx.onMenuShareQZone(wxShareInfo);
                     });
 
                 });
@@ -240,7 +241,6 @@
                     $prodAmountHints.hide();
                 }
             }
-
         });
 
     </script>

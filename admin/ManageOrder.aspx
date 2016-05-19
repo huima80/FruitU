@@ -147,11 +147,14 @@
                         <asp:TemplateField HeaderText="订单金额" SortExpression="OrderPrice">
                             <ItemTemplate>
                                 <p>
-                                    <asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label></p>
+                                    <asp:Label ID="Label6" runat="server" Text='<%# Eval("OrderPrice", "{0:c}") %>' CssClass="order-price"></asp:Label>
+                                </p>
                                 <p>
-                                    <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label></p>
+                                    <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label>
+                                </p>
                                 <p>
-                                    <asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label></p>
+                                    <asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label>
+                                </p>
                             </ItemTemplate>
                             <ItemStyle CssClass="order-price" />
                         </asp:TemplateField>
@@ -170,24 +173,35 @@
                                 <p id="pTransactionTime" runat="server" title="微信支付时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblTransactionTime" runat="server" Text='<%# Eval("TransactionTime") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="是否发货" SortExpression="IsDelivered">
+                        <asp:TemplateField HeaderText="订单操作">
                             <ItemTemplate>
-                                <div class="checkbox">
-                                    <label>
-                                        <asp:CheckBox ID="cbIsDelivery" runat="server" Checked='<%# Bind("IsDelivered") %>' AutoPostBack="True" onclick="if(!confirm('点击发货后将不能修改，确认发货吗？')){return false;}" OnCheckedChanged="cbIsDelivery_CheckedChanged" POID='<%# Eval("ID") %>' />
-                                    </label>
-                                </div>
-                                <i runat="server" id="faIsDelivery" class="fa fa-check"></i>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:TemplateField HeaderText="是否签收" SortExpression="IsAccept">
-                            <ItemTemplate>
-                                <div class="checkbox">
-                                    <label>
-                                        <asp:CheckBox ID="cbIsAccept" runat="server" Checked='<%# Bind("IsAccept") %>' AutoPostBack="True" onclick="if(!confirm('点击签收后将不能修改，确认签收吗？')){return false;}" POID='<%# Eval("ID") %>' OnCheckedChanged="cbIsAccept_CheckedChanged" />
-                                    </label>
-                                </div>
-                                <i runat="server" id="faIsAccept" class="fa fa-check"></i>
+                                <p>
+                                    <div class="checkbox">
+                                        <label>
+                                            <asp:CheckBox ID="cbIsDelivery" runat="server" Checked='<%# Bind("IsDelivered") %>' AutoPostBack="True" onclick="if(!confirm('点击发货后将不能修改，确认发货吗？')){return false;}" OnCheckedChanged="cbIsDelivery_CheckedChanged" />
+                                            发货
+                                        </label>
+                                    </div>
+                                    <i runat="server" id="faIsDelivery" class="fa fa-check"></i>
+                                </p>
+                                <p>
+                                    <div class="checkbox">
+                                        <label>
+                                            <asp:CheckBox ID="cbIsAccept" runat="server" Checked='<%# Bind("IsAccept") %>' AutoPostBack="True" onclick="if(!confirm('点击签收后将不能修改，确认签收吗？')){return false;}" OnCheckedChanged="cbIsAccept_CheckedChanged" />
+                                            签收
+                                        </label>
+                                    </div>
+                                    <i runat="server" id="faIsAccept" class="fa fa-check"></i>
+                                </p>
+                                <p>
+                                    <div class="checkbox">
+                                        <label>
+                                            <asp:CheckBox ID="cbIsCalMemberPoints" runat="server" Checked='<%# Bind("IsCalMemberPoints") %>' AutoPostBack="True" onclick="if(!confirm('确认发放积分吗？')){return false;}" OnCheckedChanged="cbIsCalMemberPoints_CheckedChanged" />
+                                            发放积分
+                                        </label>
+                                    </div>
+                                    <i runat="server" id="faIsCalMemberPoints" class="fa fa-check"></i>
+                                </p>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="打印订单">
@@ -392,7 +406,7 @@
                             $(winPO).on("unload", function () { Ladda.stopAll(); });
                         }
                         else {
-                            throw new Error("请设置浏览器允许弹出打印窗口");
+                            throw new Error("请设置浏览器允许弹出打印窗口。");
                         }
                     }
                     catch (error) {

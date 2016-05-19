@@ -61,11 +61,12 @@
             </div>
             <div id="MemberPoints" class="text-left">
                 <h4 class="text-center">Fruit U 积分规则</h4>
-                <p>您在Fruit U消费成功后，消费金额将自动转化为积分</p>
-                <p>每消费1元可累计1积分，积分终身有效，可在下次消费时直接抵扣现金</p>
-                <p>
-                    <asp:Label CssClass="member-points-exchage-rate" ID="lblMemberPointsExchageRate" runat="server" Text=""></asp:Label>积分抵扣1元，单次消费最多抵扣订单总金额的50%</p>
-                <p>（您的累计积分将记录在用户中心，可随时查看）</p>
+                <ul>
+                    <li>您在Fruit U消费成功后，消费金额将自动转化为积分，每消费1元可累计1积分，积分永久有效。</li>
+                    <li>积分可在下次消费时直接抵扣现金，<asp:Label CssClass="member-points-exchage-rate" ID="lblMemberPointsExchageRate" runat="server" Text=""></asp:Label>积分抵扣1元，单次消费最多可抵扣订单总金额的50%。</li>
+                    <li>您可以分享页面给好友、群，或者发布在朋友圈，好友点击消费后您可获得100积分（5元）奖励。</li>
+                    <li>您的会员积分可在个人中心查看。</li>
+                </ul>
             </div>
         </div>
     </div>

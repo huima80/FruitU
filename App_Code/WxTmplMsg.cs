@@ -542,8 +542,8 @@ public static class WxTmplMsg
             jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
 
-            //如果此订单有推荐人，则也给推荐人发送积分奖励消息
-            if (po.Agent != null && !string.IsNullOrEmpty(po.Agent.OpenID))
+            //如果此订单有推荐人，且推荐人获得了积分奖励，则也给推荐人发送积分奖励消息
+            if (po.Agent != null && !string.IsNullOrEmpty(po.Agent.OpenID) && po.Purchaser.OpenID != po.Agent.OpenID && e.agentNewMemberPoints != -1)
             {
                 WeChatUser wxAgent = WeChatUserDAO.FindUserByOpenID(po.Agent.OpenID);
                 if (wxAgent != null)
@@ -575,7 +575,7 @@ public static class WxTmplMsg
                     jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
                     jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("本次推荐奖励{0}积分", e.increasedMemberPoints);
+                    jTmplMsgDataValue["value"] = string.Format("本次推荐奖励{0}积分", 100);
                     jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                     jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 

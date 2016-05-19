@@ -18,6 +18,11 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
+                <img src="images/ShareIncentive.jpg" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
                 <img src="images/Juice-FreshJuice.gif" />
             </div>
         </div>
@@ -60,7 +65,8 @@
                     <button id="btnAddToCart" class="btn btn-danger" type="button"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
                 </div>
             </div>
-            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-3x"></i></div>
+            <div id="btnClose" class="btn-close"><i class="fa fa-close fa-2x"></i></div>
+            <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼！<i class="fa fa-share-alt fa-2x"></i></div>
         </div>
     </div>
 
@@ -186,7 +192,7 @@
 
         //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
         function openModal(prodID) {
-            var detailImg, jLen;
+            var mainImg, detailImg, jLen;
 
             if (juiceList && Array.isArray(juiceList)) {
                 jLen = juiceList.length;
@@ -196,9 +202,11 @@
                     if (juiceList[i]["ID"] == prodID && juiceList[i]["FruitImgList"] && Array.isArray(juiceList[i]["FruitImgList"])) {
                         //查找此商品的详图
                         for (var j = 0; j < juiceList[i]["FruitImgList"].length; j++) {
+                            if (juiceList[i]["FruitImgList"][j]["MainImg"]) {
+                                mainImg = juiceList[i]["FruitImgList"][j]["ImgName"];
+                            }
                             if (juiceList[i]["FruitImgList"][j]["DetailImg"]) {
                                 detailImg = juiceList[i]["FruitImgList"][j]["ImgName"];
-                                break;
                             }
                         }
 
@@ -220,11 +228,33 @@
                         //商品购买数量默认为1
                         $("input#txtQty").val(1);
 
-                        //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
+                        //解除上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
                         $("#btnAddToCart").off("click").on("click", juiceList[i], addToCart);
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
+
+                        //设置微信分享参数
+                        requirejs(['jweixin'], function (wx) {
+                            wxShareInfo.desc = '我买了【' + juiceList[i].FruitName + '】' + juiceList[i].FruitDesc;
+                            wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
+                            wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
+
+                            //分享到朋友圈
+                            wx.onMenuShareTimeline(wxShareInfo);
+
+                            //分享给朋友
+                            wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                            //分享到QQ
+                            wx.onMenuShareQQ(wxShareInfo);
+
+                            //分享到腾讯微博
+                            wx.onMenuShareWeibo(wxShareInfo);
+
+                            //分享到QQ空间
+                            wx.onMenuShareQZone(wxShareInfo);
+                        });
 
                         break;
                     }

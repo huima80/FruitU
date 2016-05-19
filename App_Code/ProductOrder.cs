@@ -2152,11 +2152,8 @@ public class ProductOrder : IComparable<ProductOrder>
     /// 订单支付成功后，给予下单人会员积分
     /// </summary>
     /// <param name="po"></param>
-    /// <param name="e"></param>
-    public static JsonData EarnMemberPoints(ProductOrder po, ProductOrder.OrderStateEventArgs e)
+    public static void EarnMemberPoints(ProductOrder po)
     {
-        JsonData jRet = new JsonData();
-
         try
         {
             if (po == null)
@@ -2164,10 +2161,10 @@ public class ProductOrder : IComparable<ProductOrder>
                 throw new ArgumentNullException("po对象不能为null");
             }
 
-            //如果订单是支付成功状态才给与积分
+            //如果订单是支付成功状态才发放积分
             if (po.TradeState == TradeState.SUCCESS || po.TradeState == TradeState.CASHPAID)
             {
-                //判断此订单是否计算过会员积分，避免重复计算
+                //判断此订单是否计算过会员积分
                 if (po.Purchaser != null && !po.IsCalMemberPoints)
                 {
                     int increasedMemberPoints, newMemberPoints, agentNewMemberPoints;
@@ -2177,13 +2174,9 @@ public class ProductOrder : IComparable<ProductOrder>
                     //更新会员积分，并获取会员积分余额
                     WeChatUserDAO.UpdateMemberPoints(po, increasedMemberPoints, po.UsedMemberPoints, out newMemberPoints, out agentNewMemberPoints);
 
-                    //触发根据订单计算积分余额事件
+                    //触发发放积分事件
                     ProductOrder.MemberPointsCalculatedEventArgs mpce = new ProductOrder.MemberPointsCalculatedEventArgs(increasedMemberPoints, po.UsedMemberPoints, newMemberPoints, agentNewMemberPoints);
                     po.OnMemberPointsCalculated(mpce);
-
-                    jRet["MemberPoints"] = newMemberPoints;
-                    jRet["AgentMemberPoints"] = agentNewMemberPoints;
-
                 }
             }
         }
@@ -2192,9 +2185,6 @@ public class ProductOrder : IComparable<ProductOrder>
             Log.Error("EarnMemberPoints", ex.ToString());
             throw ex;
         }
-
-        return jRet;
-
     }
 
     public int CompareTo(ProductOrder other)

@@ -48,7 +48,6 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
             {
                 //QQ回调redirect_uri?code=CODE&state=STATE
 
-                Log.Info("QQ CODE", code);
                 if (context.Session["state"] == null)
                 {
                     //如果自上次请求CODE后，session 已超时，则重新请求CODE
@@ -70,7 +69,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                     //接口调用有错误时，会返回code和msg字段，以url参数对的形式返回，value部分会进行url编码（UTF-8）。
                     strAccessToken = HttpService.Get(authUrl);
 
-                    Log.Info("QQ AccessToken", strAccessToken);
+                    Log.Info(this.GetType().ToString(), "QQ AccessToken:" + strAccessToken);
 
                     Match rxAccessToken = Regex.Match(strAccessToken, "access_token=([A-Za-z0-9]*)&expires_in=([A-Za-z0-9]*)&refresh_token=([A-Za-z0-9]*)", RegexOptions.IgnoreCase);
                     if (rxAccessToken != null && rxAccessToken.Groups.Count == 4)
@@ -86,7 +85,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         //返回的数据包格式：callback( {"client_id":"YOUR_APPID","openid":"YOUR_OPENID"} );
                         strOpenID = HttpService.Get(authUrl);
 
-                        Log.Info("QQ OpenID", strOpenID);
+                        Log.Info(this.GetType().ToString(), "QQ OpenID:" + strOpenID);
 
                         strOpenID = Regex.Match(strOpenID, @"\{.*\}").Value;
 
@@ -115,7 +114,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                                             jAuthInfo["openid"].ToString());
 
                         strUserInfo = HttpService.Get(authUrl);
-                        Log.Info("QQ UserInfo", strUserInfo);
+                        Log.Info(this.GetType().ToString(), "QQ User:" + strUserInfo);
 
                         //{
                         //    "ret": 0,
