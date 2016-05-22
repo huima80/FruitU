@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="row text-center">
-            <div class="col-xs-12" onclick="selectDeliverAddress();">
+            <div class="col-xs-12" onclick="wxOpenAddress();">
                 <div class="info-block deliver-addr-block">收货地址</div>
             </div>
         </div>
@@ -103,6 +103,26 @@
         //关闭模式对话框
         function closeModal() {
             $("#divModal").removeClass("md-show");
+        }
+
+        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
+        function wxOpenAddress() {
+            requirejs(['jquery', 'jweixin110'], function ($, wx) {
+                wx.openAddress({
+                    success: function (res) {
+                        // 用户成功拉出地址 
+                        if (res.errMsg.indexOf("ok") != -1) {
+                            alert("收货地址编辑成功，可在下单时选用。");
+                        }
+                        else {
+                            alert("无法获取您的地址");
+                        }
+                    },
+                    cancel: function () {
+                        // 用户取消拉出地址
+                    }
+                });
+            });
         }
 
         //获取微信用户地址

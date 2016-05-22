@@ -165,7 +165,8 @@
                                     <span id="divCashTradeState" runat="server" class="checkbox">
                                         <label>
                                             <i runat="server" id="faCashTradeState" class="fa fa-check"></i>
-                                            <asp:CheckBox ID="cbCashTradeState" runat="server" OnCheckedChanged="cbCashTradeState_CheckedChanged" AutoPostBack="True" onclick="if(!confirm('点击后将不能修改现金收讫状态，确认吗？')){return false;}" /><asp:Label ID="lblCashTradeState" runat="server"></asp:Label>
+                                            <asp:CheckBox ID="cbCashTradeState" runat="server" OnCheckedChanged="cbCashTradeState_CheckedChanged" AutoPostBack="True" onclick="if(!confirm('确认已收现金吗？')){return false;}" />
+                                            <asp:Label ID="lblCashTradeState" runat="server"></asp:Label>
                                         </label>
                                     </span>
                                 </p>

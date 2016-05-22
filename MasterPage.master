@@ -48,6 +48,7 @@
                 spin: 'ladda/spin.min',
                 masonry: ['masonry.pkgd.min', 'https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.min'],
                 jweixin: 'http://res.wx.qq.com/open/js/jweixin-1.0.0',
+                jweixin110: 'http://res.wx.qq.com/open/js/jweixin-1.1.0',
                 lodash: 'lodash.min',
                 html5shiv: 'http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min',
                 respond: 'http://apps.bdimg.com/libs/respond.js/1.4.2/respond',
@@ -140,7 +141,7 @@
                     });
                 });
 
-                requirejs(['jweixin'], function (wx) {
+                requirejs(['jweixin110'], function (wx) {
 
                     $.extend(wxJsApiParam, {
                         debug: false,
@@ -180,7 +181,8 @@
                     'openProductSpecificView',
                     'addCard',
                     'chooseCard',
-                    'openCard'
+                    'openCard',
+                    'openAddress'
                         ]
                     });
 

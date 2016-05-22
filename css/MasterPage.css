@@ -32,6 +32,10 @@ hr {
     margin: 5px;
 }
 
+ul {
+    list-style: none;
+}
+
 .footer {
     display: block;
     width: 100%;

@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
-                    <div class="panel-heading" onclick="selectWxAddress();">
+                    <div class="panel-heading" onclick="wxOpenAddress();">
                         <i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货人信息 >>
                     </div>
                     <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
@@ -272,7 +272,49 @@
         //微信用户地址信息
         var wxUserName = "", wxTelNumber = "", wxAddrProvince = "", wxAddrCity = "", wxAddrCounty = "", wxAddrDetailInfo = "", wxPostalCode = "";
 
-        //获取微信用户地址
+        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
+        function wxOpenAddress() {
+            requirejs(['jquery', 'jweixin110'], function ($, wx) {
+                wx.openAddress({
+                    success: function (res) {
+                        // 用户成功拉出地址 
+                        if (res.errMsg.indexOf("ok") != -1) {
+                            wxUserName = res.userName;
+                            wxTelNumber = res.telNumber;
+                            wxAddrProvince = res.provinceName;
+                            wxAddrCity = res.cityName;
+                            wxAddrCounty = res.countryName;
+                            wxAddrDetailInfo = res.detailInfo;
+                            wxPostalCode = res.postalCode;
+                            //对于直辖市，则省略省份信息
+                            if (wxAddrProvince == wxAddrCity) {
+                                wxAddrProvince = '';
+                            }
+                            if (wxPostalCode != undefined && wxPostalCode != '') {
+                                wxPostalCode = "[" + wxPostalCode + "]";
+                            }
+                            $("span.wx-user-name").text(wxUserName);
+                            $("span.wx-tel-number").text(wxTelNumber);
+                            $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
+                            $("#divCustomizeAddrInfo").hide();
+                            $("#divWxAddrInfo").slideDown();
+                        }
+                        else {
+                            alert("无法获取您的地址，请手工填写收货地址。");
+                            $("#divWxAddrInfo").hide();
+                            $("#divCustomizeAddrInfo").slideDown();
+                            console.warn(res.errMsg);
+                        }
+                    },
+                    cancel: function () {
+                        // 用户取消拉出地址
+                        alert("请选择您的收货地址");
+                    }
+                });
+            });
+        }
+
+        //获取微信用户地址，调用微信JS全局函数editAddress
         function editAddress() {
             WeixinJSBridge.invoke(
                 'editAddress',

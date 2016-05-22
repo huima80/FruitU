@@ -60,13 +60,13 @@ public partial class _Default : System.Web.UI.Page
 
         //把请求参数打包成数组
         SortedDictionary<string, string> sParaTemp = new SortedDictionary<string, string>();
-        sParaTemp.Add("partner", Com.Alipay.Config.partner);
-        sParaTemp.Add("seller_id", Com.Alipay.Config.seller_id);
-        sParaTemp.Add("_input_charset", Com.Alipay.Config.input_charset.ToLower());
-        sParaTemp.Add("service", Com.Alipay.Config.service);
-        sParaTemp.Add("payment_type", Com.Alipay.Config.payment_type);
-        sParaTemp.Add("notify_url", Com.Alipay.Config.notify_url);
-        sParaTemp.Add("return_url", Com.Alipay.Config.return_url);
+        sParaTemp.Add("partner", Com.Alipay.AliPayConfig.partner);
+        sParaTemp.Add("seller_id", Com.Alipay.AliPayConfig.seller_id);
+        sParaTemp.Add("_input_charset", Com.Alipay.AliPayConfig.input_charset.ToLower());
+        sParaTemp.Add("service", Com.Alipay.AliPayConfig.service);
+        sParaTemp.Add("payment_type", Com.Alipay.AliPayConfig.payment_type);
+        sParaTemp.Add("notify_url", Com.Alipay.AliPayConfig.notify_url);
+        sParaTemp.Add("return_url", Com.Alipay.AliPayConfig.return_url);
         sParaTemp.Add("out_trade_no", out_trade_no);
         sParaTemp.Add("subject", subject);
         sParaTemp.Add("total_fee", total_fee);
