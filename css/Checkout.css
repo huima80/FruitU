@@ -102,6 +102,16 @@ hr {
     color: white !important;
 }
 
+.btn-alipay {
+    background-color: rgb(0,160,233) !important;
+    color: white !important;
+}
+
+    .btn-alipay img {
+        width: 24px;
+        height: 24px;
+    }
+
 .sub-price {
     font-size: 10px;
     padding: 6px;
@@ -118,11 +128,11 @@ hr {
         width: 50px;
         height: 20px;
         text-align: center;
-        padding:0;
+        padding: 0;
     }
 
     .sub-price input[type=checkbox] {
-        position:static;
+        position: static;
         vertical-align: text-bottom;
     }
 
@@ -132,5 +142,5 @@ hr {
     }
 
 .md-content {
-    max-width: 50%;
+    max-width: 60%;
 }

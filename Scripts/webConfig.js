@@ -53,3 +53,4 @@
 
     return window.webConfig;
 }));
+

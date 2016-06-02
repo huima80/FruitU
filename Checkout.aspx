@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
-                    <div class="panel-heading" onclick="wxOpenAddress();">
+                    <div id="divPanelHeading" class="panel-heading" onclick="selectWxAddress();">
                         <i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货人信息 >>
                     </div>
                     <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
@@ -73,10 +73,11 @@
             <div class="col-sm-8 ">
                 <div class="sub-price">
                     <div><i class="fa fa-check-circle"></i>&nbsp;商品价格：￥<span id="spSubTotal"></span>元</div>
-                    <div><i class="fa fa-check-circle"></i>&nbsp;运费：￥<span id="spFreight"></span>元（订单满99元包邮）</div>
+                    <div><i class="fa fa-check-circle"></i>&nbsp;运费：￥<span id="spFreight"></span>元（订单满<span id="spFreightFreeCondition"></span>元包邮）</div>
                     <div class="checkbox">
                         <label>
-                            <input id="cbMemberPoints" type="checkbox" />&nbsp;使用积分
+                            <input id="cbMemberPoints" type="checkbox" />
+                            使用积分
                         </label>
                         <span class="form-group">
                             <label class="sr-only" for="txtUsedMemberPoints">会员积分</label>
@@ -96,10 +97,15 @@
         <div class="row pay-button">
             <div class="col-xs-12">
                 <p>
-                    <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="makeOrder(true);"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
+                    <button id="btnWxPay" type="button" class="btn btn-lg btn-block btn-wxpay ladda-button" data-style="zoom-in" onclick="wxPay();"><i class="fa fa-wechat fa-lg fa-fw"></i>微信支付</button>
                 </p>
                 <p>
-                    <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-info ladda-button" data-style="zoom-in" onclick="makeOrder(false);"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
+                    <button id="btnAliPay" type="button" class="btn btn-lg btn-block btn-alipay ladda-button" data-style="zoom-in" onclick="aliPay();">
+                        <img src="images/alipay.png" />
+                        支 付 宝</button>
+                </p>
+                <p>
+                    <button id="btnPayCash" type="button" class="btn btn-lg btn-block btn-warning ladda-button" data-style="zoom-in" onclick="payCash();"><i class="fa fa-truck fa-lg fa-fw"></i>货到付款</button>
                 </p>
             </div>
         </div>
@@ -107,6 +113,7 @@
     <div class="md-modal md-effect-9" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="images/SubmitOrderCompleteTip.gif" />
+            <h5 class="text-center">分享给好友或朋友圈，有积分现金奖励哦！</h5>
         </div>
     </div>
 
@@ -116,14 +123,15 @@
     <script>
 
         //Ladda loading控制按钮
-        var lBtnWxPay, lBtnPayCash;
+        var lBtnWxPay, lBtnPayCash, lBtnAliPay;
 
-        requirejs(['jquery', 'ladda'], function ($, ladda) {
+        requirejs(['jquery', 'ladda', 'encoder'], function ($, ladda) {
 
             $(function () {
+
                 requirejs(['cart'], function () {
                     try {
-                        if ($.cart.prodAmount() == 0) {
+                        if ($.cart == undefined || $.cart.prodAmount() == 0) {
                             alert("您的购物车空空的哦，先去买点什么吧。");
                             location.href = ".";
                         }
@@ -147,15 +155,32 @@
                             throw new Error("参数错误：会员积分余额");
                         }
 
+                        //初始化购物车里的运费条款
+                        if (!isNaN(freight) && freight >= 0 && !isNaN(freightFreeCondition) && freightFreeCondition >= 0) {
+                            $.cart.updateFreightTerm(freight, freightFreeCondition);
+                        }
+                        else {
+                            throw new Error("参数错误：运费条款");
+                        }
+
+                        if (paymentTerm == undefined || typeof paymentTerm != "object") {
+                            throw new Error("参数错误：支付方式");
+                        }
+
+                        if (apGateway == undefined) {
+                            throw new Error("参数错误：支付宝网关");
+                        }
+
                         //初始化购物车里的使用会员积分点数，默认为0
                         $.cart.updateUsedMemberPoints(0);
 
                         //注册购物车的积分变动后事件处理函数
                         $($.cart).on("onUsedMemberPointsUpdated", refreshOrderPrice);
 
-                        //显示商品价格、运费、账户积分余额、订单最大可抵扣金额、订单总价
+                        //显示商品价格、运费、包邮条件、账户积分余额、订单最大可抵扣金额、订单总价
                         $("#spSubTotal").text($.cart.subTotal().toFixed(2));
                         $("#spFreight").text($.cart.calFreight());
+                        $("#spFreightFreeCondition").text($.cart.freightTerm.freightFreeCondition);
                         $("#spValidMemberPoints").text(validMemberPoints);
                         $("#spMaxDiscountMemberPoints").text($.cart.getMaxDiscountMemberPoints());
                         $("#spOrderPrice").text($.cart.orderPrice().toFixed(2));
@@ -199,6 +224,9 @@
                     //}
                 });
 
+                //注册选择收货人信息单击事件处理函数
+                //$("#divPanelHeading").on("click", wx, wxOpenAddress);
+
                 //注册使用积分单选框点击事件处理函数
                 $("#cbMemberPoints").on("click", switchMemberPoints);
 
@@ -210,6 +238,7 @@
 
                 lBtnWxPay = ladda.create(document.querySelector('#btnWxPay'));
                 lBtnPayCash = ladda.create(document.querySelector('#btnPayCash'));
+                lBtnAliPay = ladda.create(document.querySelector('#btnAliPay'));
 
             });
         });
@@ -234,17 +263,23 @@
 
         //点击使用积分按钮时，填写当前可用的最大积分
         function switchMemberPoints() {
-            var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
-            if ($("#cbMemberPoints").is(":checked")) {
-                var maxDiscountMemberPoints = $.cart.getMaxDiscountMemberPoints();
-                $txtUsedMemberPoints.val(maxDiscountMemberPoints);
-                $.cart.updateUsedMemberPoints(maxDiscountMemberPoints);
-                $txtUsedMemberPoints.removeAttr("disabled");
+            try {
+                var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
+                if ($("#cbMemberPoints").is(":checked")) {
+                    var maxDiscountMemberPoints = $.cart.getMaxDiscountMemberPoints();
+                    $txtUsedMemberPoints.val(maxDiscountMemberPoints);
+                    $.cart.updateUsedMemberPoints(maxDiscountMemberPoints);
+                    $txtUsedMemberPoints.removeAttr("disabled");
+                }
+                else {
+                    $txtUsedMemberPoints.val(0);
+                    $.cart.updateUsedMemberPoints(0);
+                    $txtUsedMemberPoints.attr("disabled", "disabled");
+                }
             }
-            else {
-                $txtUsedMemberPoints.val(0);
-                $.cart.updateUsedMemberPoints(0);
-                $txtUsedMemberPoints.attr("disabled", "disabled");
+            catch (error) {
+                alert(error.message);
+                return false;
             }
         }
 
@@ -272,45 +307,44 @@
         //微信用户地址信息
         var wxUserName = "", wxTelNumber = "", wxAddrProvince = "", wxAddrCity = "", wxAddrCounty = "", wxAddrDetailInfo = "", wxPostalCode = "";
 
-        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
-        function wxOpenAddress() {
-            requirejs(['jquery', 'jweixin110'], function ($, wx) {
-                wx.openAddress({
-                    success: function (res) {
-                        // 用户成功拉出地址 
-                        if (res.errMsg.indexOf("ok") != -1) {
-                            wxUserName = res.userName;
-                            wxTelNumber = res.telNumber;
-                            wxAddrProvince = res.provinceName;
-                            wxAddrCity = res.cityName;
-                            wxAddrCounty = res.countryName;
-                            wxAddrDetailInfo = res.detailInfo;
-                            wxPostalCode = res.postalCode;
-                            //对于直辖市，则省略省份信息
-                            if (wxAddrProvince == wxAddrCity) {
-                                wxAddrProvince = '';
-                            }
-                            if (wxPostalCode != undefined && wxPostalCode != '') {
-                                wxPostalCode = "[" + wxPostalCode + "]";
-                            }
-                            $("span.wx-user-name").text(wxUserName);
-                            $("span.wx-tel-number").text(wxTelNumber);
-                            $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
-                            $("#divCustomizeAddrInfo").hide();
-                            $("#divWxAddrInfo").slideDown();
+        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress，由于微信客户端会弹出确认窗口，所以暂不使用此接口
+        function wxOpenAddress(event) {
+            var wx = event.data;
+            wx.openAddress({
+                success: function (res) {
+                    // 用户成功拉出地址 
+                    if (res.errMsg.indexOf("ok") != -1) {
+                        wxUserName = res.userName;
+                        wxTelNumber = res.telNumber;
+                        wxAddrProvince = res.provinceName;
+                        wxAddrCity = res.cityName;
+                        wxAddrCounty = res.countryName;
+                        wxAddrDetailInfo = res.detailInfo;
+                        wxPostalCode = res.postalCode;
+                        //对于直辖市，则省略省份信息
+                        if (wxAddrProvince == wxAddrCity) {
+                            wxAddrProvince = '';
                         }
-                        else {
-                            alert("无法获取您的地址，请手工填写收货地址。");
-                            $("#divWxAddrInfo").hide();
-                            $("#divCustomizeAddrInfo").slideDown();
-                            console.warn(res.errMsg);
+                        if (wxPostalCode != undefined && wxPostalCode != '') {
+                            wxPostalCode = "[" + wxPostalCode + "]";
                         }
-                    },
-                    cancel: function () {
-                        // 用户取消拉出地址
-                        alert("请选择您的收货地址");
+                        $("span.wx-user-name").text(wxUserName);
+                        $("span.wx-tel-number").text(wxTelNumber);
+                        $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
+                        $("#divCustomizeAddrInfo").hide();
+                        $("#divWxAddrInfo").slideDown();
                     }
-                });
+                    else {
+                        alert("无法获取您的地址，请手工填写收货地址。");
+                        $("#divWxAddrInfo").hide();
+                        $("#divCustomizeAddrInfo").slideDown();
+                        console.warn(res.errMsg);
+                    }
+                },
+                cancel: function () {
+                    // 用户取消拉出地址
+                    alert("请选择您的收货地址");
+                }
             });
         }
 
@@ -377,13 +411,14 @@
             }
         }
 
-        var wxJsApiParam = "";
+        //微信支付JSSDK参数，由后端生成，供前端调用
+        var wxPayParam;
 
         //调用微信JS api 支付，后台调用统一下单接口生成所需参数后，在微信浏览器中调用此函数发起支付
         function onBridgeReady() {
             WeixinJSBridge.invoke(
                 'getBrandWCPayRequest',
-                 wxJsApiParam,
+                 wxPayParam,
                  function (res) {
                      WeixinJSBridge.log(res.err_msg);
                      //alert(res.err_code + res.err_desc + res.err_msg);
@@ -425,11 +460,183 @@
             }
         }
 
+        //微信支付
+        function wxPay() {
+            try {
+                //微信支付参数不为空场景，则说明已经统一下单且获取到了prepay_id，可直接发起微信支付
+                if (wxPayParam != undefined && wxPayParam["package"] != undefined) {
+                    lBtnWxPay.start();
+                    JsApiPay();
+                }
+                else {
+                    lBtnWxPay.start();
+
+                    //使用订单收货人信息更新购物车
+                    updateDeliverInfo();
+
+                    //设置微信支付标记
+                    $.cart.updatePaymentTerm(paymentTerm.wechat);
+
+                    //根据购物车生成JSON格式订单信息，包含订单收货人和商品项信息
+                    var orderInfo = $.cart.makeOrderInfo();
+
+                    //提交订单，获取prepay_id后前台发起微信支付
+                    $.ajax({
+                        url: "PlaceOrder.ashx",
+                        data: orderInfo,
+                        type: "POST",
+                        dataType: "json",
+                        cache: false,
+                        success: function (jWxPayParam) {
+                            if (jWxPayParam["package"] != undefined)  //统一下单正常，取到了prepay_id，发起支付
+                            {
+                                wxPayParam = jWxPayParam;
+                                JsApiPay();
+                            }
+                            else {
+                                if (jWxPayParam["return_code"] != undefined)  //可能是签名错误或参数格式错误
+                                {
+                                    alert(jWxPayParam["return_msg"]);
+                                }
+                                else {
+                                    if (jWxPayParam["result_code"] != undefined)  //可能是订单已支付、已关闭、订单号重复等错误
+                                    {
+                                        alert(jWxPayParam["err_code_des"]);
+                                    }
+                                }
+
+                                lBtnWxPay.stop();   //停止按钮loading动画
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                            lBtnWxPay.stop();   //停止按钮loading动画
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                lBtnWxPay.stop();   //停止按钮loading动画
+                return false;
+            }
+        }
+
+        //支付宝
+        function aliPay() {
+            try {
+                //微信支付参数不为空场景，则说明已经统一下单且获取到了prepay_id，必须继续完成微信支付
+                if (wxPayParam != undefined && wxPayParam["package"] != undefined) {
+                    throw new Error("您已微信下单，请继续完成微信支付。");
+                }
+                else {
+                    lBtnAliPay.start();
+
+                    //使用订单收货人信息更新购物车
+                    updateDeliverInfo();
+
+                    //设置支付宝标记
+                    $.cart.updatePaymentTerm(paymentTerm.alipay);
+
+                    //根据购物车生成JSON格式订单信息，包含订单收货人和商品项信息
+                    var orderInfo = $.cart.makeOrderInfo();
+                    //提交订单
+                    $.ajax({
+                        url: "PlaceOrder.ashx",
+                        data: orderInfo,
+                        type: "POST",
+                        dataType: "text",
+                        cache: false,
+                        success: function (alipayParam) {
+                            if (typeof encoder == "object" && apGateway != undefined && alipayParam != undefined && alipayParam.indexOf("sign") != -1) {
+                                //后台下单成功后，清空购物车
+                                $.cart.clearProdItems();
+                                //后台获取到支付宝请求参数，前台再跳转到支付宝进行付款
+                                var aliPayUrl = apGateway + "?" + alipayParam;
+                                //加密支付宝网关地址，在重定向页面中提示用户，在外部浏览器中跳转到支付宝
+                                location.href = "AliPayTip.aspx?goto=" + encoder.encode(aliPayUrl);
+                            }
+                            else {
+                                alert("没有获取到支付宝参数");
+                                lBtnAliPay.stop();
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                            lBtnAliPay.stop();
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                lBtnAliPay.stop();
+                return false;
+            }
+        }
+
+        //货到付款
+        function payCash() {
+            try {
+                //微信支付参数不为空场景，则说明已经统一下单且获取到了prepay_id，必须继续完成微信支付
+                if (wxPayParam != undefined && wxPayParam["package"] != undefined) {
+                    throw new Error("您已微信下单，请继续完成微信支付。");
+                }
+                else {
+                    lBtnPayCash.start();
+
+                    //使用订单收货人信息更新购物车
+                    updateDeliverInfo();
+
+                    //设置货到付款标志
+                    $.cart.updatePaymentTerm(paymentTerm.cash);
+
+                    //根据购物车生成JSON格式订单信息，包含订购人和商品项信息
+                    var orderInfo = $.cart.makeOrderInfo();
+
+                    //提交订单
+                    $.ajax({
+                        url: "PlaceOrder.ashx",
+                        data: orderInfo,
+                        type: "POST",
+                        dataType: "json",
+                        cache: false,
+                        success: function (jPoID) {
+                            if (jPoID["NewPOID"] != undefined) {
+                                $.cart.clearProdItems();
+                                //打开模式窗口，3秒后关闭
+                                openModal();
+                                setTimeout("closeModal();", 3000);
+                            }
+                            else {
+                                if (jPoID["result_code"] != undefined)  //提交值校验错误
+                                {
+                                    alert(jPoID["err_code_des"]);
+                                }
+                            }
+
+                            lBtnPayCash.stop();
+
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                            lBtnPayCash.stop();
+                        }
+                    });
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                lBtnPayCash.stop();
+                return false;
+            }
+        }
+
         //微信支付按钮单击事件
         function makeOrder(wxPay) {
 
             //JS支付参数不为空场景，则说明已经统一下单且获取到了prepay_id，可直接发起支付
-            if (wxJsApiParam != "" && wxJsApiParam["package"] != undefined) {
+            if (wxPayParam != "" && wxPayParam["package"] != undefined) {
 
                 //已经生成了JS支付参数，但没有输入密码就取消了支付，之后用户再次点击微信支付按钮的场景
                 if (wxPay == true) {
@@ -446,7 +653,6 @@
                 //判断购物车里的商品项是否为空
                 if ($.cart != undefined && $.cart.prodAmount() != 0) {
 
-                    ////////////////处理订单收货人信息////////////////////
                     var rdAddr = "", txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
 
                     //判断是否弹出了手工地址栏
@@ -493,8 +699,6 @@
 
                     //订单备注信息
                     txtMemo = $("#txtMemo").val().trim();
-
-                    ////////////////处理订单收货人信息////////////////////
 
 
                     ////////////////提交订单////////////////////
@@ -590,6 +794,59 @@
                     alert("您的购物车里没有商品哦，请先选购吧。");
                     location.href = ".";
                 }
+            }
+        }
+
+        //把订单的收货人信息写入到购物车
+        function updateDeliverInfo() {
+            try {
+                var rdAddr = "", txtName = "", txtPhone = "", txtAddress = "", txtMemo = "";
+
+                //判断是否弹出了手工地址栏
+                if (!$("#divCustomizeAddrInfo").is(":visible")) {
+                    //判断是否选择了微信用户地址
+                    if (wxUserName == "" || wxTelNumber == "" || wxAddrDetailInfo == "") {
+                        throw new Error("请选择收货地址。");
+                    }
+                    else {
+                        //获取微信地址信息
+                        txtName = wxUserName;
+                        txtPhone = wxTelNumber;
+                        txtAddress = wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode;
+                    }
+                } else {
+                    //获取手工输入的地址信息
+                    //rdAddr = $("#divCustomizeAddrInfo :radio:checked").val();
+                    txtName = $("#txtDeliverName").val().trim();
+                    txtPhone = $("#txtDeliverPhone").val().trim();
+                    txtAddress = $("#txtDeliverAddress").val().trim();
+                }
+
+                if (!txtName) {
+                    $("#txtDeliverName").focus();
+                    throw new Error("请填写收货人姓名。");
+                }
+                if (!txtPhone) {
+                    $("#txtDeliverPhone").focus();
+                    throw new Error("请填写收货人电话。");
+                }
+                //if (!rdAddr) {
+                //    alert("请选择收货地点。");
+                //    $("#divCustomizeAddrInfo :radio:first").focus();
+                //    return false;
+                //}
+                if (!txtAddress) {
+                    $("#txtDeliverAddress").focus();
+                    throw new Error("请填写详细地址。");
+                }
+
+                //订单备注信息
+                txtMemo = $("#txtMemo").val().trim();
+
+                $.cart.updateDeliverInfo(txtName, txtPhone, txtAddress, txtMemo);
+            }
+            catch (error) {
+                throw error;
             }
         }
 

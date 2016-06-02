@@ -57,14 +57,15 @@
                 jssorslider: 'jssor.slider.mini',
                 cart: 'cart',
                 pager: 'pager',
-                webConfig: 'webConfig'
+                webConfig: 'webConfig',
+                encoder: 'encoder'
             },
             shim: {
                 'bootstrap': ['jquery'],
                 'flexslider': ['jquery'],
                 'jssorslider': ['jquery']
             }
-            //,urlArgs: "bust=" + (new Date()).getTime()
+            //, urlArgs: "bust=" + (new Date()).getTime()
         });
 
         requirejs.onError = function (err) {
@@ -75,7 +76,6 @@
 
             throw err;
         };
-
     </script>
 
 </head>
@@ -232,15 +232,11 @@
 
             //刷新购物车数量
             function refreshCartProdQty(event, data) {
-
-                var $prodAmountHints = $("span#ProdAmountHints");
                 if (data.prodQty != 0) {
-                    $prodAmountHints.text(data.prodQty);
-                    $prodAmountHints.addClass("cart-prod-hint");
-                    $prodAmountHints.show();
+                    $("#ProdAmountHints").text(data.prodQty).addClass("cart-prod-hint").show();
                 }
                 else {
-                    $prodAmountHints.hide();
+                    $("#ProdAmountHints").hide();
                 }
             }
         });

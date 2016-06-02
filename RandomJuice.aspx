@@ -43,7 +43,7 @@
                 </div>
             </div>
             <div id="btnClose" class="btn-close"><i class="fa fa-close fa-2x"></i></div>
-            <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼！<i class="fa fa-share-alt fa-2x"></i></div>
+            <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼<i class="fa fa-share-alt fa-2x"></i></div>
         </div>
     </div>
 

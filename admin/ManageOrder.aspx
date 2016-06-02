@@ -20,24 +20,11 @@
                                     <label for="ddlPaymentTerm" class="sr-only">支付方式</label>
                                     <asp:DropDownList ID="ddlPaymentTerm" runat="server" CssClass="form-control">
                                         <asp:ListItem Selected="True" Value="-1">===支付方式===</asp:ListItem>
-                                        <asp:ListItem Value="1">微信支付</asp:ListItem>
-                                        <asp:ListItem Value="2">货到付款</asp:ListItem>
                                     </asp:DropDownList>
                                 </div>
                                 <div class="form-group">
                                     <label for="ddlTradeState" class="sr-only">支付状态</label>
                                     <asp:DropDownList ID="ddlTradeState" runat="server" CssClass="form-control">
-                                        <asp:ListItem Selected="True" Value="-1">===微信支付状态===</asp:ListItem>
-                                        <asp:ListItem Value="1">支付成功</asp:ListItem>
-                                        <asp:ListItem Value="2">转入退款</asp:ListItem>
-                                        <asp:ListItem Value="3">未支付</asp:ListItem>
-                                        <asp:ListItem Value="4">已关闭</asp:ListItem>
-                                        <asp:ListItem Value="5">已撤销（刷卡支付）</asp:ListItem>
-                                        <asp:ListItem Value="6">用户支付中</asp:ListItem>
-                                        <asp:ListItem Value="7">支付失败</asp:ListItem>
-                                        <asp:ListItem Value="-1">===货到付款状态===</asp:ListItem>
-                                        <asp:ListItem Value="8">已付现金</asp:ListItem>
-                                        <asp:ListItem Value="9">未付现金</asp:ListItem>
                                     </asp:DropDownList>
                                 </div>
                                 <div class="form-group">
@@ -78,11 +65,15 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="txtOrderDetail" class="sr-only">订单商品</label>
-                                    <asp:TextBox ID="txtOrderDetail" runat="server" placeholder="订单商品详情" CssClass="form-control" Width="150"></asp:TextBox>
+                                    <asp:TextBox ID="txtOrderDetail" runat="server" placeholder="商品详情" CssClass="form-control" Width="100"></asp:TextBox>
                                 </div>
                                 <div class="form-group">
-                                    <label for="txtTransactionID" class="sr-only">微信支付流水号</label>
-                                    <asp:TextBox ID="txtTransactionID" runat="server" placeholder="微信支付流水号" CssClass="form-control" Width="150"></asp:TextBox>
+                                    <label for="txtTransactionID" class="sr-only">微信支付交易号</label>
+                                    <asp:TextBox ID="txtTransactionID" runat="server" placeholder="微信支付交易号" CssClass="form-control" Width="150"></asp:TextBox>
+                                </div>
+                                <div class="form-group">
+                                    <label for="txtTradeNo" class="sr-only">支付宝交易号</label>
+                                    <asp:TextBox ID="txtTradeNo" runat="server" placeholder="支付宝交易号" CssClass="form-control" Width="150"></asp:TextBox>
                                 </div>
                                 <div class="form-group">
                                     <label for="txtStartOrderDate" class="sr-only">订单开始日期</label>
@@ -143,6 +134,7 @@
                                     </ItemTemplate>
                                 </asp:DataList>
                             </ItemTemplate>
+                            <ItemStyle CssClass="col-lg-2"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单金额" SortExpression="OrderPrice">
                             <ItemTemplate>
@@ -161,7 +153,7 @@
                         <asp:TemplateField HeaderText="支付状态" SortExpression="PaymentTerm">
                             <ItemTemplate>
                                 <p>
-                                    <asp:Label ID="lblPaymentTerm" runat="server"></asp:Label>：<asp:Label ID="lblWxTradeState" runat="server" ToolTip='<%# Eval("TradeStateDesc") %>'></asp:Label>
+                                    <asp:Label ID="lblPaymentTerm" CssClass="payment-term" runat="server"></asp:Label>：<asp:Label ID="lblWxTradeState" runat="server" ToolTip='<%# Eval("TradeStateDesc") %>'></asp:Label><asp:Label ID="lblAlipayTradeState" runat="server"></asp:Label>
                                     <span id="divCashTradeState" runat="server" class="checkbox">
                                         <label>
                                             <i runat="server" id="faCashTradeState" class="fa fa-check"></i>
@@ -170,8 +162,11 @@
                                         </label>
                                     </span>
                                 </p>
-                                <p id="pTransactionID" runat="server" title="微信支付流水号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" CssClass="transaction-id" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
+                                <p id="pTransactionID" runat="server" title="微信支付交易号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" CssClass="transaction-id" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
                                 <p id="pTransactionTime" runat="server" title="微信支付时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblTransactionTime" runat="server" Text='<%# Eval("TransactionTime") %>'></asp:Label></p>
+                                <p id="pAP_TradeNo" runat="server" title="支付宝交易号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblAP_TradeNo" runat="server" Text='<%# Eval("AP_TradeNo") %>'></asp:Label></p>
+                                <p id="pAP_GMT_Payment" runat="server" title="支付宝支付时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblAP_GMT_Payment" runat="server" Text='<%# Eval("AP_GMT_Payment") %>'></asp:Label></p>
+                                <p id="pPayCashDate" runat="server" title="货到付款时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblPayCashDate" runat="server" Text='<%# Eval("PayCashDate") %>'></asp:Label></p>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单操作">
@@ -269,7 +264,9 @@
                 微信支付
                 {{else PaymentTerm == 2}}
                 货到付款
-                {{/if}}
+                 {{else PaymentTerm == 3}}
+                支付宝
+               {{/if}}
                         </span>
                     </p>
                 </div>

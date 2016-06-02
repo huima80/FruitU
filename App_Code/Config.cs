@@ -175,6 +175,16 @@ public static class Config
     /// </summary>
     public static readonly int MemberPointsExchangeRate;
 
+    /// <summary>
+    /// 运费标准
+    /// </summary>
+    public static readonly decimal Freight;
+
+    /// <summary>
+    /// 免运费条件
+    /// </summary>
+    public static readonly decimal FreightFreeCondition;
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
@@ -191,69 +201,69 @@ public static class Config
         Config.DefaultImg = ConfigurationManager.AppSettings["DefaultImg"].ToString();
 
         int productListPageSize;
-        if (!int.TryParse(ConfigurationManager.AppSettings["ProductListPageSize"].ToString(), out productListPageSize))
+        if (int.TryParse(ConfigurationManager.AppSettings["ProductListPageSize"].ToString(), out productListPageSize))
+        {
+            Config.ProductListPageSize = productListPageSize;
+        }
+        else
         {
             //默认pagesize
             Config.ProductListPageSize = 10;
         }
-        else
-        {
-            Config.ProductListPageSize = productListPageSize;
-        }
 
         int orderListPageSize;
-        if (!int.TryParse(ConfigurationManager.AppSettings["OrderListPageSize"].ToString(), out orderListPageSize))
+        if (int.TryParse(ConfigurationManager.AppSettings["OrderListPageSize"].ToString(), out orderListPageSize))
+        {
+            Config.OrderListPageSize = orderListPageSize;
+        }
+        else
         {
             //默认pagesize
             Config.OrderListPageSize = 10;
         }
-        else
-        {
-            Config.OrderListPageSize = orderListPageSize;
-        }
 
         int userListPageSize;
-        if (!int.TryParse(ConfigurationManager.AppSettings["UserListPageSize"].ToString(), out userListPageSize))
+        if (int.TryParse(ConfigurationManager.AppSettings["UserListPageSize"].ToString(), out userListPageSize))
+        {
+            Config.UserListPageSize = userListPageSize;
+        }
+        else
         {
             //默认pagesize
             Config.UserListPageSize = 10;
         }
-        else
-        {
-            Config.UserListPageSize = userListPageSize;
-        }
 
         int uoTimeout;
-        if (!int.TryParse(ConfigurationManager.AppSettings["WeChatAPITimeout"].ToString(), out uoTimeout))
+        if (int.TryParse(ConfigurationManager.AppSettings["WeChatAPITimeout"].ToString(), out uoTimeout))
+        {
+            Config.WeChatAPITimeout = uoTimeout;
+        }
+        else
         {
             //默认超时5秒
             Config.WeChatAPITimeout = 5;
         }
-        else
-        {
-            Config.WeChatAPITimeout = uoTimeout;
-        }
 
         int weChatOrderExpire;
-        if (!int.TryParse(ConfigurationManager.AppSettings["WeChatOrderExpire"].ToString(), out weChatOrderExpire))
+        if (int.TryParse(ConfigurationManager.AppSettings["WeChatOrderExpire"].ToString(), out weChatOrderExpire))
+        {
+            Config.WeChatOrderExpire = weChatOrderExpire;
+        }
+        else
         {
             //默认超时2小时
             Config.WeChatOrderExpire = 120;
         }
-        else
-        {
-            Config.WeChatOrderExpire = weChatOrderExpire;
-        }
 
         int logLevel;
-        if (!int.TryParse(ConfigurationManager.AppSettings["LogLevel"].ToString(), out logLevel))
+        if (int.TryParse(ConfigurationManager.AppSettings["LogLevel"].ToString(), out logLevel))
+        {
+            Config.LogLevel = logLevel;
+        }
+        else
         {
             //默认不输出日志
             Config.LogLevel = 0;
-        }
-        else
-        {
-            Config.LogLevel = logLevel;
         }
 
         Config.WxTmplMsgReceiver = new List<string>();
@@ -268,16 +278,37 @@ public static class Config
         }
 
         int memberPointsExchangeRate;
-        if (!int.TryParse(ConfigurationManager.AppSettings["MemberPointsExchangeRate"].ToString(), out memberPointsExchangeRate))
+        if (int.TryParse(ConfigurationManager.AppSettings["MemberPointsExchangeRate"].ToString(), out memberPointsExchangeRate))
+        {
+            Config.MemberPointsExchangeRate = memberPointsExchangeRate;
+        }
+        else
         {
             //默认兑换比率
             Config.MemberPointsExchangeRate = 20;
         }
+
+        decimal freight;
+        if (decimal.TryParse(ConfigurationManager.AppSettings["Freight"].ToString(), out freight))
+        {
+            Config.Freight = freight;
+        }
         else
         {
-            Config.MemberPointsExchangeRate = memberPointsExchangeRate;
+            //默认运费标准
+            Config.Freight = 0;
         }
 
+        decimal freightFreeCondition;
+        if (decimal.TryParse(ConfigurationManager.AppSettings["FreightFreeCondition"].ToString(), out freightFreeCondition))
+        {
+            Config.FreightFreeCondition = freightFreeCondition;
+        }
+        else
+        {
+            //默认包邮条件
+            Config.FreightFreeCondition = 0;
+        }
 
     }
 }

@@ -59,23 +59,27 @@
                 <div class="order-price-freight">
                     <div class="order-total">
                         合计：￥<span class="order-price">{{:OrderPrice}}</span>元
-                {{if IsCancel==0 && (TradeState!=1 && TradeState!=8)}}
-                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                        {{/if}}
                     </div>
-                    <div><span class="freight">(含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</span></div>
+                    <div class="freight">(含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</div>
                 </div>
+                {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14)}}
+                <div class="btn-pay">
+                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="wxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
+                        <button id="btnAliPay{{:ID}}" class="btn btn-alipay ladda-button" type="button" data-style="zoom-in" onclick="aliPay({{:ID}});">
+                            <img src="images/alipay.png" /> 支付宝</button>
+                </div>
+                {{/if}}
                 <hr />
                 <div class="order-state">
                     <span class="done">
                         <i class="fa fa-file-o"></i>&nbsp;下单
                     </span>
-                    {{if IsCancel==0 && (TradeState!=1 && TradeState!=8) && IsDelivered==0 && IsAccept==0}}
-                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">&nbsp;取消订单&nbsp;{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
+                    {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14) && IsDelivered==0 && IsAccept==0}}
+                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">&nbsp;取消订单&nbsp;{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
                            <span class="done">—</span>
-                            {{if TradeState==1 || TradeState==8}}
+                           {{if TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14}}
                      <span class="done">{{else}}
-                       <span id="WxPayOrder{{:ID}}" class="doing">{{/if}}
+                       <span id="PayOrder{{:ID}}" class="doing">{{/if}}
                     <i class="fa fa-credit-card"></i>&nbsp;支付—
                        </span>
                          {{if IsDelivered==1}}
@@ -97,8 +101,18 @@
     <script>
         var Ladda;
 
-        requirejs(['jquery', 'bootstrap'], function ($) {
+        requirejs(['jquery', 'bootstrap', 'encoder'], function ($) {
             $(function () {
+
+                if (paymentTerm == undefined || typeof paymentTerm != "object") {
+                    alert("参数错误：支付方式");
+                    return false;
+                }
+
+                if (apGateway == undefined) {
+                    alert("参数错误：支付宝网关");
+                    return false;
+                }
 
                 requirejs(['pager', 'ladda'], function (pager, ladda) {
 
@@ -135,7 +149,7 @@
                         var $lButtons = $("button.ladda-button").filter(function (index, element) {
                             return $(".ladda-spinner", this).length == 0;
                         });
-                        $.each($lButtons, function () {
+                        $lButtons.each(function () {
                             Ladda.bind(this);
                         });
                     });
@@ -165,13 +179,13 @@
             });
         });
 
-        var wxJsApiParam = "", lastPoID = "";
+        var wxPayParam = "", lastPoID = "";
 
         //调用微信JS api 支付，后台调用统一下单接口生成所需参数后，在微信浏览器中调用此函数发起支付
         function onBridgeReady() {
             WeixinJSBridge.invoke(
                 'getBrandWCPayRequest',
-                 wxJsApiParam,
+                 wxPayParam,
                  function (res) {
                      WeixinJSBridge.log(res.err_msg);
                      //alert(res.err_code + res.err_desc + res.err_msg);
@@ -180,8 +194,9 @@
 
                          //付款成功后，隐藏撤单、修改订单状态、隐藏微信支付按钮
                          $("#CancelOrder" + lastPoID).hide();
-                         $("#WxPayOrder" + lastPoID).removeClass("doing").addClass("done");
+                         $("#PayOrder" + lastPoID).removeClass("doing").addClass("done");
                          $("#btnWxPay" + lastPoID).hide();
+                         $("#btnAliPay" + lastPoID).hide();
                      }
                      else {
                          if (res.err_msg.indexOf("cancel") != -1) {
@@ -212,32 +227,32 @@
         }
 
         //微信支付按钮单击事件
-        function WxPay(poID) {
+        function wxPay(poID) {
 
-            //lastPoID是最近一次点击微信支付指向的订单ID，如果当前函数传入的poID和lastPoID不一致，这说明用户点击了两个不同订单的微信支付按钮，第二次需要清空变量wxJsApiParam，重新向后台发起统一下单
+            //lastPoID是最近一次点击微信支付指向的订单ID，如果当前函数传入的poID和lastPoID不一致，这说明用户点击了两个不同订单的微信支付按钮，第二次需要清空变量wxPayParam，重新向后台发起统一下单
             if (lastPoID != "" && lastPoID != poID) {
-                wxJsApiParam = "";   //清空上次统一下单返回的JS支付参数
+                wxPayParam = "";   //清空上次统一下单返回的JS支付参数
             }
 
             //记录当前点击的订单ID
             lastPoID = poID;
 
             //如果JS支付参数不为空，说明已经获取到prepay_id，则直接发起支付
-            if (wxJsApiParam != "" && wxJsApiParam.package != undefined) {
+            if (wxPayParam != "" && wxPayParam.package != undefined) {
 
                 JsApiPay();
             }
             else {
                 $.ajax({
-                    url: "JSAPIPay.ashx",
-                    data: { PoID: poID },
+                    url: "PlaceOrder.ashx",
+                    data: { PoID: poID, PaymentTerm: paymentTerm.wechat },
                     type: "GET",
                     dataType: "json",
                     cache: false,
                     success: function (response) {
                         if (response["package"] != null)  //统一下单正常，取到了prepay_id，发起支付
                         {
-                            wxJsApiParam = response;
+                            wxPayParam = response;
                             JsApiPay();
                         }
                         else {
@@ -263,13 +278,49 @@
             }
         }
 
+        //支付宝支付
+        function aliPay(poID) {
+
+            //lastPoID是最近一次点击微信支付指向的订单ID，如果当前函数传入的poID和lastPoID不一致，这说明用户点击了两个不同订单的微信支付按钮，第二次需要清空变量wxPayParam，重新向后台发起统一下单
+            if (lastPoID != "" && lastPoID != poID) {
+                wxPayParam = "";   //清空上次统一下单返回的JS支付参数
+            }
+
+            //记录当前点击的订单ID
+            lastPoID = poID;
+
+            //提交订单
+            $.ajax({
+                url: "PlaceOrder.ashx",
+                data: { PoID: poID, PaymentTerm: paymentTerm.alipay },
+                type: "GET",
+                dataType: "text",
+                cache: false,
+                success: function (alipayParam) {
+                    if (typeof encoder == "object" && apGateway != undefined && alipayParam != undefined && alipayParam.indexOf("sign") != -1) {
+                        //后台获取到支付宝请求参数，前台再跳转到支付宝进行付款
+                        var aliPayUrl = apGateway + "?" + alipayParam;
+                        location.href = "AliPayTip.aspx?goto=" + encoder.encode(aliPayUrl);
+                    }
+                    else {
+                        alert("没有获取到支付宝参数");
+                        Ladda.stopAll();   //停止按钮loading动画
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown + ":" + textStatus);
+                    Ladda.stopAll();   //停止按钮loading动画
+                }
+            });
+        }
+
         //撤单
         function cancelOrder(poID) {
             if (!confirm("撤单后不能恢复，您确认吗？")) {
                 return false;
             }
             else {
-                $("#CancelOrder" + poID).prop("onclick", "").text("(撤单中...)");
+                $("#CancelOrder" + poID).prop("onclick", "").text("撤单中...");
                 $.ajax({
                     url: "CancelOrder.ashx",
                     data: { PoID: poID },
@@ -279,9 +330,10 @@
                     success: function (response) {
                         if (response["result_code"] == "SUCCESS") {
                             alert("撤单成功");
-                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("doing").addClass("done");
+                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("doing btn-cancel").addClass("done");
                             $("#AcceptOrder" + poID).prop("onclick", "");
                             $("#btnWxPay" + poID).hide();
+                            $("#btnAliPay" + poID).hide();
                         }
                         else {
                             alert("撤单失败：" + response["err_code_des"]);

@@ -46,6 +46,13 @@
         this.validMemberPoints = 0;
         //积分兑换比率，默认100积分兑换1元
         this.memberPointsExchangeRate = 100;
+        //运费条款
+        this.freightTerm = {
+            //运费标准，默认0元
+            freight: 0,
+            //包邮条件，默认不包邮
+            freightFreeCondition: 0
+        };
         //订单商品信息
         this.prodItems = [];
 
@@ -291,17 +298,17 @@
             }
         };
 
-        //根据订单商品价格计算运费
+        //根据订单商品价格、运费条款计算运费
         Cart.prototype.calFreight = function () {
             try {
                 var subTotal, freight;
                 subTotal = this.subTotal();
-                //根据购物车中的商品价格计算运费
-                if (subTotal < 99) {
-                    freight = 10;
+                //根据购物车中的商品价格达到免运费条件，则免运费
+                if (subTotal >= this.freightTerm.freightFreeCondition) {
+                    freight = 0;
                 }
                 else {
-                    freight = 0;
+                    freight = this.freightTerm.freight;
                 }
                 return freight;
             }
@@ -370,13 +377,25 @@
         };
 
         //更新收件人信息
-        Cart.prototype.updateDeliverInfo = function (name, phone, address, memo, paymentTerm) {
+        Cart.prototype.updateDeliverInfo = function (name, phone, address, memo) {
             try {
                 this.load();
                 this.name = name;
                 this.phone = phone;
                 this.address = address;
                 this.memo = memo;
+                this.save();
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
+        };
+
+        //更新支付方式
+        Cart.prototype.updatePaymentTerm = function (paymentTerm) {
+            try {
+                this.load();
                 this.paymentTerm = paymentTerm;
                 this.save();
             }
@@ -455,6 +474,27 @@
                 else {
                     return this.validMemberPoints;
                 }
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
+        };
+
+        //更新运费条款
+        Cart.prototype.updateFreightTerm = function (freight, freightFreeCondition) {
+            try {
+                //校验参数
+                if (isNaN(freight) || freight < 0) {
+                    throw new TypeError("运费标准不正确");
+                }
+                if (isNaN(freightFreeCondition) || freightFreeCondition < 0) {
+                    throw new TypeError("包邮条件不正确");
+                }
+                this.load();
+                this.freightTerm.freight = freight;
+                this.freightTerm.freightFreeCondition = freightFreeCondition;
+                this.save();
             }
             catch (error) {
                 alert(error.message);

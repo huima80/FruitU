@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="row text-center">
-            <div class="col-xs-12" onclick="wxOpenAddress();">
+            <div id="divWxAddress" class="col-xs-12" onclick="selectDeliverAddress();">
                 <div class="info-block deliver-addr-block">收货地址</div>
             </div>
         </div>
@@ -79,6 +79,9 @@
         requirejs(['jquery'], function ($) {
 
             $(function () {
+                //注册选择收货人信息单击事件处理函数
+                //$("#divWxAddress").on("click", wx, wxOpenAddress);
+
                 //点击遮罩层关闭模式窗口
                 $(".md-overlay").on("click", closeModal);
 
@@ -106,22 +109,22 @@
         }
 
         //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
-        function wxOpenAddress() {
-            requirejs(['jquery', 'jweixin110'], function ($, wx) {
-                wx.openAddress({
-                    success: function (res) {
-                        // 用户成功拉出地址 
-                        if (res.errMsg.indexOf("ok") != -1) {
-                            alert("收货地址编辑成功，可在下单时选用。");
-                        }
-                        else {
-                            alert("无法获取您的地址");
-                        }
-                    },
-                    cancel: function () {
-                        // 用户取消拉出地址
+        function wxOpenAddress(event) {
+            var wx = event.data;
+            wx.openAddress({
+                success: function (res) {
+                    // 用户成功拉出地址 
+                    if (res.errMsg.indexOf("ok") != -1) {
+                        alert("收货地址可在下单时选用。");
                     }
-                });
+                    else {
+                        alert("无法获取您的地址");
+                    }
+                },
+                cancel: function () {
+                    // 用户取消拉出地址
+                    alert("收货地址可在下单时选用。");
+                }
             });
         }
 
@@ -132,7 +135,7 @@
                 wxEditAddrParam,   //后端获取的参数
                   function (res) {
                       if (res.err_msg.indexOf("ok") != -1) {
-                          alert("收货地址编辑成功，可在下单时选用。");
+                          alert("收货地址可在下单时选用。");
                       }
                       else {
                           if (res.err_msg.indexOf("function_not_exist") != -1) {

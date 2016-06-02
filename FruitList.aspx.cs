@@ -12,64 +12,56 @@ public partial class FruitList : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
         int topSellingIDWeekly, topSellingIDMonthly;
-        List<Fruit> fruitList;
+        List<Fruit> fruitList, sliceList;
+
+        //获取水果切片数据，并渲染模板显示
+        sliceList = Fruit.FindFruitByCategoryID("44", out topSellingIDWeekly, out topSellingIDMonthly);
+        this.divSlices.InnerHtml = this.RenderTmpl(sliceList, topSellingIDWeekly);
+
+        //获取水果数据，并使用数据绑定控件显示
         fruitList = Fruit.FindFruitByCategoryID("28", out topSellingIDWeekly, out topSellingIDMonthly);
+        fruitList.Sort();
+        this.dlFruits.DataSource = fruitList;
+        this.dlFruits.DataBind();
 
-        this.divFruitList.InnerHtml = RenderTmpl(fruitList, topSellingIDWeekly);
+        //把所有切片数据写入前端JS变量
+        JsonData jSliceList = JsonMapper.ToJson(sliceList);
+        ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsSliceList", string.Format("var sliceList={0};", jSliceList.ToString()), true);
 
-        JsonData jFruitList = JsonMapper.ToJson(fruitList);
-        ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsJuiceList", string.Format("var fruitList={0};", jFruitList.ToString()), true);
     }
 
     private string RenderTmpl(List<Fruit> data, int topSellingIDWeekly)
     {
         StringBuilder sbFruitList = new StringBuilder();
-        string tmplFruit = "<div class=\"col-xs-12\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{今日售罄}}</div>";
-        string tmplWeeklyMenu = "<div class=\"col-xs-12\"><img src=\"images/WeeklyMenu.gif\" /></div>";
+        string tmplFruit = "<div class=\"col-xs-{{:ColWidth}}\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{今日售罄}}</div>";
+        string tmplSliceMenu = "<div class=\"col-xs-12\"><img src=\"images/SliceMenu.jpg\" /></div>";
         string resultStr;
-        int inventoryOfFruitAWeek = 0;
 
         data.Sort();
 
-        //查询一周水果套餐的库存量
         data.ForEach(fruit =>
         {
-            if (fruit.ID == 88)
+            if (fruit.ID == 97 && fruit.InventoryQty != 0)
             {
-                inventoryOfFruitAWeek = fruit.InventoryQty;
-                return;
-            }
-        });
-
-        data.ForEach(fruit =>
-        {
-            resultStr = string.Copy(tmplFruit);
-
-            if (fruit.ID == 88 && fruit.InventoryQty != 0)
-            {
-                resultStr = resultStr.Replace("{{:ID}}", fruit.ID.ToString());
-                resultStr = resultStr.Replace("{{今日售罄}}", string.Empty);
-                resultStr += tmplWeeklyMenu;
+                resultStr = tmplFruit.Replace("{{:ColWidth}}", "12").Replace("{{:ID}}", fruit.ID.ToString()).Replace("{{今日售罄}}", string.Empty);
+                resultStr += tmplSliceMenu;
             }
             else
             {
-                if (fruit.ID == 88 && fruit.InventoryQty == 0)
+                if (fruit.ID == 97 && fruit.InventoryQty == 0)
                 {
-                    resultStr = resultStr.Replace("onclick=\"openModal({{:ID}});\"", string.Empty);
-                    resultStr = resultStr.Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
-                    resultStr += tmplWeeklyMenu;
+                    resultStr = tmplFruit.Replace("{{:ColWidth}}", "12").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
+                    resultStr += tmplSliceMenu;
                 }
                 else
                 {
-                    if (fruit.ID != 88 && inventoryOfFruitAWeek != 0)
+                    if (fruit.ID != 97 && fruit.InventoryQty != 0)
                     {
-                        resultStr = resultStr.Replace("{{:ID}}", "88");
-                        resultStr = resultStr.Replace("{{今日售罄}}", string.Empty);
+                        resultStr = tmplFruit.Replace("{{:ColWidth}}", "6").Replace("{{:ID}}", fruit.ID.ToString()).Replace("{{今日售罄}}", string.Empty);
                     }
                     else
                     {
-                        resultStr = resultStr.Replace("onclick=\"openModal({{:ID}});\"", string.Empty);
-                        resultStr = resultStr.Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
+                        resultStr = tmplFruit.Replace("{{:ColWidth}}", "6").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
                     }
                 }
             }
@@ -82,14 +74,6 @@ public partial class FruitList : System.Web.UI.Page
                     return;
                 }
             });
-            //if (fruit.ID == topSellingIDWeekly)
-            //{
-            //    resultStr = resultStr.Replace("{{本周爆款}}", "<span class=\"top-selling-week-prod\"><i class=\"fa fa-trophy fa-lg\"></i>本周爆款</span>");
-            //}
-            //else
-            //{
-            //    resultStr = resultStr.Replace("{{本周爆款}}", string.Empty);
-            //}
 
             sbFruitList.Append(resultStr);
         });

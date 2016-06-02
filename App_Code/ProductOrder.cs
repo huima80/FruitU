@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using LitJson;
+using Com.Alipay;
 
 /// <summary>
 /// ProductOrder 的摘要说明
@@ -99,6 +100,11 @@ public class ProductOrder : IComparable<ProductOrder>
     public DateTime? AcceptDate { get; set; }
 
     /// <summary>
+    /// 货到付款日期，可空
+    /// </summary>
+    public DateTime? PayCashDate { get; set; }
+
+    /// <summary>
     /// 微信支付交易号
     /// </summary>
     public string TransactionID { get; set; }
@@ -154,7 +160,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 会员积分抵扣的订单金额
+    /// 会员积分抵扣的金额
     /// </summary>
     public decimal MemberPointsDiscount { get; set; }
 
@@ -226,6 +232,66 @@ public class ProductOrder : IComparable<ProductOrder>
             return string.Join<string>(",", ods);
         }
     }
+
+    /// <summary>
+    /// 支付宝交易号，最长64位
+    /// </summary>
+    public string AP_TradeNo { get; set; }
+
+    /// <summary>
+    /// 卖家支付宝账户号，以2088开头的纯16位数字。
+    /// </summary>
+    public string AP_SellerID { get; set; }
+
+    /// <summary>
+    /// 卖家支付宝账号，可以是Email或手机号码
+    /// </summary>
+    public string AP_SellerEmail { get; set; }
+
+    /// <summary>
+    /// 买家支付宝账户号，以2088开头的纯16位数字。
+    /// </summary>
+    public string AP_BuyerID { get; set; }
+
+    /// <summary>
+    /// 买家支付宝账号，可以是Email或手机号码
+    /// </summary>
+    public string AP_BuyerEmail { get; set; }
+
+    /// <summary>
+    /// 支付宝通知时间
+    /// </summary>
+    public DateTime? AP_Notify_Time { get; set; }
+
+    /// <summary>
+    /// 支付宝通知类型
+    /// </summary>
+    public string AP_Notify_Type { get; set; }
+
+    /// <summary>
+    /// 支付宝交易创建时间
+    /// </summary>
+    public DateTime? AP_GMT_Create { get; set; }
+
+    /// <summary>
+    /// 支付宝交易付款时间
+    /// </summary>
+    public DateTime? AP_GMT_Payment { get; set; }
+
+    /// <summary>
+    /// 支付宝交易关闭时间
+    /// </summary>
+    public DateTime? AP_GMT_Close { get; set; }
+
+    /// <summary>
+    /// 支付宝退款状态
+    /// </summary>
+    public RefundStatus? AP_RefundStatus { get; set; }
+
+    /// <summary>
+    /// 支付宝退款时间
+    /// </summary>
+    public DateTime? AP_GMT_Refund { get; set; }
 
     public ProductOrder()
     {
@@ -321,15 +387,13 @@ public class ProductOrder : IComparable<ProductOrder>
 
 
     /// <summary>
-    /// 提交新订单
-    /// 1，如果付款方式是微信支付，则调用微信支付统一下单API、获取prepay_id，订单入库，生成JS支付参数
-    /// 2，如果付款方式是货到付款，则直接订单入库
+    /// 提交新订单，微信支付，调用微信支付统一下单API、获取prepay_id，订单入库，生成JS支付参数
     /// </summary>
     /// <param name="po">待处理订单</param>
-    /// <param name="wxJsApiParam">根据prepay_id生成的JS支付参数</param>
+    /// <param name="wxPayParam">根据prepay_id生成的JS支付参数</param>
     /// <param name="jStateCode">微信支付返回的错误码</param>
     /// <returns>处理后的订单</returns>
-    public static ProductOrder SubmitOrder(ProductOrder po, out string wxJsApiParam, out WeChatPayData stateCode)
+    public static ProductOrder SubmitOrder(ProductOrder po, out string wxPayParam, out WeChatPayData stateCode)
     {
         if (po == null)
         {
@@ -337,42 +401,28 @@ public class ProductOrder : IComparable<ProductOrder>
         }
 
         //根据prepay_id生成的JS支付参数
-        wxJsApiParam = string.Empty;
+        wxPayParam = string.Empty;
 
         //微信统一下单API返回的错误码
         stateCode = new WeChatPayData();
 
-        switch (po.PaymentTerm)
+        //统一下单，获取prepay_id，如果有错误发生，则jStateCode有返回值
+        po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
+
+        if (stateCode.Count == 0)
         {
-            case PaymentTerm.WECHAT:    //付款方式为微信支付，先统一下单、再订单入库
-
-                //统一下单，获取prepay_id，如果有错误发生，则jStateCode有返回值
-                po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
-
-                if (stateCode.Count == 0)
-                {
-                    if (!string.IsNullOrEmpty(po.PrepayID))
-                    {
-                        //订单入库
-                        ProductOrder.AddOrder(po);
-
-                        //根据prepay_id生成JS支付参数
-                        wxJsApiParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
-                    }
-                    else
-                    {
-                        throw new Exception("未能获取微信支付统一下单prepay_id");
-                    }
-                }
-
-                break;
-            case PaymentTerm.CASH:  //付款方式为货到付款，不统一下单，直接入库
-
+            if (!string.IsNullOrEmpty(po.PrepayID))
+            {
                 //订单入库
                 ProductOrder.AddOrder(po);
-                break;
-            default:
-                throw new Exception("不支持的支付方式。");
+
+                //根据prepay_id生成JS支付参数
+                wxPayParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
+            }
+            else
+            {
+                throw new Exception("未能获取微信支付统一下单prepay_id");
+            }
         }
 
         //触发订单提交状态事件
@@ -383,18 +433,127 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 处理已有订单
+    /// 提交新订单，货到付款
+    /// </summary>
+    /// <param name="po"></param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrder(ProductOrder po)
+    {
+        if (po == null)
+        {
+            throw new ArgumentNullException("ProductOrder对象不能为null");
+        }
+
+        //订单入库
+        ProductOrder.AddOrder(po);
+
+        //触发订单提交状态事件
+        po.OnOrderStateChanged(OrderState.Submitted);
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 提交新订单，支付宝支付
+    /// </summary>
+    /// <param name="po"></param>
+    /// <param name="requestPara">支付宝请求参数</param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrder(ProductOrder po, out string requestPara)
+    {
+        if (po == null)
+        {
+            throw new ArgumentNullException("ProductOrder对象不能为null");
+        }
+
+        //订单入库
+        ProductOrder.AddOrder(po);
+
+        //生成支付宝请求参数
+        SortedDictionary<string, string> sParaTemp = new SortedDictionary<string, string>();
+        sParaTemp.Add("partner", AliPayConfig.partner);
+        sParaTemp.Add("seller_id", AliPayConfig.seller_id);
+        sParaTemp.Add("_input_charset", AliPayConfig.input_charset.ToLower());
+        sParaTemp.Add("service", AliPayConfig.service);
+        sParaTemp.Add("payment_type", AliPayConfig.payment_type);
+        sParaTemp.Add("notify_url", AliPayConfig.notify_url);
+        sParaTemp.Add("return_url", AliPayConfig.return_url);
+        sParaTemp.Add("out_trade_no", po.OrderID);
+        sParaTemp.Add("subject", po.ProductNames);
+        sParaTemp.Add("total_fee", po.OrderPrice.ToString());
+        sParaTemp.Add("show_url", "http://mahui.me");
+        sParaTemp.Add("body", po.OrderDetails);
+
+        requestPara = Submit.BuildRequestPara(sParaTemp);
+
+        //触发订单提交状态事件
+        po.OnOrderStateChanged(OrderState.Submitted);
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 处理已有订单，支付宝
+    /// </summary>
+    /// <param name="poID"></param>
+    /// <param name="requestPara"></param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrder(int poID, out string requestPara)
+    {
+        //加载完整的订单信息
+        ProductOrder po = new ProductOrder(poID);
+
+        //对于已有订单，用户在我的订单中点击“支付宝”后，需要把此订单的支付方式改为“支付宝支付”、支付状态改为“未支付”
+        po.PaymentTerm = PaymentTerm.ALIPAY;
+        po.TradeState = TradeState.AP_WAIT_BUYER_PAY;
+
+        ProductOrder.UpdatePaymentTerm(po);
+
+        requestPara = string.Empty;
+        if (!string.IsNullOrEmpty(po.OrderID))
+        {
+            //生成支付宝请求参数
+            SortedDictionary<string, string> sParaTemp = new SortedDictionary<string, string>();
+            sParaTemp.Add("partner", AliPayConfig.partner);
+            sParaTemp.Add("seller_id", AliPayConfig.seller_id);
+            sParaTemp.Add("_input_charset", AliPayConfig.input_charset.ToLower());
+            sParaTemp.Add("service", AliPayConfig.service);
+            sParaTemp.Add("payment_type", AliPayConfig.payment_type);
+            sParaTemp.Add("notify_url", AliPayConfig.notify_url);
+            sParaTemp.Add("return_url", AliPayConfig.return_url);
+            sParaTemp.Add("out_trade_no", po.OrderID);
+            sParaTemp.Add("subject", po.ProductNames);
+            sParaTemp.Add("total_fee", po.OrderPrice.ToString());
+            sParaTemp.Add("show_url", "http://mahui.me");
+            sParaTemp.Add("body", po.OrderDetails);
+
+            requestPara = Submit.BuildRequestPara(sParaTemp);
+
+        }
+        else
+        {
+            throw new Exception(string.Format("订单“{0}”不存在", poID));
+        }
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 处理已有订单，微信支付
     /// 1，根据订单ID查询订单，如果prepay_id有值，则校验其有效期，如果过期则重新发起统一下单获取prepay_id，并生成JS支付参数
     /// 2，如果没有prepay_id值，则上次下单时为货到付款，则重新发起微信支付统一下单并获取JS支付参数
     /// </summary>
     /// <param name="poID">订单ID</param>
-    /// <param name="wxJsApiParam">JS支付参数</param>
+    /// <param name="wxPayParam">微信支付JS参数</param>
     /// <param name="jStateCode">微信支付返回的错误码</param>
     /// <returns></returns>
-    public static ProductOrder SubmitOrder(int poID, out string wxJsApiParam, out WeChatPayData stateCode)
+    public static ProductOrder SubmitOrder(int poID, out string wxPayParam, out WeChatPayData stateCode)
     {
         //根据prepay_id生成的JS支付参数
-        wxJsApiParam = string.Empty;
+        wxPayParam = string.Empty;
 
         //微信统一下单API返回的错误码
         stateCode = new WeChatPayData();
@@ -427,27 +586,27 @@ public class ProductOrder : IComparable<ProductOrder>
 
                     if (!string.IsNullOrEmpty(po.PrepayID) && stateCode.Count == 0)
                     {
-                        //使用新获取的PrepayID更新数据库
-                        ProductOrder.UpdatePrepayID(po);
+                        //更新订单的支付方式、支付状态、新的prepay_id
+                        ProductOrder.UpdatePaymentTerm(po);
                     }
                 }
             }
             else
             {
-                //如果PrepayID为空（上次下单时选择的货到付款），这里使用OrderID发起统一下单，首次获取prepay_id
+                //如果PrepayID为空（上次下单时没有选择微信支付），这里使用OrderID发起统一下单，首次获取prepay_id
                 po.PrepayID = WxPayAPI.CallUnifiedOrderAPI(po, out stateCode);
 
                 if (!string.IsNullOrEmpty(po.PrepayID) && stateCode.Count == 0)
                 {
-                    //使用首次获得的PrepayID更新数据库
-                    ProductOrder.UpdatePrepayID(po);
+                    //更新订单的支付方式、支付状态、新的prepay_id
+                    ProductOrder.UpdatePaymentTerm(po);
                 }
             }
 
             if (!string.IsNullOrEmpty(po.PrepayID))
             {
                 //根据新的prepay_id生成前端JS支付参数
-                wxJsApiParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
+                wxPayParam = WxPayAPI.MakeWXPayJsParam(po.PrepayID);
             }
             else
             {
@@ -641,6 +800,12 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramIsCalMemberPoints.SqlValue = po.IsCalMemberPoints;
                         cmdAddOrder.Parameters.Add(paramIsCalMemberPoints);
 
+                        SqlParameter paramSellerID = cmdAddOrder.CreateParameter();
+                        paramSellerID.ParameterName = "@AP_SellerID";
+                        paramSellerID.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramSellerID.SqlValue = po.AP_SellerID;
+                        cmdAddOrder.Parameters.Add(paramSellerID);
+
                         foreach (SqlParameter param in cmdAddOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -650,7 +815,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [AgentOpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints]) VALUES (@OrderID,@OpenID,@AgentOpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [AgentOpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints], [AP_SellerID]) VALUES (@OrderID,@OpenID,@AgentOpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints,@AP_SellerID);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -819,30 +984,7 @@ public class ProductOrder : IComparable<ProductOrder>
                             {
                                 po = new ProductOrder();
 
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
-                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
-                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
+                                SDR2PO(po, sdrOrder);
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
 
@@ -921,7 +1063,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="startRowIndex">每页开始行号</param>
     /// <param name="maximumRows">每页行数</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount,out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -1030,30 +1172,7 @@ public class ProductOrder : IComparable<ProductOrder>
                             {
                                 po = new ProductOrder();
 
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.IsDelivered = sdrOrder["IsDelivered"] != DBNull.Value ? bool.Parse(sdrOrder["IsDelivered"].ToString()) : false;
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = sdrOrder["IsAccept"] != DBNull.Value ? bool.Parse(sdrOrder["IsAccept"].ToString()) : false;
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.IsCancel = sdrOrder["IsCancel"] != DBNull.Value ? bool.Parse(sdrOrder["IsCancel"].ToString()) : false;
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
-                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
-                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
+                                SDR2PO(po, sdrOrder);
 
                                 if (isLoadPurchaser)
                                 {
@@ -1218,30 +1337,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         {
                             while (sdrOrder.Read())
                             {
-                                this.ID = int.Parse(sdrOrder["Id"].ToString());
-                                this.OrderID = sdrOrder["OrderID"].ToString();
-                                this.DeliverName = sdrOrder["DeliverName"].ToString();
-                                this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                this.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                this.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                this.TradeState = (TradeState)sdrOrder["TradeState"];
-                                this.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                this.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                this.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                this.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                this.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                this.TransactionID = sdrOrder["TransactionID"].ToString();
-                                this.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                this.PrepayID = sdrOrder["PrepayID"].ToString();
-                                this.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                this.ClientIP = sdrOrder["ClientIP"].ToString();
-                                this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-                                this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                this.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
-                                this.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
-                                this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
+                                SDR2PO(this, sdrOrder);
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
                                 if (sdrOrder["AgentOpenID"] != null)
@@ -1318,30 +1414,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         {
                             while (sdrOrder.Read())
                             {
-                                this.ID = int.Parse(sdrOrder["Id"].ToString());
-                                this.OrderID = sdrOrder["OrderID"].ToString();
-                                this.DeliverName = sdrOrder["DeliverName"].ToString();
-                                this.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                this.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                this.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                this.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                this.TradeState = (TradeState)sdrOrder["TradeState"];
-                                this.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                this.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                this.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                this.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                this.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                this.TransactionID = sdrOrder["TransactionID"].ToString();
-                                this.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                this.PrepayID = sdrOrder["PrepayID"].ToString();
-                                this.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                this.ClientIP = sdrOrder["ClientIP"].ToString();
-                                this.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                this.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-                                this.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                this.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
-                                this.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
-                                this.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
+                                SDR2PO(this, sdrOrder);
 
                                 this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
                                 if (sdrOrder["AgentOpenID"] != null)
@@ -1425,30 +1498,7 @@ public class ProductOrder : IComparable<ProductOrder>
                             {
                                 po = new ProductOrder();
 
-                                po.ID = int.Parse(sdrOrder["Id"].ToString());
-                                po.OrderID = sdrOrder["OrderID"].ToString();
-                                po.DeliverName = sdrOrder["DeliverName"].ToString();
-                                po.DeliverPhone = sdrOrder["DeliverPhone"].ToString();
-                                po.DeliverAddress = sdrOrder["DeliverAddress"].ToString();
-                                po.OrderMemo = sdrOrder["OrderMemo"].ToString();
-                                po.OrderDate = DateTime.Parse(sdrOrder["OrderDate"].ToString());
-                                po.TradeState = (TradeState)sdrOrder["TradeState"];
-                                po.TradeStateDesc = sdrOrder["TradeStateDesc"].ToString();
-                                po.IsDelivered = bool.Parse(sdrOrder["IsDelivered"].ToString());
-                                po.DeliverDate = sdrOrder["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["DeliverDate"].ToString()) : null;
-                                po.IsAccept = bool.Parse(sdrOrder["IsAccept"].ToString());
-                                po.AcceptDate = sdrOrder["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["AcceptDate"].ToString()) : null;
-                                po.TransactionID = sdrOrder["TransactionID"].ToString();
-                                po.TransactionTime = sdrOrder["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["TransactionTime"].ToString()) : null;
-                                po.PrepayID = sdrOrder["PrepayID"].ToString();
-                                po.PaymentTerm = (PaymentTerm)sdrOrder["PaymentTerm"];
-                                po.ClientIP = sdrOrder["ClientIP"].ToString();
-                                po.IsCancel = bool.Parse(sdrOrder["IsCancel"].ToString());
-                                po.CancelDate = sdrOrder["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdrOrder["CancelDate"].ToString()) : null;
-                                po.Freight = sdrOrder["Freight"] != DBNull.Value ? decimal.Parse(sdrOrder["Freight"].ToString()) : 0;
-                                po.MemberPointsDiscount = sdrOrder["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdrOrder["MemberPointsDiscount"].ToString()) : 0;
-                                po.UsedMemberPoints = sdrOrder["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdrOrder["UsedMemberPoints"].ToString()) : 0;
-                                po.IsCalMemberPoints = sdrOrder["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdrOrder["IsCalMemberPoints"].ToString()) : false;
+                                SDR2PO(po, sdrOrder);
 
                                 po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
                                 if (sdrOrder["AgentOpenID"] != null)
@@ -1593,11 +1643,12 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// PrepayID超时后，需要重新发起统一下单，得到新的PrepayID，并更新数据库的“PrepayID、PaymentTerm微信支付方式、TradeState未支付”字段
+    /// 更新订单的支付方式，用于在我的订单页面中，用户对已有订单重新发起支付时，更新此订单的支付方式和支付状态字段
+    /// 对于微信支付，在PrepayID超时后，需要重新发起统一下单，得到新的PrepayID，并更新数据库的“PrepayID、PaymentTerm微信支付方式、TradeState未支付”字段
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
-    public static int UpdatePrepayID(ProductOrder po)
+    public static int UpdatePaymentTerm(ProductOrder po)
     {
         int result;
 
@@ -1611,22 +1662,12 @@ public class ProductOrder : IComparable<ProductOrder>
                 {
                     using (SqlCommand cmdOrderID = conn.CreateCommand())
                     {
-                        cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm, TradeState = @TradeState where Id=@Id";
-
                         SqlParameter paramId;
                         paramId = cmdOrderID.CreateParameter();
                         paramId.ParameterName = "@Id";
                         paramId.SqlDbType = System.Data.SqlDbType.Int;
                         paramId.SqlValue = po.ID;
                         cmdOrderID.Parameters.Add(paramId);
-
-                        SqlParameter paramPrepayID;
-                        paramPrepayID = cmdOrderID.CreateParameter();
-                        paramPrepayID.ParameterName = "@PrepayID";
-                        paramPrepayID.SqlDbType = System.Data.SqlDbType.VarChar;
-                        paramPrepayID.Size = 100;
-                        paramPrepayID.SqlValue = po.PrepayID;
-                        cmdOrderID.Parameters.Add(paramPrepayID);
 
                         SqlParameter paramPaymentTerm;
                         paramPaymentTerm = cmdOrderID.CreateParameter();
@@ -1641,6 +1682,33 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramTradeState.SqlDbType = System.Data.SqlDbType.Int;
                         paramTradeState.SqlValue = (int)po.TradeState;
                         cmdOrderID.Parameters.Add(paramTradeState);
+
+                        switch (po.PaymentTerm)
+                        {
+                            case PaymentTerm.WECHAT:
+                                cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm, TradeState = @TradeState where Id=@Id";
+
+                                SqlParameter paramPrepayID;
+                                paramPrepayID = cmdOrderID.CreateParameter();
+                                paramPrepayID.ParameterName = "@PrepayID";
+                                paramPrepayID.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramPrepayID.Size = 100;
+                                paramPrepayID.SqlValue = po.PrepayID;
+                                cmdOrderID.Parameters.Add(paramPrepayID);
+
+                                break;
+                            case PaymentTerm.ALIPAY:
+                                cmdOrderID.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, AP_SellerID = @AP_SellerID where Id=@Id";
+
+                                SqlParameter paramAP_SellerID;
+                                paramAP_SellerID = cmdOrderID.CreateParameter();
+                                paramAP_SellerID.ParameterName = "@AP_SellerID";
+                                paramAP_SellerID.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramAP_SellerID.SqlValue = AliPayConfig.seller_id;
+                                cmdOrderID.Parameters.Add(paramAP_SellerID);
+
+                                break;
+                        }
 
                         foreach (SqlParameter param in cmdOrderID.Parameters)
                         {
@@ -1986,7 +2054,7 @@ public class ProductOrder : IComparable<ProductOrder>
 
 
     /// <summary>
-    /// 更新订单的微信支付状态
+    /// 更新订单的支付状态，根据不同支付方式，更新不同的字段
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
@@ -2026,12 +2094,10 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramTradeState.SqlValue = (int)po.TradeState;
                         cmdTradeState.Parameters.Add(paramTradeState);
 
-                        //微信支付方式需要额外更新支付方式描述、交易ID、交易时间字段
+                        //不同的支付方式需要更新不同的字段
                         switch (po.PaymentTerm)
                         {
                             case PaymentTerm.WECHAT:
-                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, TradeStateDesc=@TradeStateDesc, TransactionID = @TransactionID, TransactionTime=@TransactionTime where OrderID=@OrderID";
-
                                 SqlParameter paramTradeStateDesc;
                                 paramTradeStateDesc = cmdTradeState.CreateParameter();
                                 paramTradeStateDesc.ParameterName = "@TradeStateDesc";
@@ -2055,13 +2121,99 @@ public class ProductOrder : IComparable<ProductOrder>
                                 paramTransactionTime.SqlValue = po.TransactionTime;
                                 cmdTradeState.Parameters.Add(paramTransactionTime);
 
+                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, TradeStateDesc=@TradeStateDesc, TransactionID = @TransactionID, TransactionTime=@TransactionTime where OrderID=@OrderID";
+
+                                break;
+
+                            case PaymentTerm.ALIPAY:
+                                SqlParameter paramAP_TradeNo;
+                                paramAP_TradeNo = cmdTradeState.CreateParameter();
+                                paramAP_TradeNo.ParameterName = "@AP_TradeNo";
+                                paramAP_TradeNo.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramAP_TradeNo.SqlValue = po.AP_TradeNo;
+                                cmdTradeState.Parameters.Add(paramAP_TradeNo);
+
+                                SqlParameter paramAP_SellerEmail;
+                                paramAP_SellerEmail = cmdTradeState.CreateParameter();
+                                paramAP_SellerEmail.ParameterName = "@AP_SellerEmail";
+                                paramAP_SellerEmail.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramAP_SellerEmail.SqlValue = po.AP_SellerEmail;
+                                cmdTradeState.Parameters.Add(paramAP_SellerEmail);
+
+                                SqlParameter paramAP_BuyerID;
+                                paramAP_BuyerID = cmdTradeState.CreateParameter();
+                                paramAP_BuyerID.ParameterName = "@AP_BuyerID";
+                                paramAP_BuyerID.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramAP_BuyerID.SqlValue = po.AP_BuyerID;
+                                cmdTradeState.Parameters.Add(paramAP_BuyerID);
+
+                                SqlParameter paramAP_BuyerEmail;
+                                paramAP_BuyerEmail = cmdTradeState.CreateParameter();
+                                paramAP_BuyerEmail.ParameterName = "@AP_BuyerEmail";
+                                paramAP_BuyerEmail.SqlDbType = System.Data.SqlDbType.VarChar;
+                                paramAP_BuyerEmail.SqlValue = po.AP_BuyerEmail;
+                                cmdTradeState.Parameters.Add(paramAP_BuyerEmail);
+
+                                SqlParameter paramAP_Notify_Time;
+                                paramAP_Notify_Time = cmdTradeState.CreateParameter();
+                                paramAP_Notify_Time.ParameterName = "@AP_Notify_Time";
+                                paramAP_Notify_Time.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramAP_Notify_Time.SqlValue = po.AP_Notify_Time;
+                                cmdTradeState.Parameters.Add(paramAP_Notify_Time);
+
+                                SqlParameter paramAP_GMT_Create;
+                                paramAP_GMT_Create = cmdTradeState.CreateParameter();
+                                paramAP_GMT_Create.ParameterName = "@AP_GMT_Create";
+                                paramAP_GMT_Create.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramAP_GMT_Create.SqlValue = po.AP_GMT_Create;
+                                cmdTradeState.Parameters.Add(paramAP_GMT_Create);
+
+                                SqlParameter paramAP_GMT_Payment;
+                                paramAP_GMT_Payment = cmdTradeState.CreateParameter();
+                                paramAP_GMT_Payment.ParameterName = "@AP_GMT_Payment";
+                                paramAP_GMT_Payment.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramAP_GMT_Payment.SqlValue = po.AP_GMT_Payment;
+                                cmdTradeState.Parameters.Add(paramAP_GMT_Payment);
+
+                                SqlParameter paramAP_GMT_Close;
+                                paramAP_GMT_Close = cmdTradeState.CreateParameter();
+                                paramAP_GMT_Close.ParameterName = "@AP_GMT_Close";
+                                paramAP_GMT_Close.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramAP_GMT_Close.SqlValue = po.AP_GMT_Close;
+                                cmdTradeState.Parameters.Add(paramAP_GMT_Close);
+
+                                SqlParameter paramAP_GMT_Refund;
+                                paramAP_GMT_Refund = cmdTradeState.CreateParameter();
+                                paramAP_GMT_Refund.ParameterName = "@AP_GMT_Refund";
+                                paramAP_GMT_Refund.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramAP_GMT_Refund.SqlValue = po.AP_GMT_Refund;
+                                cmdTradeState.Parameters.Add(paramAP_GMT_Refund);
+
+                                SqlParameter paramAP_RefundStatus;
+                                paramAP_RefundStatus = cmdTradeState.CreateParameter();
+                                paramAP_RefundStatus.ParameterName = "@AP_RefundStatus";
+                                paramAP_RefundStatus.SqlDbType = System.Data.SqlDbType.Int;
+                                paramAP_RefundStatus.SqlValue = po.AP_RefundStatus.HasValue ? po.AP_RefundStatus : null;
+                                cmdTradeState.Parameters.Add(paramAP_RefundStatus);
+
+                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, AP_TradeNo = @AP_TradeNo, AP_Notify_Time = @AP_Notify_Time, AP_GMT_Create = @AP_GMT_Create, AP_GMT_Payment = @AP_GMT_Payment, AP_GMT_Close = @AP_GMT_Close, AP_SellerEmail = @AP_SellerEmail, AP_BuyerID = @AP_BuyerID, AP_BuyerEmail = @AP_BuyerEmail, AP_RefundStatus = @AP_RefundStatus, AP_GMT_Refund = @AP_GMT_Refund where OrderID=@OrderID";
+
                                 break;
 
                             case PaymentTerm.CASH:
-                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState where OrderID=@OrderID";
+                                SqlParameter paramPayCashDate;
+                                paramPayCashDate = cmdTradeState.CreateParameter();
+                                paramPayCashDate.ParameterName = "@PayCashDate";
+                                paramPayCashDate.SqlDbType = System.Data.SqlDbType.DateTime;
+                                paramPayCashDate.SqlValue = po.PayCashDate;
+                                cmdTradeState.Parameters.Add(paramPayCashDate);
+
+                                cmdTradeState.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, PayCashDate = @PayCashDate where OrderID=@OrderID";
 
                                 break;
 
+                            default:
+                                throw new Exception("不支持的支付方式PaymentTerm");
                         }
 
                         foreach (SqlParameter param in cmdTradeState.Parameters)
@@ -2162,7 +2314,9 @@ public class ProductOrder : IComparable<ProductOrder>
             }
 
             //如果订单是支付成功状态才发放积分
-            if (po.TradeState == TradeState.SUCCESS || po.TradeState == TradeState.CASHPAID)
+            if (po.TradeState == TradeState.SUCCESS ||
+                po.TradeState == TradeState.CASHPAID ||
+                po.TradeState == TradeState.AP_TRADE_FINISHED || po.TradeState == TradeState.AP_TRADE_SUCCESS)
             {
                 //判断此订单是否计算过会员积分
                 if (po.Purchaser != null && !po.IsCalMemberPoints)
@@ -2185,6 +2339,53 @@ public class ProductOrder : IComparable<ProductOrder>
             Log.Error("EarnMemberPoints", ex.ToString());
             throw ex;
         }
+    }
+
+    /// <summary>
+    /// 订单的数据库字段转换为订单对象
+    /// </summary>
+    /// <param name="po"></param>
+    /// <param name="sdr"></param>
+    private static ProductOrder SDR2PO(ProductOrder po, SqlDataReader sdr)
+    {
+        po.ID = int.Parse(sdr["Id"].ToString());
+        po.OrderID = sdr["OrderID"].ToString();
+        po.DeliverName = sdr["DeliverName"].ToString();
+        po.DeliverPhone = sdr["DeliverPhone"].ToString();
+        po.DeliverAddress = sdr["DeliverAddress"].ToString();
+        po.OrderMemo = sdr["OrderMemo"].ToString();
+        po.OrderDate = DateTime.Parse(sdr["OrderDate"].ToString());
+        po.TradeState = (TradeState)sdr["TradeState"];
+        po.TradeStateDesc = sdr["TradeStateDesc"].ToString();
+        po.IsDelivered = bool.Parse(sdr["IsDelivered"].ToString());
+        po.DeliverDate = sdr["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["DeliverDate"].ToString()) : null;
+        po.IsAccept = bool.Parse(sdr["IsAccept"].ToString());
+        po.AcceptDate = sdr["AcceptDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AcceptDate"].ToString()) : null;
+        po.TransactionID = sdr["TransactionID"].ToString();
+        po.TransactionTime = sdr["TransactionTime"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["TransactionTime"].ToString()) : null;
+        po.PrepayID = sdr["PrepayID"].ToString();
+        po.PaymentTerm = (PaymentTerm)sdr["PaymentTerm"];
+        po.ClientIP = sdr["ClientIP"].ToString();
+        po.IsCancel = bool.Parse(sdr["IsCancel"].ToString());
+        po.CancelDate = sdr["CancelDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["CancelDate"].ToString()) : null;
+        po.Freight = sdr["Freight"] != DBNull.Value ? decimal.Parse(sdr["Freight"].ToString()) : 0;
+        po.MemberPointsDiscount = sdr["MemberPointsDiscount"] != DBNull.Value ? decimal.Parse(sdr["MemberPointsDiscount"].ToString()) : 0;
+        po.UsedMemberPoints = sdr["UsedMemberPoints"] != DBNull.Value ? int.Parse(sdr["UsedMemberPoints"].ToString()) : 0;
+        po.IsCalMemberPoints = sdr["IsCalMemberPoints"] != DBNull.Value ? bool.Parse(sdr["IsCalMemberPoints"].ToString()) : false;
+        po.PayCashDate = sdr["PayCashDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["PayCashDate"].ToString()) : null;
+        po.AP_GMT_Create = sdr["AP_GMT_Create"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AP_GMT_Create"].ToString()) : null;
+        po.AP_GMT_Payment = sdr["AP_GMT_Payment"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AP_GMT_Payment"].ToString()) : null;
+        po.AP_GMT_Close = sdr["AP_GMT_Close"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AP_GMT_Close"].ToString()) : null;
+        po.AP_GMT_Refund = sdr["AP_GMT_Refund"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AP_GMT_Refund"].ToString()) : null;
+        po.AP_Notify_Time = sdr["AP_Notify_Time"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["AP_Notify_Time"].ToString()) : null;
+        po.AP_TradeNo = sdr["AP_TradeNo"].ToString();
+        po.AP_SellerID = sdr["AP_SellerID"].ToString();
+        po.AP_SellerEmail = sdr["AP_SellerEmail"].ToString();
+        po.AP_BuyerID = sdr["AP_BuyerID"].ToString();
+        po.AP_BuyerEmail = sdr["AP_BuyerEmail"].ToString();
+        po.AP_RefundStatus = sdr["AP_RefundStatus"] != DBNull.Value ? sdr["AP_RefundStatus"] as RefundStatus? : null;
+
+        return po;
     }
 
     public int CompareTo(ProductOrder other)
@@ -2234,7 +2435,7 @@ public enum OrderState
 }
 
 /// <summary>
-/// 付款方式
+/// 支付方式
 /// </summary>
 public enum PaymentTerm
 {
@@ -2246,59 +2447,111 @@ public enum PaymentTerm
     /// <summary>
     /// 现金支付
     /// </summary>
-    CASH = 2
+    CASH = 2,
+
+    /// <summary>
+    /// 支付宝
+    /// </summary>
+    ALIPAY = 3
 }
 
 /// <summary>
-/// 订单支付状态，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
-/// 1~7是微信支付状态
+/// 订单支付状态
+/// 1~7是微信支付状态，参考：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
 /// 8~9是现金支付状态
+/// 10~14是支付宝状态，参考：https://doc.open.alipay.com/doc2/detail.htm?treeId=60&articleId=103698&docType=1
 /// </summary>
 public enum TradeState
 {
     /// <summary>
-    /// 支付成功
+    /// 微信支付：支付成功
     /// </summary>
     SUCCESS = 1,
 
     /// <summary>
-    /// 转入退款
+    /// 微信支付：转入退款
     /// </summary>
     REFUND = 2,
 
     /// <summary>
-    /// 未支付
+    /// 微信支付：未支付
     /// </summary>
     NOTPAY = 3,
 
     /// <summary>
-    /// 已关闭
+    /// 微信支付：已关闭
     /// </summary>
     CLOSED = 4,
 
     /// <summary>
-    /// 已撤销（刷卡支付）
+    /// 微信支付：已撤销（刷卡支付）
     /// </summary>
     REVOKED = 5,
 
     /// <summary>
-    /// 用户支付中
+    /// 微信支付：用户支付中
     /// </summary>
     USERPAYING = 6,
 
     /// <summary>
-    /// 支付失败(其他原因，如银行返回失败)
+    /// 微信支付：支付失败(其他原因，如银行返回失败)
     /// </summary>
     PAYERROR = 7,
 
     /// <summary>
-    /// 已付现金
+    /// 货到付款：已付现金
     /// </summary>
     CASHPAID = 8,
 
     /// <summary>
-    /// 未付现金
+    /// 货到付款：未付现金
     /// </summary>
-    CASHNOTPAID = 9
+    CASHNOTPAID = 9,
+
+    /// <summary>
+    /// 支付宝：交易创建，等待买家付款。
+    /// </summary>
+    AP_WAIT_BUYER_PAY = 10,
+
+    /// <summary>
+    /// 支付宝：在指定时间段内未支付时关闭的交易；在交易完成全额退款成功时关闭的交易
+    /// </summary>
+    AP_TRADE_CLOSED = 11,
+
+    /// <summary>
+    /// 支付宝：交易成功，且可对该交易做操作，如：多级分润、退款等。
+    /// 触发条件是商户签约的产品支持退款功能的前提下，买家付款成功。
+    /// </summary>
+    AP_TRADE_SUCCESS = 12,
+
+    /// <summary>
+    /// 支付宝：等待卖家收款（买家付款后，如果卖家账号被冻结）。
+    /// </summary>
+    AP_TRADE_PENDING = 13,
+
+    /// <summary>
+    /// 支付宝：交易成功且结束，即不可再做任何操作。
+    /// 触发条件是商户签约的产品不支持退款功能的前提下，买家付款成功；或者，商户签约的产品支持退款功能的前提下，交易已经成功并且已经超过可退款期限。
+    /// </summary>
+    AP_TRADE_FINISHED = 14
+
+}
+
+/// <summary>
+/// 支付宝退款状态，参考：https://doc.open.alipay.com/doc2/detail.htm?treeId=60&articleId=103673&docType=1
+/// </summary>
+public enum RefundStatus
+{
+    /// <summary>
+    /// 支付宝：退款成功。
+    /// 全额退款情况：trade_status= TRADE_CLOSED，而refund_status=REFUND_SUCCESS；
+    /// 非全额退款情况：trade_status= TRADE_SUCCESS，而refund_status=REFUND_SUCCESS
+    /// </summary>
+    AP_REFUND_SUCCESS = 1,
+
+    /// <summary>
+    /// 支付宝：退款关闭
+    /// </summary>
+    AP_REFUND_CLOSED = 2
 }
 

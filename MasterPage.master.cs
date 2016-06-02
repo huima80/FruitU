@@ -44,31 +44,39 @@ public partial class MasterPage : System.Web.UI.MasterPage
             }
             else
             {
-                Response.Redirect("~/wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
+                //如果请求页面是支付宝支付，需要在外部浏览器打开页面，则不进行微信认证
+                if (Request.Url.AbsolutePath.ToLower().IndexOf("alipay") == -1)
+                {
+                    Response.Redirect("~/wxauth.ashx?scope=snsapi_userinfo&state=" + Request.Url.ToString());
+                }
             }
         }
     }
 
     protected void Page_Load(object sender, EventArgs e)
     {
-        WeChatUser wxUser = Session["WxUser"] as WeChatUser;
-        string jsTicket, jsSign, timestamp, nonceStr, url;
-
-        url = Request.Url.ToString().Split('#')[0];
-        jsTicket = WxJSAPI.GetJsAPITicket();
-        jsSign = WxJSAPI.MakeJsAPISign(jsTicket, url, out nonceStr, out timestamp);
-
-        //处理用户的推荐人
-        string agentOpenID = Request.QueryString["AgentOpenID"];
-        if (!string.IsNullOrEmpty(agentOpenID) && agentOpenID != wxUser.OpenID)
+        if (Session["WxUser"] != null)
         {
-            wxUser.AgentOpenID = agentOpenID;
-        }
+            WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+            string jsTicket, jsSign, timestamp, nonceStr, url;
 
-        //向前端页面注册全局JS变量
-        ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
-        ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam = {{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}};", Config.APPID, timestamp, nonceStr, jsSign), true);
-        ScriptManager.RegisterStartupScript(Page, this.GetType(), "webConfig", string.Format("var webConfigServer = {{siteDomain:'{0}',siteTitle:'{1}',siteDesc:'{2}',siteKeywords:'{3}',siteIcon:'{4}',siteCopyrights:'{5}',defaultImg:'{6}'}};", Request.Url.Scheme + "://" + Request.Url.Host, Config.SiteTitle, Config.SiteDesc, Config.SiteKeywords, Config.SiteIcon, Config.SiteCopyrights, Config.DefaultImg), true);
-        
+            url = Request.Url.ToString().Split('#')[0];
+            jsTicket = WxJSAPI.GetJsAPITicket();
+            jsSign = WxJSAPI.MakeJsAPISign(jsTicket, url, out nonceStr, out timestamp);
+
+            //处理用户的推荐人
+            string agentOpenID = Request.QueryString["AgentOpenID"];
+            if (!string.IsNullOrEmpty(agentOpenID) && agentOpenID != wxUser.OpenID)
+            {
+                wxUser.AgentOpenID = agentOpenID;
+            }
+
+            //注册JS变量openID，用于用户分享页面时带上自己的OpenID
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
+            //注册JS变量wxJsApiParam，用于调用微信的JS SDK
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam = {{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}};", Config.APPID, timestamp, nonceStr, jsSign), true);
+            //注册JS变量webConfigServer，用于用户分享页面时设置页面title等信息
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "webConfig", string.Format("var webConfigServer = {{siteDomain:'{0}',siteTitle:'{1}',siteDesc:'{2}',siteKeywords:'{3}',siteIcon:'{4}',siteCopyrights:'{5}',defaultImg:'{6}'}};", Request.Url.Scheme + "://" + Request.Url.Host, Config.SiteTitle, Config.SiteDesc, Config.SiteKeywords, Config.SiteIcon, Config.SiteCopyrights, Config.DefaultImg), true);
+        }
     }
 }

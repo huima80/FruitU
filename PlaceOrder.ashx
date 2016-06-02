@@ -1,28 +1,32 @@
-﻿<%@ WebHandler Language="C#" Class="JSAPIPay" %>
+﻿<%@ WebHandler Language="C#" Class="PlaceOrder" %>
 
 using System;
 using System.Web;
 using System.Globalization;
 using System.Collections.Generic;
 using LitJson;
+using Com.Alipay;
 
 /// <summary>
 /// 1，处理新订单流程：校验客户端表单提交值->构造PO对象->校验PO对象值->注册PO对象事件处理函数->调用SubmitOrder(po)方法提交订单
 /// 2，处理已有订单流程：校验客户端提交的POID值->调用SubmitOrder(POID)，在其中校验此订单的prepay_id是否有效，无效则重新发起统一下单获取prepay_id，并生成JS支付字符串
 /// 3，根据新订单或已有订单流程，返回JS支付字符串或新订单ID给客户端，如有异常则返回stateCode
 /// </summary>
-public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionState
+public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessionState
 {
 
     public void ProcessRequest(HttpContext context)
     {
         ProductOrder newPO = null, existPO = null;
 
-        //根据prepay_id生成的JS支付参数
-        string wxJsApiParam = string.Empty;
+        //根据prepay_id生成的微信支付参数
+        string wxPayParam = string.Empty;
 
         //微信统一下单API返回的错误码
         WeChatPayData stateCode = new WeChatPayData();
+
+        //支付宝请求字符串
+        string alipayParam = string.Empty;
 
         try
         {
@@ -59,20 +63,37 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     newPO.DeliverAddress = jOrderInfo["address"].ToString().Trim();
                     newPO.OrderMemo = jOrderInfo["memo"].ToString().Trim();
                     newPO.OrderDate = DateTime.Now;
-                    newPO.PaymentTerm = (PaymentTerm)int.Parse(jOrderInfo["paymentTerm"].ToString());
-
-                    //订单初始状态：未支付、未发货、未签收、未撤单
+                    newPO.AP_SellerID = AliPayConfig.seller_id;
+                    //订单初始状态：未发货、未签收、未撤单
                     newPO.IsDelivered = false;
                     newPO.IsAccept = false;
                     newPO.IsCancel = false;
-                    switch(newPO.PaymentTerm)
+
+                    //处理订单支付方式和支付状态
+                    int paymentTerm;
+                    if (int.TryParse(jOrderInfo["paymentTerm"].ToString(), out paymentTerm))
                     {
-                        case PaymentTerm.WECHAT:
-                            newPO.TradeState = TradeState.NOTPAY;
-                            break;
-                        case PaymentTerm.CASH:
-                            newPO.TradeState = TradeState.CASHNOTPAID;
-                            break;
+                        switch (paymentTerm)
+                        {
+                            case (int)PaymentTerm.WECHAT:
+                                newPO.PaymentTerm = PaymentTerm.WECHAT;
+                                newPO.TradeState = TradeState.NOTPAY;
+                                break;
+                            case (int)PaymentTerm.CASH:
+                                newPO.PaymentTerm = PaymentTerm.CASH;
+                                newPO.TradeState = TradeState.CASHNOTPAID;
+                                break;
+                            case (int)PaymentTerm.ALIPAY:
+                                newPO.PaymentTerm = PaymentTerm.ALIPAY;
+                                newPO.TradeState = TradeState.AP_WAIT_BUYER_PAY;
+                                break;
+                            default:
+                                throw new Exception("未知的支付方式PaymentTerm");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("未知的支付方式PaymentTerm");
                     }
 
                     //查找下单用户的推荐人，且不是下单人，则写入订单对象
@@ -102,7 +123,7 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
 
                                 if (fruit != null)
                                 {
-                                    //如果此商品是无限库存量，或者购买量不超过库存量，则可以下单
+                                    //如果此商品是不限库存量，或者购买量不超过库存量，则可以下单
                                     if (fruit.InventoryQty == -1 || fruit.InventoryQty >= qty)
                                     {
                                         od = new OrderDetail(fruit);
@@ -130,10 +151,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                         throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请调整购买数量后重新下单。", string.Join<string>(",", outOfStockProdItems)));
                     }
 
-                    //根据订单商品项金额计算运费，满99元包邮
-                    if(newPO.OrderDetailPrice < 99)
+                    //根据订单商品项金额计算运费
+                    if (newPO.OrderDetailPrice < Config.FreightFreeCondition)
                     {
-                        newPO.Freight = 10;
+                        newPO.Freight = Config.Freight;
                     }
                     else
                     {
@@ -194,7 +215,19 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     newPO.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
 
                     //提交新订单
-                    ProductOrder.SubmitOrder(newPO, out wxJsApiParam, out stateCode);
+                    switch (newPO.PaymentTerm)
+                    {
+                        case PaymentTerm.WECHAT:
+                            ProductOrder.SubmitOrder(newPO, out wxPayParam, out stateCode);
+                            break;
+                        case PaymentTerm.ALIPAY:
+                            ProductOrder.SubmitOrder(newPO, out alipayParam);
+                            break;
+                        case PaymentTerm.CASH:
+                            ProductOrder.SubmitOrder(newPO);
+                            break;
+                    }
+
                 }
                 else
                 {
@@ -205,11 +238,27 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
             {
                 //2，现有订单处理流程
 
-                int poID;
+                int poID, paymentTerm;
                 if (int.TryParse(context.Request.QueryString["PoID"], out poID))
                 {
-                    //处理已有订单
-                    existPO = ProductOrder.SubmitOrder(poID, out wxJsApiParam, out stateCode);
+                    if (int.TryParse(context.Request.QueryString["PaymentTerm"], out paymentTerm))
+                    {
+                        switch (paymentTerm)
+                        {
+                            case (int)PaymentTerm.WECHAT:
+                                existPO = ProductOrder.SubmitOrder(poID, out wxPayParam, out stateCode);
+                                break;
+                            case (int)PaymentTerm.ALIPAY:
+                                existPO = ProductOrder.SubmitOrder(poID, out alipayParam);
+                                break;
+                            default:
+                                throw new Exception("未知的支付方式PaymentTerm");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("未知的支付方式PaymentTerm");
+                    }
                 }
                 else
                 {
@@ -241,7 +290,10 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                     switch (newPO.PaymentTerm)
                     {
                         case PaymentTerm.WECHAT: //如是微信支付，返回JS支付参数
-                            context.Response.Write(wxJsApiParam);
+                            context.Response.Write(wxPayParam);
+                            break;
+                        case PaymentTerm.ALIPAY: //如是支付宝支付，返回支付宝请求参数
+                            context.Response.Write(alipayParam);
                             break;
                         case PaymentTerm.CASH:  //如是货到付款，返回新订单ID
                             JsonData jNewPOID = new JsonData();
@@ -254,7 +306,15 @@ public class JSAPIPay : IHttpHandler, System.Web.SessionState.IReadOnlySessionSt
                 {
                     if (existPO != null)
                     {
-                        context.Response.Write(wxJsApiParam);
+                        switch (existPO.PaymentTerm)
+                        {
+                            case PaymentTerm.WECHAT: //如是微信支付，返回JS支付参数
+                                context.Response.Write(wxPayParam);
+                                break;
+                            case PaymentTerm.ALIPAY: //如是支付宝支付，返回支付宝请求参数
+                                context.Response.Write(alipayParam);
+                                break;
+                        }
                     }
                 }
             }

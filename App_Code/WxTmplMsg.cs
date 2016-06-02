@@ -48,16 +48,15 @@ public static class WxTmplMsg
     private const string TMPL_ORDER_SUCCESS = "zYBc-cvsf_7cllTNbXE_Y-55jU4owKAhqfEHAxVhDbU";
 
     /// <summary>
-    /// 收到微信支付成功订单模板
-    /// {{first.DATA}}
-    /// 消费金额：{{keyword1.DATA}}
-    /// 付款用户：{{keyword2.DATA}}
-    /// 成功支付码：{{keyword3.DATA}}
-    /// 消费时间：{{keyword4.DATA}}
-    /// 商户单号：{{keyword5.DATA}}
-    /// {{remark.DATA}}
+    /// 订单支付成功通知
+    //{{first.DATA}}
+    //订单编号：{{keyword1.DATA}}
+    //订单商品：{{keyword2.DATA}}
+    //支付金额：{{keyword3.DATA}}
+    //支付时间：{{keyword4.DATA}}
+    //{{remark.DATA}} 
     /// </summary>
-    private const string TMPL_WXPAY = "xyxsgmpRd5dOJD4Cn-WUV6ZQJ6wBbQADhXkrN2gJ-0Q";
+    private const string TMPL_PAY_SUCCESS = "pSqI0iYqqh8BRuEt40JtIbQxSgWV_l6sDCxdorH3KPo";
 
     /// <summary>
     /// 发货通知
@@ -163,6 +162,9 @@ public static class WxTmplMsg
                         case PaymentTerm.WECHAT:
                             paymentTerm = "微信支付";
                             break;
+                        case PaymentTerm.ALIPAY:
+                            paymentTerm = "支付宝";
+                            break;
                         case PaymentTerm.CASH:
                             paymentTerm = "货到付款";
                             break;
@@ -217,57 +219,87 @@ public static class WxTmplMsg
                         return false;
                     }
 
-                    //只有微信支付成功才发送模板消息
-                    if (po.PaymentTerm != PaymentTerm.WECHAT || po.TradeState != TradeState.SUCCESS)
+                    //只有收款成功才发送模板消息
+                    if ((po.PaymentTerm == PaymentTerm.WECHAT && po.TradeState == TradeState.SUCCESS)
+                        || (po.PaymentTerm == PaymentTerm.ALIPAY && (po.TradeState == TradeState.AP_TRADE_SUCCESS || po.TradeState == TradeState.AP_TRADE_FINISHED))
+                        || (po.PaymentTerm == PaymentTerm.CASH && po.TradeState == TradeState.CASHPAID))
                     {
-                        return false;
+                        //构造模板消息
+                        jTmplMsg["touser"] = string.Empty;
+                        jTmplMsg["template_id"] = TMPL_PAY_SUCCESS;
+                        jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
+                        jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
+
+                        switch (po.PaymentTerm)
+                        {
+                            case PaymentTerm.WECHAT:
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = "【微信】支付成功";
+                                jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                                jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = string.Format("微信支付交易号：{0}", po.TransactionID);
+                                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                                jTmplMsgData["remark"] = jTmplMsgDataValue;
+
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = (po.TransactionTime.HasValue ? po.TransactionTime.ToString() : string.Empty);
+                                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                                jTmplMsgData["keyword4"] = jTmplMsgDataValue;
+
+                                break;
+                            case PaymentTerm.ALIPAY:
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = "【支付宝】支付成功";
+                                jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                                jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = string.Format("支付宝交易号：{0}", po.AP_TradeNo);
+                                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                                jTmplMsgData["remark"] = jTmplMsgDataValue;
+
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = (po.AP_GMT_Payment.HasValue ? po.AP_GMT_Payment.ToString() : string.Empty);
+                                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                                jTmplMsgData["keyword4"] = jTmplMsgDataValue;
+
+                                break;
+                            case PaymentTerm.CASH:
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = "【货到付款】收款成功";
+                                jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                                jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                                jTmplMsgDataValue = new JsonData();
+                                jTmplMsgDataValue["value"] = (po.PayCashDate.HasValue ? po.PayCashDate.ToString() : string.Empty);
+                                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                                jTmplMsgData["keyword4"] = jTmplMsgDataValue;
+
+                                break;
+
+                        }
+                        jTmplMsgDataValue = new JsonData();
+                        jTmplMsgDataValue["value"] = po.OrderID.Substring(18);
+                        jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                        jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+                        jTmplMsgDataValue = new JsonData();
+                        jTmplMsgDataValue["value"] = po.OrderDetails;
+                        jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                        jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+                        jTmplMsgDataValue = new JsonData();
+                        jTmplMsgDataValue["value"] = string.Format("￥{0}元", po.OrderPrice.ToString());
+                        jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                        jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
+                        jTmplMsg["data"] = jTmplMsgData;
+
+                        //发送模板消息
+                        jRet = SendTmplMsg(listReceiver, jTmplMsg);
                     }
-
-                    //构造模板消息
-                    jTmplMsg["touser"] = string.Empty;
-                    jTmplMsg["template_id"] = TMPL_WXPAY;
-                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
-                    jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = "微信支付成功";
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["first"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("￥{0}元", po.OrderPrice.ToString());
-                    jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
-                    jTmplMsgData["keyword1"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = po.DeliverName;
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["keyword2"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = po.TransactionID;
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["keyword3"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = (po.TransactionTime.HasValue ? po.TransactionTime.ToString() : string.Empty);
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["keyword4"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = po.OrderID;
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["keyword5"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = "微信支付成功，请核实对账";
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["remark"] = jTmplMsgDataValue;
-
-                    jTmplMsg["data"] = jTmplMsgData;
-
-                    //发送模板消息
-                    jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
                     break;
                 case OrderState.Delivered:
@@ -286,7 +318,17 @@ public static class WxTmplMsg
                             }
                             else
                             {
-                                tradeState = "尚未微信支付";
+                                tradeState = "尚未支付";
+                            }
+                            break;
+                        case PaymentTerm.ALIPAY:
+                            if (po.TradeState == TradeState.AP_TRADE_SUCCESS || po.TradeState == TradeState.AP_TRADE_FINISHED)
+                            {
+                                tradeState = "支付宝支付成功";
+                            }
+                            else
+                            {
+                                tradeState = "尚未支付";
                             }
                             break;
                         case PaymentTerm.CASH:
@@ -304,7 +346,7 @@ public static class WxTmplMsg
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("您的订单{0}已配送", po.OrderID.Substring(18));
+                    jTmplMsgDataValue["value"] = string.Format("您的订单{0}已发货，请注意查收。", po.OrderID.Substring(18));
                     jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                     jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -332,11 +374,6 @@ public static class WxTmplMsg
                     jTmplMsgDataValue["value"] = "13585702012";
                     jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                     jTmplMsgData["keyword5"] = jTmplMsgDataValue;
-
-                    jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = "请您注意查收。";
-                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                    jTmplMsgData["remark"] = jTmplMsgDataValue;
 
                     jTmplMsg["data"] = jTmplMsgData;
 
@@ -438,7 +475,7 @@ public static class WxTmplMsg
             jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "商品库存量不足";
+            jTmplMsgDataValue["value"] = "商品库存量不足，请尽快补货";
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -456,11 +493,6 @@ public static class WxTmplMsg
             jTmplMsgDataValue["value"] = restInventory;
             jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
             jTmplMsgData["keyword3"] = jTmplMsgDataValue;
-
-            jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "请尽快补货";
-            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-            jTmplMsgData["remark"] = jTmplMsgDataValue;
 
             jTmplMsg["data"] = jTmplMsgData;
 
@@ -532,7 +564,7 @@ public static class WxTmplMsg
             jTmplMsgData["keyword4"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "如有疑问，请及时与FruitU微信客服联系";
+            jTmplMsgDataValue["value"] = "在FruitU页面中分享给好友或朋友圈，好友消费后您有100积分(5元)奖励哦，现在就分享吧！";
             jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
             jTmplMsgData["remark"] = jTmplMsgDataValue;
 

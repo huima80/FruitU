@@ -53,6 +53,28 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.gvOrderList.AllowCustomPaging = true;
                 this.gvOrderList.PageIndex = 0;
                 this.gvOrderList.PageSize = Config.OrderListPageSize;
+
+                this.ddlPaymentTerm.Items.Add(new ListItem("微信支付", ((int)PaymentTerm.WECHAT).ToString()));
+                this.ddlPaymentTerm.Items.Add(new ListItem("支付宝", ((int)PaymentTerm.ALIPAY).ToString()));
+                this.ddlPaymentTerm.Items.Add(new ListItem("货到付款", ((int)PaymentTerm.CASH).ToString()));
+
+                this.ddlTradeState.Items.Add(new ListItem("===微信支付状态===", "-1"));
+                this.ddlTradeState.Items.Add(new ListItem("支付成功", ((int)TradeState.SUCCESS).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("转入退款", ((int)TradeState.REFUND).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("未支付", ((int)TradeState.NOTPAY).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("已关闭", ((int)TradeState.CLOSED).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("已撤销（刷卡支付）", ((int)TradeState.REVOKED).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("用户支付中", ((int)TradeState.USERPAYING).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("支付失败", ((int)TradeState.PAYERROR).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("===支付宝状态===", "-1"));
+                this.ddlTradeState.Items.Add(new ListItem("等待买家付款", ((int)TradeState.AP_WAIT_BUYER_PAY).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("等待卖家收款", ((int)TradeState.AP_TRADE_PENDING).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("交易成功", ((int)TradeState.AP_TRADE_SUCCESS).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("交易成功且结束", ((int)TradeState.AP_TRADE_FINISHED).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("未支付已关闭", ((int)TradeState.AP_TRADE_CLOSED).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("===货到付款状态===", "-1"));
+                this.ddlTradeState.Items.Add(new ListItem("已付现金", ((int)TradeState.CASHPAID).ToString()));
+                this.ddlTradeState.Items.Add(new ListItem("未付现金", ((int)TradeState.CASHNOTPAID).ToString()));
             }
             catch (Exception ex)
             {
@@ -99,6 +121,8 @@ public partial class ManageOrder : System.Web.UI.Page
                 return "<i class=\"fa fa-wechat\"></i>&nbsp;微信支付";
             case PaymentTerm.CASH:
                 return "<i class=\"fa fa-money\"></i>&nbsp;货到付款";
+            case PaymentTerm.ALIPAY:
+                return "<img src=\"../images/alipay.png\" />&nbsp;支付宝";
             default:
                 return "未知方式";
         }
@@ -131,6 +155,16 @@ public partial class ManageOrder : System.Web.UI.Page
                 return "已付现金";
             case TradeState.CASHNOTPAID:
                 return "未付现金";
+            case TradeState.AP_WAIT_BUYER_PAY:
+                return "等待买家付款";
+            case TradeState.AP_TRADE_SUCCESS:
+                return "交易成功";
+            case TradeState.AP_TRADE_FINISHED:
+                return "交易结束";
+            case TradeState.AP_TRADE_PENDING:
+                return "等待卖家收款";
+            case TradeState.AP_TRADE_CLOSED:
+                return "交易未支付已关闭";
             default:
                 return "未知状态";
         }
@@ -155,6 +189,8 @@ public partial class ManageOrder : System.Web.UI.Page
                 {
                     case TradeState.SUCCESS:
                     case TradeState.CASHPAID:
+                    case TradeState.AP_TRADE_SUCCESS:
+                    case TradeState.AP_TRADE_FINISHED:
                         e.Row.CssClass = "success";
                         break;
                     default:
@@ -179,43 +215,68 @@ public partial class ManageOrder : System.Web.UI.Page
             //处理订单支付状态
             Label lblPaymentTerm = e.Row.FindControl("lblPaymentTerm") as Label;
             Label lblWxTradeState = e.Row.FindControl("lblWxTradeState") as Label;
+            Label lblAlipayTradeState = e.Row.FindControl("lblAlipayTradeState") as Label;
             Label lblCashTradeState = e.Row.FindControl("lblCashTradeState") as Label;
             HtmlGenericControl pTransactionID = e.Row.FindControl("pTransactionID") as HtmlGenericControl;
             HtmlGenericControl pTransactionTime = e.Row.FindControl("pTransactionTime") as HtmlGenericControl;
             HtmlGenericControl divCashTradeState = e.Row.FindControl("divCashTradeState") as HtmlGenericControl;
             CheckBox cbCashTradeState = e.Row.FindControl("cbCashTradeState") as CheckBox;
             HtmlGenericControl faCashTradeState = e.Row.FindControl("faCashTradeState") as HtmlGenericControl;
+            HtmlGenericControl pAP_TradeNo = e.Row.FindControl("pAP_TradeNo") as HtmlGenericControl;
+            HtmlGenericControl pAP_GMT_Payment = e.Row.FindControl("pAP_GMT_Payment") as HtmlGenericControl;
+            HtmlGenericControl pPayCashDate = e.Row.FindControl("pPayCashDate") as HtmlGenericControl;
 
             //显示支付方式文本值
             lblPaymentTerm.Text = paymentTerm(po.PaymentTerm);
 
-            //根据支付方式（微信支付、货到付款），分别显示不同的支付状态，如果是货到付款还需要提供CheckBox供修改
+            //根据支付方式（微信支付、支付宝、货到付款），分别显示不同的支付状态，如果是货到付款还需要提供CheckBox供修改
             switch (po.PaymentTerm)
             {
                 case PaymentTerm.WECHAT:
                     lblWxTradeState.Visible = true;
                     lblWxTradeState.Text = tradeState(po.TradeState);
+                    lblAlipayTradeState.Visible = false;
                     pTransactionID.Visible = !string.IsNullOrEmpty(po.TransactionID);
                     pTransactionTime.Visible = po.TransactionTime.HasValue;
                     divCashTradeState.Visible = false;
                     faCashTradeState.Visible = false;
+                    pAP_TradeNo.Visible = false;
+                    pAP_GMT_Payment.Visible = false;
+                    pPayCashDate.Visible = false;
                     break;
-                case PaymentTerm.CASH:
+                case PaymentTerm.ALIPAY:
+                    lblAlipayTradeState.Visible = true;
                     lblWxTradeState.Visible = false;
                     pTransactionID.Visible = false;
                     pTransactionTime.Visible = false;
+                    divCashTradeState.Visible = false;
+                    faCashTradeState.Visible = false;
+                    lblAlipayTradeState.Text = tradeState(po.TradeState);
+                    pAP_TradeNo.Visible = !string.IsNullOrEmpty(po.AP_TradeNo);
+                    pAP_GMT_Payment.Visible = po.AP_GMT_Payment.HasValue;
+                    pPayCashDate.Visible = false;
+                    break;
+                case PaymentTerm.CASH:
+                    lblWxTradeState.Visible = false;
+                    lblAlipayTradeState.Visible = false;
+                    pTransactionID.Visible = false;
+                    pTransactionTime.Visible = false;
+                    pAP_TradeNo.Visible = false;
+                    pAP_GMT_Payment.Visible = false;
                     lblCashTradeState.Text = tradeState(po.TradeState);
                     switch (po.TradeState)
                     {
                         case TradeState.CASHPAID:
                             cbCashTradeState.Visible = false;
                             faCashTradeState.Visible = true;
+                            pPayCashDate.Visible = po.PayCashDate.HasValue;
                             break;
                         case TradeState.CASHNOTPAID:
                             faCashTradeState.Visible = false;
                             cbCashTradeState.Visible = true;
                             cbCashTradeState.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
                             cbCashTradeState.Checked = false;
+                            pPayCashDate.Visible = false;
                             break;
                     }
                     break;
@@ -310,6 +371,7 @@ public partial class ManageOrder : System.Web.UI.Page
             if (cbCashTradeState != null && cbCashTradeState.Checked)
             {
                 e.NewValues.Add("TradeState", TradeState.CASHPAID);
+                e.NewValues.Add("PayCashDate", DateTime.Now);
             }
             else
             {
@@ -333,6 +395,7 @@ public partial class ManageOrder : System.Web.UI.Page
             bool isAccept = po.IsAccept;
             bool isDelivered = po.IsDelivered;
             TradeState tradeState = po.TradeState;
+            DateTime? payCashDate = po.PayCashDate;
 
             //根据订单ID加载完整订单信息，并赋值用户更改值
             po.FindOrderByID(po.ID);
@@ -341,6 +404,9 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 case "UpdateTradeState":
                     po.TradeState = tradeState;
+                    po.PayCashDate = payCashDate;
+                    //注册订单的支付状态变动事件处理函数，通知管理员
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
                     break;
                 case "DeliverOrder":
                     po.IsDelivered = isDelivered;
@@ -422,7 +488,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.ddlPaymentTerm.Style.Clear();
             }
 
-            //查询条件：微信支付状态
+            //查询条件：支付状态
             if (this.ddlTradeState.SelectedIndex != 0)
             {
                 UtilityHelper.AntiSQLInjection(this.ddlTradeState.SelectedValue);
@@ -518,7 +584,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.txtOrderDetail.Style.Clear();
             }
 
-            //查询条件：微信支付流水号
+            //查询条件：微信支付交易号
             if (!string.IsNullOrEmpty(this.txtTransactionID.Text.Trim()))
             {
                 UtilityHelper.AntiSQLInjection(this.txtTransactionID.Text);
@@ -528,6 +594,18 @@ public partial class ManageOrder : System.Web.UI.Page
             else
             {
                 this.txtTransactionID.Style.Clear();
+            }
+
+            //查询条件：支付宝交易号
+            if (!string.IsNullOrEmpty(this.txtTradeNo.Text.Trim()))
+            {
+                UtilityHelper.AntiSQLInjection(this.txtTradeNo.Text);
+                listWhere.Add(string.Format("AP_TradeNo like '%{0}%'", this.txtTradeNo.Text.Trim()));
+                this.txtTransactionID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+            }
+            else
+            {
+                this.txtTradeNo.Style.Clear();
             }
 
             //查询条件：订单开始日期
@@ -599,6 +677,9 @@ public partial class ManageOrder : System.Web.UI.Page
 
         this.txtTransactionID.Text = string.Empty;
         this.txtTransactionID.Style.Clear();
+
+        this.txtTradeNo.Text = string.Empty;
+        this.txtTradeNo.Style.Clear();
 
         this.txtStartOrderDate.Text = string.Empty;
         this.txtEndOrderDate.Text = string.Empty;

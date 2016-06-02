@@ -1,19 +1,14 @@
-﻿<%@ Page Title="鲜榨果汁" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="JuiceList.aspx.cs" Inherits="JuiceList" %>
+﻿<%@ Page Title="新鲜水果切片" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="FruitList - 复制.aspx.cs" Inherits="FruitList" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
-    <link href="css/JuiceList.css" rel="stylesheet" />
+    <link href="css/FruitList.css" rel="stylesheet" />
     <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    <div class="container text-center juice-list">
-        <div class="row">
+    <div class="container text-center fruit-list">
+        <div class="row fruit-list text-center">
             <div class="col-xs-12">
-                <img src="images/juice-banner.gif" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <img src="images/99DeliveryFree.gif" />
+                <img src="images/fruit-banner.gif" />
             </div>
         </div>
         <div class="row">
@@ -21,28 +16,9 @@
                 <img src="images/ShareIncentive.jpg" />
             </div>
         </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <img src="images/Juice-FreshJuice.gif" />
-            </div>
+        <div runat="server" id="divFruitList" class="row">
         </div>
-        <div runat="server" id="divFreshJuiceList" class="row">
-        </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <img src="images/Juice-AllFruitJuice.gif" />
-            </div>
-        </div>
-        <div runat="server" id="divAllFruitJuiceList" class="row">
-        </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <img src="images/Juice-FruitVeggiesJuice.gif" />
-            </div>
-        </div>
-        <div runat="server" id="divFruitVeggiesJuiceList" class="row">
-        </div>
-        <div class="row">
+        <div class="row fruit-list text-center">
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
@@ -74,29 +50,28 @@
     <!-- the overlay element -->
 
     <!-- Declare a JsRender template, in a script block: -->
-    <script id="tmplJuicePage" type="text/x-jsrender">
-        <div class="col-xs-6" 
-            {{if InventoryQty!=0}}
+    <script id="tmplFruitPage" type="text/x-jsrender">
+        <div class="col-xs-12" 
+            {{if InventoryQty!=0 }}
                 onclick="openModal({{:ID}});"
             {{/if}}
             >
             {{for FruitImgList}}
-                {{if MainImg}}
+                    {{if MainImg}}
                <img src="images/{{:ImgName}}" alt="{{:ImgDesc}}" />
             {{/if}}   
-                {{/for}}        
-                {{if TopSellingWeekly}}
+                {{/for}}            
+                  {{if TopSellingWeekly}}
                     <span class="top-selling-week-prod"><i class="fa fa-trophy fa-lg"></i>本周爆款</span>
             {{/if}}
-            {{if InventoryQty==0}}
+          {{if InventoryQty==0}}
                     <span class="sell-out">今日售罄</span>
             {{/if}}
         </div>
     </script>
 
     <script>
-        //存放分页获取的所有数据
-        //var juiceList = [];
+        //var fruitList = [];
 
         requirejs(['jquery'], function ($) {
             $(function () {
@@ -111,15 +86,15 @@
                     //    pagerMode: 1,
                     //    pageSize: 10,
                     //    pageQueryURL: 'ProdListPager.ashx',
-                    //    pageQueryCriteria: { CategoryID: 1 },
-                    //    pageTemplate: '#tmplJuicePage',
-                    //    pageContainer: '#divJuiceList'
+                    //    pageQueryCriteria: { CategoryID: 28 },
+                    //    pageTemplate: '#tmplFruitPage',
+                    //    pageContainer: '#divFruitList'
                     //});
 
                     //$($.pager).on("onPageLoaded", function (event, data) {
                     //    //设置分页数据到全局数组变量，便于前端操作
-                    //    if (juiceList && Array.isArray(juiceList) && data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
-                    //        juiceList = juiceList.concat(data.originalDataPerPage);
+                    //    if (fruitList && Array.isArray(fruitList) && data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
+                    //        fruitList = fruitList.concat(data.originalDataPerPage);
                     //    }
                     //});
 
@@ -145,6 +120,7 @@
 
                     //显示更新的数量
                     $("#txtQty").val(currQty);
+
                 });
 
                 //递增商品数量
@@ -186,7 +162,6 @@
                     $("#faLoading").hide();
                     $("#imgDetailImg").show();
                 });
-
             });
         });
 
@@ -194,19 +169,17 @@
         function openModal(prodID) {
             var mainImg, detailImg, jLen;
 
-            if (juiceList && Array.isArray(juiceList)) {
-                jLen = juiceList.length;
-
+            if (fruitList && Array.isArray(fruitList)) {
+                jLen = fruitList.length;
                 for (var i = 0; i < jLen; i++) {
-                    //查找用户选择的商品ID
-                    if (juiceList[i]["ID"] == prodID && juiceList[i]["FruitImgList"] && Array.isArray(juiceList[i]["FruitImgList"])) {
-                        //查找此商品的详图
-                        for (var j = 0; j < juiceList[i]["FruitImgList"].length; j++) {
-                            if (juiceList[i]["FruitImgList"][j]["MainImg"]) {
-                                mainImg = juiceList[i]["FruitImgList"][j]["ImgName"];
+                    if (fruitList[i]["ID"] == prodID && fruitList[i]["FruitImgList"] && Array.isArray(fruitList[i]["FruitImgList"])) {
+                        //查找商品详图
+                        for (var j = 0; j < fruitList[i]["FruitImgList"].length; j++) {
+                            if (fruitList[i]["FruitImgList"][j]["MainImg"]) {
+                                mainImg = fruitList[i]["FruitImgList"][j]["ImgName"];
                             }
-                            if (juiceList[i]["FruitImgList"][j]["DetailImg"]) {
-                                detailImg = juiceList[i]["FruitImgList"][j]["ImgName"];
+                            if (fruitList[i]["FruitImgList"][j]["DetailImg"]) {
+                                detailImg = fruitList[i]["FruitImgList"][j]["ImgName"];
                             }
                         }
 
@@ -219,24 +192,24 @@
                         $("#faLoading").show();
 
                         //商品库存量
-                        $("#spanInventory").text(juiceList[i]["InventoryQty"] == -1 ? "不限量" : juiceList[i]["InventoryQty"]);
-                        $("#hfInventory").val(juiceList[i]["InventoryQty"]);
+                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "不限量" : fruitList[i]["InventoryQty"]);
+                        $("#hfInventory").val(fruitList[i]["InventoryQty"]);
 
                         //商品单价
-                        $("span.prod-price").text("￥" + juiceList[i]["FruitPrice"] + "元/" + juiceList[i]["FruitUnit"]);
+                        $("span.prod-price").text("￥" + fruitList[i]["FruitPrice"] + "元/" + fruitList[i]["FruitUnit"]);
 
                         //商品购买数量默认为1
                         $("input#txtQty").val(1);
 
-                        //解除上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
-                        $("#btnAddToCart").off("click").on("click", juiceList[i], addToCart);
+                        //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
+                        $("#btnAddToCart").off("click").on("click", fruitList[i], addToCart);
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
 
                         //设置微信分享参数
                         requirejs(['jweixin'], function (wx) {
-                            wxShareInfo.desc = '我买了【' + juiceList[i].FruitName + '】' + juiceList[i].FruitDesc;
+                            wxShareInfo.desc = '我买了【' + fruitList[i].FruitName + '】' + fruitList[i].FruitDesc;
                             wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
                             wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
 
@@ -262,7 +235,7 @@
             }
             else {
                 alert("商品数据异常");
-                console.warn("var juiceList=" + juiceList);
+                console.warn("var fruitList=" + fruitList);
             }
         }
 
@@ -294,10 +267,11 @@
                 if ($.cart.insertProdItem(prodItem)) {
                     closeModal();
                 }
+
             }
             else {
                 alert("商品数据异常");
-                console.warn("var juiceList=" + juiceList);
+                console.warn("var fruitList=" + fruitList);
             }
 
         }
@@ -305,4 +279,3 @@
     </script>
 
 </asp:Content>
-
