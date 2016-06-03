@@ -318,7 +318,7 @@ public static class WxTmplMsg
                             }
                             else
                             {
-                                tradeState = "尚未支付";
+                                tradeState = "未支付";
                             }
                             break;
                         case PaymentTerm.ALIPAY:
@@ -328,7 +328,7 @@ public static class WxTmplMsg
                             }
                             else
                             {
-                                tradeState = "尚未支付";
+                                tradeState = "未支付";
                             }
                             break;
                         case PaymentTerm.CASH:

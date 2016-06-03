@@ -15,6 +15,12 @@ public partial class ManageOrder : System.Web.UI.Page
     /// </summary>
     protected static readonly System.Drawing.Color CRITERIA_BG_COLOR = System.Drawing.Color.Pink;
 
+    protected const string BTN_DONE = "btn btn-sm btn-block btn-success ladda-button";
+    protected const string BTN_DOING = "btn btn-sm btn-block btn-danger ladda-button";
+
+    protected const string BTN_CASH_DONE = "btn btn-xs btn-success ladda-button";
+    protected const string BTN_CASH_DOING = "btn btn-xs btn-danger ladda-button";
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!Page.IsPostBack)
@@ -212,16 +218,13 @@ public partial class ManageOrder : System.Web.UI.Page
                 pAgent.Visible = false;
             }
 
-            //处理订单支付状态
+            //支付方式和支付状态控件
             Label lblPaymentTerm = e.Row.FindControl("lblPaymentTerm") as Label;
             Label lblWxTradeState = e.Row.FindControl("lblWxTradeState") as Label;
             Label lblAlipayTradeState = e.Row.FindControl("lblAlipayTradeState") as Label;
-            Label lblCashTradeState = e.Row.FindControl("lblCashTradeState") as Label;
+            Button btnPayCash = e.Row.FindControl("btnPayCash") as Button;
             HtmlGenericControl pTransactionID = e.Row.FindControl("pTransactionID") as HtmlGenericControl;
             HtmlGenericControl pTransactionTime = e.Row.FindControl("pTransactionTime") as HtmlGenericControl;
-            HtmlGenericControl divCashTradeState = e.Row.FindControl("divCashTradeState") as HtmlGenericControl;
-            CheckBox cbCashTradeState = e.Row.FindControl("cbCashTradeState") as CheckBox;
-            HtmlGenericControl faCashTradeState = e.Row.FindControl("faCashTradeState") as HtmlGenericControl;
             HtmlGenericControl pAP_TradeNo = e.Row.FindControl("pAP_TradeNo") as HtmlGenericControl;
             HtmlGenericControl pAP_GMT_Payment = e.Row.FindControl("pAP_GMT_Payment") as HtmlGenericControl;
             HtmlGenericControl pPayCashDate = e.Row.FindControl("pPayCashDate") as HtmlGenericControl;
@@ -236,100 +239,81 @@ public partial class ManageOrder : System.Web.UI.Page
                     lblWxTradeState.Visible = true;
                     lblWxTradeState.Text = tradeState(po.TradeState);
                     lblAlipayTradeState.Visible = false;
+                    btnPayCash.Visible = false;
                     pTransactionID.Visible = !string.IsNullOrEmpty(po.TransactionID);
                     pTransactionTime.Visible = po.TransactionTime.HasValue;
-                    divCashTradeState.Visible = false;
-                    faCashTradeState.Visible = false;
                     pAP_TradeNo.Visible = false;
                     pAP_GMT_Payment.Visible = false;
                     pPayCashDate.Visible = false;
                     break;
                 case PaymentTerm.ALIPAY:
                     lblAlipayTradeState.Visible = true;
+                    lblAlipayTradeState.Text = tradeState(po.TradeState);
                     lblWxTradeState.Visible = false;
+                    btnPayCash.Visible = false;
                     pTransactionID.Visible = false;
                     pTransactionTime.Visible = false;
-                    divCashTradeState.Visible = false;
-                    faCashTradeState.Visible = false;
-                    lblAlipayTradeState.Text = tradeState(po.TradeState);
                     pAP_TradeNo.Visible = !string.IsNullOrEmpty(po.AP_TradeNo);
                     pAP_GMT_Payment.Visible = po.AP_GMT_Payment.HasValue;
                     pPayCashDate.Visible = false;
                     break;
                 case PaymentTerm.CASH:
+                    btnPayCash.Visible = true;
+                    btnPayCash.Text = tradeState(po.TradeState);
                     lblWxTradeState.Visible = false;
                     lblAlipayTradeState.Visible = false;
                     pTransactionID.Visible = false;
                     pTransactionTime.Visible = false;
                     pAP_TradeNo.Visible = false;
                     pAP_GMT_Payment.Visible = false;
-                    lblCashTradeState.Text = tradeState(po.TradeState);
                     switch (po.TradeState)
                     {
                         case TradeState.CASHPAID:
-                            cbCashTradeState.Visible = false;
-                            faCashTradeState.Visible = true;
+                            btnPayCash.Enabled = false;
+                            btnPayCash.CssClass = BTN_CASH_DONE;
                             pPayCashDate.Visible = po.PayCashDate.HasValue;
                             break;
                         case TradeState.CASHNOTPAID:
-                            faCashTradeState.Visible = false;
-                            cbCashTradeState.Visible = true;
-                            cbCashTradeState.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
-                            cbCashTradeState.Checked = false;
+                            btnPayCash.Enabled = true;
+                            btnPayCash.CssClass = BTN_CASH_DOING;
                             pPayCashDate.Visible = false;
                             break;
                     }
                     break;
             }
 
-            //如果已发货，则绑定发货时间
-            CheckBox cbIsDelivery = e.Row.FindControl("cbIsDelivery") as CheckBox;
-            HtmlGenericControl faIsDelivery = e.Row.FindControl("faIsDelivery") as HtmlGenericControl;
+            //发货、签收、发放积分按钮
+            Button btnDeliver = e.Row.FindControl("btnDeliver") as Button;
+            Button btnAccept = e.Row.FindControl("btnAccept") as Button;
+            Button btnCalMemberPoints = e.Row.FindControl("btnCalMemberPoints") as Button;
             if (po.IsDelivered)
             {
-                cbIsDelivery.Visible = false;
-                faIsDelivery.Visible = true;
-                faIsDelivery.Attributes.Add("title", string.Format("发货时间：{0}", po.DeliverDate));
+                btnDeliver.Enabled = false;
+                btnDeliver.CssClass = BTN_DONE;
+                btnDeliver.ToolTip = po.DeliverDate.HasValue ? "发货时间：" + po.DeliverDate.ToString() : string.Empty;
             }
             else
             {
-                cbIsDelivery.Visible = true;
-                cbIsDelivery.ToolTip = "点击发货";
-                cbIsDelivery.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
-                faIsDelivery.Visible = false;
+                btnDeliver.CssClass = BTN_DOING;
             }
-
-            //如果已签收，则绑定签收时间
-            CheckBox cbIsAccept = e.Row.FindControl("cbIsAccept") as CheckBox;
-            HtmlGenericControl faIsAccept = e.Row.FindControl("faIsAccept") as HtmlGenericControl;
             if (po.IsAccept)
             {
-                cbIsAccept.Visible = false;
-                faIsAccept.Visible = true;
-                faIsAccept.Attributes.Add("title", string.Format("签收时间：{0}", po.AcceptDate));
+                btnAccept.Enabled = false;
+                btnAccept.CssClass = BTN_DONE;
+                btnAccept.ToolTip = po.AcceptDate.HasValue ? "签收时间：" + po.AcceptDate.ToString() : string.Empty;
             }
             else
             {
-                cbIsAccept.Enabled = true;
-                cbIsAccept.ToolTip = "点击签收";
-                cbIsAccept.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
-                faIsAccept.Visible = false;
+                btnAccept.CssClass = BTN_DOING;
             }
-
-            //处理发放积分状态
-            CheckBox cbIsCalMemberPoints = e.Row.FindControl("cbIsCalMemberPoints") as CheckBox;
-            HtmlGenericControl faIsCalMemberPoints = e.Row.FindControl("faIsCalMemberPoints") as HtmlGenericControl;
             if (po.IsCalMemberPoints)
             {
-                cbIsCalMemberPoints.Visible = false;
-                faIsCalMemberPoints.Visible = true;
+                btnCalMemberPoints.Enabled = false;
+                btnCalMemberPoints.CssClass = BTN_DONE;
             }
             else
             {
-                cbIsCalMemberPoints.Enabled = true;
-                cbIsCalMemberPoints.ToolTip = "点击发放积分";
-                cbIsCalMemberPoints.Attributes["RowIndex"] = e.Row.RowIndex.ToString();
-                faIsCalMemberPoints.Visible = false;
+                btnCalMemberPoints.CssClass = BTN_DOING;
             }
 
             //如果已撤单则屏蔽发货、签收按钮、发放积分按钮，显示撤单时间
@@ -337,16 +321,16 @@ public partial class ManageOrder : System.Web.UI.Page
             if (po.IsCancel)
             {
                 //屏蔽发货按钮
-                cbIsDelivery.Enabled = false;
-                cbIsDelivery.ToolTip = "已撤单，不能发货";
+                btnDeliver.Enabled = false;
+                btnDeliver.ToolTip = "已撤单，不能发货";
 
                 //屏蔽签收按钮
-                cbIsAccept.Enabled = false;
-                cbIsAccept.ToolTip = "已撤单，不能签收";
+                btnAccept.Enabled = false;
+                btnAccept.ToolTip = "已撤单，不能签收";
 
                 //屏蔽发放积分按钮
-                cbIsCalMemberPoints.Enabled = false;
-                cbIsCalMemberPoints.ToolTip = "已撤单，不能发放积分";
+                btnCalMemberPoints.Enabled = false;
+                btnCalMemberPoints.ToolTip = "已撤单，不能发放积分";
 
                 //显示撤单时间
                 pCancelDate.Visible = true;
@@ -358,115 +342,6 @@ public partial class ManageOrder : System.Web.UI.Page
 
         }
 
-    }
-
-    protected void gvOrderList_RowUpdating(object sender, GridViewUpdateEventArgs e)
-    {
-        if (odsOrderList.UpdateMethod == "UpdateTradeState")
-        {
-            //由于cbCashTradeState控件不是Bind绑定控件，所以GridView提交时不会自动生成更新值，需要根据是否选中现金收讫状态，在GridView的NewValues集合中增加值
-            GridViewRow gvr = ((GridView)sender).Rows[e.RowIndex];
-            CheckBox cbCashTradeState = gvr.FindControl("cbCashTradeState") as CheckBox;
-            //根据是否选中checkbox设置现金收款状态
-            if (cbCashTradeState != null && cbCashTradeState.Checked)
-            {
-                e.NewValues.Add("TradeState", TradeState.CASHPAID);
-                e.NewValues.Add("PayCashDate", DateTime.Now);
-            }
-            else
-            {
-                e.NewValues.Add("TradeState", TradeState.CASHNOTPAID);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 根据ObjectDataSource控件反射生成的ProductOrder业务对象的订单ID，加载完整的订单数据，并注册事件处理函数，用于订单处理后回调事件处理函数
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    protected void odsOrderList_Updating(object sender, ObjectDataSourceMethodEventArgs e)
-    {
-        if (e.InputParameters.Count == 1 && e.InputParameters[0] is ProductOrder)
-        {
-            ProductOrder po = e.InputParameters[0] as ProductOrder;
-
-            //保存用户更改的checkbox值
-            bool isAccept = po.IsAccept;
-            bool isDelivered = po.IsDelivered;
-            TradeState tradeState = po.TradeState;
-            DateTime? payCashDate = po.PayCashDate;
-
-            //根据订单ID加载完整订单信息，并赋值用户更改值
-            po.FindOrderByID(po.ID);
-
-            switch (odsOrderList.UpdateMethod)
-            {
-                case "UpdateTradeState":
-                    po.TradeState = tradeState;
-                    po.PayCashDate = payCashDate;
-                    //注册订单的支付状态变动事件处理函数，通知管理员
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    break;
-                case "DeliverOrder":
-                    po.IsDelivered = isDelivered;
-                    po.DeliverDate = DateTime.Now;
-                    //注册订单发货事件处理函数，通知用户
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    po.OrderDetailList.ForEach(od =>
-                    {
-                        //注册商品库存量报警事件处理函数，通知管理员
-                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
-                    });
-                    break;
-                case "AcceptOrder":
-                    po.IsAccept = isAccept;
-                    po.AcceptDate = DateTime.Now;
-                    break;
-                case "EarnMemberPoints":
-                    //注册订单的发放积分事件处理函数，通知下单人和推荐人
-                    po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
-                    break;
-                default:
-                    throw new Exception("不能识别的更新方法");
-            }
-        }
-    }
-
-    protected void cbCashTradeState_CheckedChanged(object sender, EventArgs e)
-    {
-        CheckBox cbCashTradeState = sender as CheckBox;
-        int rowIndex = int.Parse(cbCashTradeState.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "UpdateTradeState";
-        this.gvOrderList.UpdateRow(rowIndex, false);
-        this.gvOrderList.DataBind();
-    }
-
-    protected void cbIsDelivery_CheckedChanged(object sender, EventArgs e)
-    {
-        CheckBox cbIsDelivery = sender as CheckBox;
-        int rowIndex = int.Parse(cbIsDelivery.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "DeliverOrder";
-        this.gvOrderList.UpdateRow(rowIndex, false);
-        this.gvOrderList.DataBind();
-    }
-
-    protected void cbIsAccept_CheckedChanged(object sender, EventArgs e)
-    {
-        CheckBox cbIsAccept = sender as CheckBox;
-        int rowIndex = int.Parse(cbIsAccept.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "AcceptOrder";
-        this.gvOrderList.UpdateRow(rowIndex, false);
-        this.gvOrderList.DataBind();
-    }
-
-    protected void cbIsCalMemberPoints_CheckedChanged(object sender, EventArgs e)
-    {
-        CheckBox cbIsCalMemberPoints = sender as CheckBox;
-        int rowIndex = int.Parse(cbIsCalMemberPoints.Attributes["RowIndex"]);
-        this.odsOrderList.UpdateMethod = "EarnMemberPoints";
-        this.gvOrderList.UpdateRow(rowIndex, false);
-        this.gvOrderList.DataBind();
     }
 
     protected void btnSearch_Click(object sender, EventArgs e)
@@ -691,4 +566,57 @@ public partial class ManageOrder : System.Web.UI.Page
         this.gvOrderList.DataBind();
     }
 
+    protected void gvOrderList_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        ProductOrder po = new ProductOrder();
+        int poID;
+        if (int.TryParse(e.CommandArgument.ToString(), out poID))
+        {
+            //根据订单ID加载完整订单信息
+            po.FindOrderByID(poID);
+
+            //根据命令值修改订单
+            switch (e.CommandName)
+            {
+                case "PayCash":
+                    po.TradeState = TradeState.CASHPAID;
+                    po.PayCashDate = DateTime.Now;
+                    //注册订单的支付状态变动事件处理函数，通知管理员
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                    ProductOrder.UpdateTradeState(po);
+                    gvOrderList.DataBind();
+                    break;
+                case "Deliver":
+                    po.IsDelivered = true;
+                    po.DeliverDate = DateTime.Now;
+                    //注册订单发货事件处理函数，通知用户
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                    po.OrderDetailList.ForEach(od =>
+                    {
+                        //注册商品库存量报警事件处理函数，通知管理员
+                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
+                    });
+                    ProductOrder.DeliverOrder(po);
+                    gvOrderList.DataBind();
+                    break;
+                case "Accept":
+                    po.IsAccept = true;
+                    po.AcceptDate = DateTime.Now;
+                    ProductOrder.AcceptOrder(po);
+                    gvOrderList.DataBind();
+                    break;
+                case "CalMemberPoints":
+                    //注册订单的发放积分事件处理函数，通知下单人和推荐人
+                    po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
+                    ProductOrder.EarnMemberPoints(po);
+                    gvOrderList.DataBind();
+                    break;
+            }
+        }
+        else
+        {
+            throw new Exception("订单ID错误");
+        }
+
+    }
 }

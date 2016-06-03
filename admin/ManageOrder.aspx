@@ -104,7 +104,7 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowUpdating="gvOrderList_RowUpdating">
+                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowCommand="gvOrderList_RowCommand">
                     <Columns>
                         <asp:TemplateField HeaderText="订单信息" SortExpression="OrderID">
                             <ItemTemplate>
@@ -119,7 +119,7 @@
                             <ItemTemplate>
                                 <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-pencil-square-o\"></i>&nbsp;"+Server.HtmlEncode(Eval("OrderMemo").ToString())+"</p>" %>'></asp:Label>
                             </ItemTemplate>
-                            <ItemStyle CssClass="col-lg-2"></ItemStyle>
+                            <ItemStyle CssClass="col-lg-3"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField ConvertEmptyStringToNull="False" HeaderText="订单商品详情" SortExpression="OrderDetailList">
                             <ItemTemplate>
@@ -154,13 +154,7 @@
                             <ItemTemplate>
                                 <p>
                                     <asp:Label ID="lblPaymentTerm" CssClass="payment-term" runat="server"></asp:Label>：<asp:Label ID="lblWxTradeState" runat="server" ToolTip='<%# Eval("TradeStateDesc") %>'></asp:Label><asp:Label ID="lblAlipayTradeState" runat="server"></asp:Label>
-                                    <span id="divCashTradeState" runat="server" class="checkbox">
-                                        <label>
-                                            <i runat="server" id="faCashTradeState" class="fa fa-check"></i>
-                                            <asp:CheckBox ID="cbCashTradeState" runat="server" OnCheckedChanged="cbCashTradeState_CheckedChanged" AutoPostBack="True" onclick="if(!confirm('确认已收现金吗？')){return false;}" />
-                                            <asp:Label ID="lblCashTradeState" runat="server"></asp:Label>
-                                        </label>
-                                    </span>
+                                    <asp:Button ID="btnPayCash" runat="server" Text="" data-style="zoom-in" CommandName="PayCash" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认现金收讫吗？');" />
                                 </p>
                                 <p id="pTransactionID" runat="server" title="微信支付交易号"><i class="fa fa-file-text-o"></i>&nbsp;<asp:Label ID="lblTransactionID" runat="server" CssClass="transaction-id" Text='<%# Eval("TransactionID") %>'></asp:Label></p>
                                 <p id="pTransactionTime" runat="server" title="微信支付时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblTransactionTime" runat="server" Text='<%# Eval("TransactionTime") %>'></asp:Label></p>
@@ -171,38 +165,10 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单操作">
                             <ItemTemplate>
-                                <p>
-                                    <div class="checkbox">
-                                        <label>
-                                            <asp:CheckBox ID="cbIsDelivery" runat="server" Checked='<%# Bind("IsDelivered") %>' AutoPostBack="True" onclick="if(!confirm('点击发货后将不能修改，确认发货吗？')){return false;}" OnCheckedChanged="cbIsDelivery_CheckedChanged" />
-                                            发货
-                                        </label>
-                                    </div>
-                                    <i runat="server" id="faIsDelivery" class="fa fa-check"></i>
-                                </p>
-                                <p>
-                                    <div class="checkbox">
-                                        <label>
-                                            <asp:CheckBox ID="cbIsAccept" runat="server" Checked='<%# Bind("IsAccept") %>' AutoPostBack="True" onclick="if(!confirm('点击签收后将不能修改，确认签收吗？')){return false;}" OnCheckedChanged="cbIsAccept_CheckedChanged" />
-                                            签收
-                                        </label>
-                                    </div>
-                                    <i runat="server" id="faIsAccept" class="fa fa-check"></i>
-                                </p>
-                                <p>
-                                    <div class="checkbox">
-                                        <label>
-                                            <asp:CheckBox ID="cbIsCalMemberPoints" runat="server" Checked='<%# Bind("IsCalMemberPoints") %>' AutoPostBack="True" onclick="if(!confirm('确认发放积分吗？')){return false;}" OnCheckedChanged="cbIsCalMemberPoints_CheckedChanged" />
-                                            发放积分
-                                        </label>
-                                    </div>
-                                    <i runat="server" id="faIsCalMemberPoints" class="fa fa-check"></i>
-                                </p>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:TemplateField HeaderText="打印订单">
-                            <ItemTemplate>
-                                <button id="btnPrintPreview" class="btn btn-danger ladda-button" type="button" data-style="zoom-in" onclick='printPreview(<%# Eval("ID") %>);'><i class="fa fa-print"></i>&nbsp;打印</button>
+                                <asp:Button ID="btnDeliver" runat="server" Text="发货" CssClass="" data-style="zoom-in" CommandName="Deliver" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发货吗？');" />
+                                <asp:Button ID="btnAccept" runat="server" Text="签收" CssClass="" data-style="zoom-in" CommandName="Accept" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认签收吗？');" />
+                                <asp:Button ID="btnCalMemberPoints" runat="server" Text="发放积分" CssClass="" data-style="zoom-in" CommandName="CalMemberPoints" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发放积分吗？');" />
+                                <button id="btnPrintPreview" class="<%#BTN_DOING %>" type="button" data-style="zoom-in" onclick='printPreview(<%# Eval("ID") %>);'><i class="fa fa-print"></i>&nbsp;打印</button>
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
@@ -211,7 +177,7 @@
                 </asp:GridView>
             </div>
         </div>
-        <asp:ObjectDataSource ID="odsOrderList" runat="server" SelectMethod="FindProductOrderPager" TypeName="ProductOrder" EnablePaging="True" OnSelecting="odsOrderList_Selecting" OnSelected="odsOrderList_Selected" SelectCountMethod="FindProductOrderCount" UpdateMethod="UpdateOrderDeliver" DataObjectTypeName="ProductOrder" OnUpdating="odsOrderList_Updating"></asp:ObjectDataSource>
+        <asp:ObjectDataSource ID="odsOrderList" runat="server" SelectMethod="FindProductOrderPager" TypeName="ProductOrder" EnablePaging="True" OnSelecting="odsOrderList_Selecting" OnSelected="odsOrderList_Selected" SelectCountMethod="FindProductOrderCount" DataObjectTypeName="ProductOrder"></asp:ObjectDataSource>
     </div>
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
