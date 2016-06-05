@@ -23,6 +23,11 @@ public class AcceptOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessio
                     //根据POID加载订单信息，并注册订单变动事件处理函数
                     ProductOrder po = new ProductOrder(poID);
 
+                    if (wxUser.OpenID != po.Purchaser.OpenID)
+                    {
+                        throw new Exception("您只能签收自己的订单");
+                    }
+
                     //校验订单状态是否允许签收
                     if (po.IsCancel)
                     {

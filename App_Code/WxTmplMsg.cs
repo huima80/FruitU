@@ -143,7 +143,6 @@ public static class WxTmplMsg
         try
         {
             List<string> listReceiver;
-            listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
 
             JsonData jTmplMsg = new JsonData(), jTmplMsgData = new JsonData(), jTmplMsgDataValue;
 
@@ -156,6 +155,10 @@ public static class WxTmplMsg
                     {
                         return false;
                     }
+
+                    //通知管理员
+                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+
                     string paymentTerm = string.Empty;
                     switch (po.PaymentTerm)
                     {
@@ -208,8 +211,13 @@ public static class WxTmplMsg
 
                     jTmplMsg["data"] = jTmplMsgData;
 
-                    //发送模板消息
+                    //发送模板消息，通知管理员
                     jRet = SendTmplMsg(listReceiver, jTmplMsg);
+
+                    //发送模板消息，通知用户
+                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
+                    jTmplMsg["url"] = @"http://mahui.me/MyOrders.aspx";
+                    jRet.Add(SendTmplMsg(listReceiver, jTmplMsg));
 
                     break;
                 case OrderState.Paid:
@@ -224,6 +232,9 @@ public static class WxTmplMsg
                         || (po.PaymentTerm == PaymentTerm.ALIPAY && (po.TradeState == TradeState.AP_TRADE_SUCCESS || po.TradeState == TradeState.AP_TRADE_FINISHED))
                         || (po.PaymentTerm == PaymentTerm.CASH && po.TradeState == TradeState.CASHPAID))
                     {
+                        //通知管理员
+                        listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+
                         //构造模板消息
                         jTmplMsg["touser"] = string.Empty;
                         jTmplMsg["template_id"] = TMPL_PAY_SUCCESS;
@@ -297,8 +308,14 @@ public static class WxTmplMsg
 
                         jTmplMsg["data"] = jTmplMsgData;
 
-                        //发送模板消息
+                        //发送模板消息，通知管理员
                         jRet = SendTmplMsg(listReceiver, jTmplMsg);
+
+                        //发送模板消息，通知用户
+                        listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
+                        jTmplMsg["url"] = @"http://mahui.me/MyOrders.aspx";
+                        jRet.Add(SendTmplMsg(listReceiver, jTmplMsg));
+
                     }
 
                     break;
@@ -308,6 +325,10 @@ public static class WxTmplMsg
                     {
                         return false;
                     }
+
+                    //发货消息只通知用户本人
+                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
+
                     string tradeState = string.Empty;
                     switch (po.PaymentTerm)
                     {
@@ -336,13 +357,10 @@ public static class WxTmplMsg
                             break;
                     }
 
-                    //发货消息只发送给用户本人
-                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
-
                     //构造模板消息
                     jTmplMsg["touser"] = string.Empty;
                     jTmplMsg["template_id"] = TMPL_DELIVER;
-                    jTmplMsg["url"] = @"http://mahui.me/";
+                    jTmplMsg["url"] = @"http://mahui.me/MyOrders.aspx";
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
@@ -387,20 +405,21 @@ public static class WxTmplMsg
                     {
                         return false;
                     }
+
                     break;
                 case OrderState.Cancelled:
-                    //订单撤单事件，发送模板消息给用户
+                    //订单撤单事件，发送模板消息
                     if (!SendTmplMsgSwitch[OrderState.Cancelled])
                     {
                         return false;
                     }
 
-                    //通知管理员和用户
-                    listReceiver.Add(po.Purchaser.OpenID);
+                    //通知管理员
+                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
 
                     jTmplMsg["touser"] = string.Empty;
                     jTmplMsg["template_id"] = TMPL_CANCEL;
-                    jTmplMsg["url"] = @"http://mahui.me/MyOrders.aspx";
+                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
@@ -425,8 +444,13 @@ public static class WxTmplMsg
 
                     jTmplMsg["data"] = jTmplMsgData;
 
-                    //发送模板消息
+                    //发送模板消息，通知管理员
                     jRet = SendTmplMsg(listReceiver, jTmplMsg);
+
+                    //发送模板消息，通知用户
+                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
+                    jTmplMsg["url"] = @"http://mahui.me/MyOrders.aspx";
+                    jRet.Add(SendTmplMsg(listReceiver, jTmplMsg));
 
                     break;
                 default:

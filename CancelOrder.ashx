@@ -25,14 +25,19 @@ public class CancelOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessio
                     //根据POID加载订单信息，并注册订单变动事件处理函数
                     ProductOrder po = new ProductOrder(poID);
 
+                    if (wxUser.OpenID != po.Purchaser.OpenID)
+                    {
+                        throw new Exception("您只能撤销自己的订单");
+                    }
+
                     //校验订单状态是否允许撤单
-                    if (po.TradeState == TradeState.SUCCESS)
+                    if (po.TradeState == TradeState.SUCCESS || po.TradeState == TradeState.CASHPAID || po.TradeState == TradeState.AP_TRADE_SUCCESS || po.TradeState == TradeState.AP_TRADE_FINISHED)
                     {
                         throw new Exception("此订单已经支付，撤单失败");
                     }
                     if (po.IsDelivered)
                     {
-                        throw new Exception("此订单已经配送，撤单失败");
+                        throw new Exception("此订单已经发货，撤单失败");
                     }
                     if (po.IsAccept)
                     {
