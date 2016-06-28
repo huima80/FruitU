@@ -227,7 +227,7 @@
                         $("#divModal").addClass("md-show");
 
                         //设置微信分享参数
-                        requirejs(['jweixin'], function (wx) {
+                        requirejs(['jweixin110'], function (wx) {
                             wxShareInfo.desc = '我买了【' + sliceList[i].FruitName + '】' + sliceList[i].FruitDesc;
                             wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
                             wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;

@@ -144,8 +144,12 @@
                                 <p>
                                     <asp:Label ID="Label7" runat="server" Text='<%# "含运费："+Eval("Freight", "{0:c}") %>' CssClass="freight"></asp:Label>
                                 </p>
-                                <p>
+                                <p id="pMemberPointsDiscount" runat="server">
                                     <asp:Label ID="Label8" runat="server" Text='<%# "积分优惠：- "+Eval("MemberPointsDiscount", "{0:c}") %>' CssClass="member-points-discount"></asp:Label>
+                                </p>
+                                <p id="pWxCardDiscount" runat="server">
+                                    <asp:Label ID="Label9" runat="server" Text='<%# "微信优惠券：- "+Eval("WxCardDiscount", "{0:c}") %>' CssClass="wxcard-discount"></asp:Label><br />
+                                    <asp:Label ID="Label10" runat="server" CssClass="wxcard-code" Text='<%# "【"+Eval("WxCard.Title")+"】" %>' ToolTip='<%# "卡券Code:"+Eval("WxCard.Code") %>'></asp:Label>
                                 </p>
                             </ItemTemplate>
                             <ItemStyle CssClass="order-price" />
@@ -222,8 +226,13 @@
                         </table>
                     </p>
                     <p class="text-right">运费：￥<span>{{:Freight}}</span></p>
+                    {{if MemberPointsDiscount != 0}}
                     <p class="text-right">积分优惠：-￥<span>{{:MemberPointsDiscount}}</span></p>
-                    <p class="order-price">订单总金额：￥<span>{{:OrderPrice}}</span></p>
+                    {{/if}}
+                     {{if WxCardDiscount != 0}}
+                    <p class="text-right">微信优惠券优惠：-￥<span>{{:WxCardDiscount}}</span></p>
+                    {{/if}}
+                 <p class="order-price">订单总金额：￥<span>{{:OrderPrice}}</span></p>
                     <p class="text-right">
                         支付方式：<span>
                 {{if PaymentTerm == 1}}

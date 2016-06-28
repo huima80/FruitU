@@ -10,9 +10,13 @@ public partial class UserCenter : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
+        WeChatUser wxUser;
+        string wxEditAddrParam = string.Empty;
+        string cardSign = string.Empty, timeStamp = string.Empty, nonceStr = string.Empty;
+
         try
         {
-            WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+            wxUser = Session["WxUser"] as WeChatUser;
 
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
@@ -54,11 +58,15 @@ public partial class UserCenter : System.Web.UI.Page
             }
 
             //获取“收货地址共享接口参数”，传给前端JS
-            string wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", wxEditAddrParam), true);
+            wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
 
             //获取最新的用户积分信息
             wxUser.MemberPoints = WeChatUserDAO.FindMemberPointsByOpenID(wxUser.OpenID);
+
+            //生成微信卡券签名，用于客户端调用微信卡券JSSDK
+            string apiTicket;
+            apiTicket = WxJSAPI.GetAPITicket();
+            cardSign = WxJSAPI.MakeCardSign(apiTicket, out nonceStr, out timeStamp);
 
             ////开始：显示当前微信用户信息：用户头像、昵称、特权、积分
             this.imgPortrait.ImageUrl = wxUser.HeadImgUrl;
@@ -67,6 +75,11 @@ public partial class UserCenter : System.Web.UI.Page
             this.lblMemberPoints.Text = string.Format("{0}（={1}元）", wxUser.MemberPoints, (decimal)wxUser.MemberPoints / Config.MemberPointsExchangeRate);
             this.lblMemberPointsExchageRate.Text = Config.MemberPointsExchangeRate.ToString();
             ////结束：显示auth.ashx鉴权获取的微信用户信息
+
+            //定义前端JS全局变量：微信地址JS参数
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
+            //定义前端JS全局变量：微信卡券JS参数
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
 
         }
         catch (System.Threading.ThreadAbortException)

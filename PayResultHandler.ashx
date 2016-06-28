@@ -195,6 +195,9 @@ public class PayResultHandler : IHttpHandler
                         //注册订单的微信支付状态变动事件处理函数，通知管理员
                         po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
 
+                        //注册订单的微信支付状态变动事件处理函数，核销微信卡券
+                        po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
+
                         //更新订单的微信支付状态
                         ProductOrder.UpdateTradeState(po);
 

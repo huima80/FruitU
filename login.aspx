@@ -13,7 +13,7 @@
         <div class="container">
             <div class="jumbotron">
                 <h1 id="SiteTitle" runat="server"></h1>
-                <p id="SiteDesc" runat="server"></p>
+                <p id="SiteDesc" runat="server">Fresh Fruits & Juice</p>
                 <p>
                     <a href="qqauth.ashx">
                         <img alt="" src="images/Connect_logo_5.png" /></a>

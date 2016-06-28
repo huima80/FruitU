@@ -11,7 +11,6 @@ public partial class login : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
         this.SiteTitle.InnerText = Config.SiteTitle;
-        this.SiteDesc.InnerText = Config.SiteDesc;
 
         //QQ用户已登录，但不是管理员
         if (User.Identity.IsAuthenticated &&

@@ -243,20 +243,33 @@ public class WxJSAPI
         }
     }
 
-    public static string MakeCardSign(string apiTicket, string url, out string noncestr, out string timestamp)
+    /// <summary>
+    /// 卡券签名
+    /// 1.将 api_ticket（特别说明：api_ticket 相较 appsecret 安全性更高，同时兼容老版本文档中使用的 appsecret 作为签名凭证。）、app_id、location_id、times_tamp、nonce_str、card_id、card_type的value值进行字符串的字典序排序。
+    /// 2.将所有参数字符串拼接成一个字符串进行sha1加密，得到cardSign。
+    /// </summary>
+    /// <param name="apiTicket"></param>
+    /// <param name="noncestr"></param>
+    /// <param name="timestamp"></param>
+    /// <returns></returns>
+    public static string MakeCardSign(string apiTicket, out string noncestr, out string timestamp)
     {
         string cardSign = string.Empty;
         try
         {
+            string param = string.Empty;
             noncestr = WeChatPayData.MakeNonceStr();
             timestamp = WeChatPayData.MakeTimeStamp();
-            //参与加密的参数key全部小写
             WeChatPayData signData = new WeChatPayData();
-            signData.SetValue("api_ticket", apiTicket);
-            signData.SetValue("timestamp", timestamp);
-            signData.SetValue("noncestr", noncestr);
-            signData.SetValue("url", url);
-            string param = signData.ToSignStr();
+            signData.SetValue(apiTicket, apiTicket);
+            signData.SetValue(Config.APPID, Config.APPID);
+            signData.SetValue(timestamp, timestamp);
+            signData.SetValue(noncestr, noncestr);
+            //参与加密的参数value连接成字符串
+            foreach (KeyValuePair<string, object> kvp in signData.GetValues())
+            {
+                param += kvp.Key;
+            }
 
             Log.Debug("MakeJsAPISign", "SHA1 encrypt param : " + param);
             //SHA1加密

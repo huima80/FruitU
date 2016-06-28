@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Web;
 using System.Web.UI;
+using System.Collections.Generic;
 using LitJson;
 using Com.Alipay;
+using System.Web.UI.WebControls;
 
 public partial class Checkout : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
-        WeChatUser wxUser = Session["WxUser"] as WeChatUser;
+        WeChatUser wxUser;
         string wxEditAddrParam = string.Empty;
+        string cardSign = string.Empty, timeStamp = string.Empty, nonceStr = string.Empty;
 
         try
         {
+            wxUser = Session["WxUser"] as WeChatUser;
+
             //获取“微信收货地址共享接口参数”
             string authUrl;
             string redirectUri = Request.Url.AbsoluteUri;
@@ -53,10 +58,37 @@ public partial class Checkout : System.Web.UI.Page
                 }
             }
 
+            //获取“收货地址共享接口参数”，传给前端JS
             wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
 
             //获取最新的用户积分信息
             wxUser.MemberPoints = WeChatUserDAO.FindMemberPointsByOpenID(wxUser.OpenID);
+
+            //生成微信卡券签名，用于客户端调用微信卡券JSSDK
+            string apiTicket;
+            apiTicket = WxJSAPI.GetAPITicket();
+            cardSign = WxJSAPI.MakeCardSign(apiTicket, out nonceStr, out timeStamp);
+
+            ////获取用户的微信卡券列表
+            //List<WxCard> wxCardList;
+            //wxCardList = WxCard.GetCardList(wxUser.OpenID);
+            //if (wxCardList.Count != 0)
+            //{
+            //    this.ddlWxCard.DataSource = wxCardList;
+            //    this.ddlWxCard.DataTextField = "Title";
+            //    this.ddlWxCard.DataValueField = "Code";
+            //    this.ddlWxCard.DataBind();
+            //    this.ddlWxCard.Items.Insert(0, new ListItem("请选择微信优惠券", "0"));
+            //}
+
+            //定义前端JS全局变量：收货地址接口参数、会员积分兑换比率、会员积分余额、微信地址JS参数
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsMemberPoints", string.Format("var memberPointsExchangeRate = {0}, validMemberPoints = {1}, wxEditAddrParam = {2};", Config.MemberPointsExchangeRate, wxUser.MemberPoints, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
+            //定义前端JS全局变量：运费标准、免运费条件
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsFreightTerm", string.Format("var freight = {0}, freightFreeCondition = {1};", Config.Freight, Config.FreightFreeCondition), true);
+            //定义前端JS全局变量：支付方式枚举值、支付宝网关
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPaymentTerm", string.Format("var paymentTerm={{wechat:{0},alipay:{1},cash:{2}}}, apGateway = '{3}';", (int)PaymentTerm.WECHAT, (int)PaymentTerm.ALIPAY, (int)PaymentTerm.CASH, AliPayConfig.AliPayGateway), true);
+            //定义前端JS全局变量：微信卡券JS参数
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
 
         }
         catch (System.Threading.ThreadAbortException)
@@ -65,15 +97,6 @@ public partial class Checkout : System.Web.UI.Page
         catch (Exception ex)
         {
             Log.Error(this.GetType().ToString(), ex.Message);
-        }
-        finally
-        {
-            //定义前端JS全局变量：收货地址接口参数、会员积分兑换比率、会员积分余额、微信地址JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsVar", string.Format("var memberPointsExchangeRate = {0}, validMemberPoints = {1}, wxEditAddrParam = {2};", Config.MemberPointsExchangeRate, wxUser.MemberPoints, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
-            //定义前端JS全局变量：运费标准、免运费条件
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsFreightTerm", string.Format("var freight = {0}, freightFreeCondition = {1};", Config.Freight, Config.FreightFreeCondition), true);
-            //定义前端JS全局变量：支付方式枚举值、支付宝网关
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPaymentTerm", string.Format("var paymentTerm={{wechat:{0},alipay:{1},cash:{2}}}, apGateway = '{3}';", (int)PaymentTerm.WECHAT, (int)PaymentTerm.ALIPAY, (int)PaymentTerm.CASH, AliPayConfig.AliPayGateway), true);
         }
     }
 }

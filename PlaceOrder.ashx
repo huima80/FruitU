@@ -38,19 +38,20 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
             }
 
             //1，处理新订单流程
-            if (context.Request.Form.Count != 0 && string.IsNullOrEmpty(context.Request.QueryString["PoID"]))
+            if (context.Request.Form != null && string.IsNullOrEmpty(context.Request.QueryString["PoID"]))
             {
                 //客户端提交的订单信息
-                string orderInfo = context.Request.Form[0];
-                if (!string.IsNullOrEmpty(orderInfo))
+                string strOrderInfo = HttpUtility.UrlDecode(context.Request.Form.ToString());
+                if (!string.IsNullOrEmpty(strOrderInfo))
                 {
                     //--------------校验表单信息关键字段-------------------
-                    JsonData jOrderInfo = JsonMapper.ToObject(orderInfo);
+                    JsonData jOrderInfo = JsonMapper.ToObject(strOrderInfo);
                     if (jOrderInfo == null || !jOrderInfo.Keys.Contains("name") || !jOrderInfo.Keys.Contains("phone") || !jOrderInfo.Keys.Contains("address")
                             || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm") || !jOrderInfo.Keys.Contains("usedMemberPoints")
+                            || !jOrderInfo.Keys.Contains("wxCard")
                             || !jOrderInfo.Keys.Contains("prodItems") || !jOrderInfo["prodItems"].IsArray || jOrderInfo["prodItems"].Count < 1)
                     {
-                        throw new Exception("订单姓名、电话、地址、支付方式、会员积分、备注、商品项信息不完整。");
+                        throw new Exception("订单姓名、电话、地址、支付方式、会员积分、微信优惠券、备注、商品项信息不完整。");
                     }
 
                     //--------------生成订单业务对象START-----------------
@@ -181,6 +182,46 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                     else
                     {
                         throw new Exception(string.Format("本订单可使用的积分范围：0~{0}", maxDiscountMemberPoints));
+                    }
+
+                    //订单使用的微信优惠券
+                    if (jOrderInfo["wxCard"].Keys.Contains("cardId") && !string.IsNullOrEmpty(jOrderInfo["wxCard"]["cardId"].ToString()) && !string.IsNullOrEmpty(jOrderInfo["wxCard"]["encryptCode"].ToString()))
+                    {
+                        WxCard wxCard = WxCard.GetCard(jOrderInfo["wxCard"]["cardId"].ToString());
+                        if (wxCard != null)
+                        {
+                            string wxCode = WxCard.DecryptCode(jOrderInfo["wxCard"]["encryptCode"].ToString());
+                            if (!string.IsNullOrEmpty(wxCode))
+                            {
+                                if ((newPO.OrderDetailPrice + newPO.Freight) >= wxCard.LeastCost)
+                                {
+                                    //只有微信卡券CODE解码正确，且满足使用条件，此优惠券才有效
+                                    newPO.WxCard = wxCard;
+                                    newPO.WxCard.Code = wxCode;
+                                    newPO.WxCardDiscount = wxCard.ReduceCost;
+                                }
+                                else
+                                {
+                                    newPO.WxCard = null;
+                                    newPO.WxCardDiscount = 0;
+                                }
+                            }
+                            else
+                            {
+                                newPO.WxCard = null;
+                                newPO.WxCardDiscount = 0;
+                            }
+                        }
+                        else
+                        {
+                            newPO.WxCard = null;
+                            newPO.WxCardDiscount = 0;
+                        }
+                    }
+                    else
+                    {
+                        newPO.WxCard = null;
+                        newPO.WxCardDiscount = 0;
                     }
 
                     //--------------生成订单业务对象END-----------------

@@ -320,7 +320,7 @@ public static class WxTmplMsg
 
                     break;
                 case OrderState.Delivered:
-                    //订单发货事件，发送模板消息给客户
+                    //订单发货事件，发送模板消息给用户
                     if (!SendTmplMsgSwitch[OrderState.Delivered])
                     {
                         return false;

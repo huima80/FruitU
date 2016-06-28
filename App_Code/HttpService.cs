@@ -20,7 +20,7 @@ public class HttpService
         return true;
     }
 
-    public static string Post(string xml, string url, bool isUseCert, int timeout)
+    public static string Post(string content, string url, bool isUseCert, int timeout)
     {
         System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
 
@@ -28,7 +28,6 @@ public class HttpService
 
         HttpWebRequest request = null;
         HttpWebResponse response = null;
-        Stream reqStream = null;
 
         try
         {
@@ -56,7 +55,7 @@ public class HttpService
 
             //设置POST的数据类型和长度
             request.ContentType = "text/xml";
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(xml);
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(content);
             request.ContentLength = data.Length;
 
             //是否使用证书
@@ -69,17 +68,21 @@ public class HttpService
             }
 
             //往服务器写入数据
-            reqStream = request.GetRequestStream();
-            reqStream.Write(data, 0, data.Length);
-            reqStream.Close();
+            using (Stream reqStream = request.GetRequestStream())
+            {
+                reqStream.Write(data, 0, data.Length);
+                reqStream.Close();
+            }
 
             //获取服务端返回
             response = (HttpWebResponse)request.GetResponse();
 
             //获取服务端返回数据
-            StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
-            result = sr.ReadToEnd().Trim();
-            sr.Close();
+            using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+            {
+                result = sr.ReadToEnd().Trim();
+                sr.Close();
+            }
         }
         catch (System.Threading.ThreadAbortException e)
         {
@@ -156,9 +159,11 @@ public class HttpService
             response = (HttpWebResponse)request.GetResponse();
 
             //获取HTTP返回数据
-            StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
-            result = sr.ReadToEnd().Trim();
-            sr.Close();
+            using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+            {
+                result = sr.ReadToEnd().Trim();
+                sr.Close();
+            }
         }
         catch (System.Threading.ThreadAbortException e)
         {

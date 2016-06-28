@@ -15,65 +15,15 @@
     <link href="css/shake.css" rel="stylesheet" />
 </head>
 <body>
-        <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button id="btnShowMenu" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#divOrderSearchCriteria" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <p class="navbar-text">
-                    <i class="fa fa-file-o"></i>&nbsp;订单数<span id="spanOrderSubmitted"></span>
-                    <i class="fa fa-credit-card"></i>&nbsp;未支付<span id="spanOrderPaid"></span>
-                    <i class="fa fa-truck"></i>&nbsp;未发货<span id="spanOrderDelivered"></span>
-                    <i class="fa fa-pencil-square-o"></i>&nbsp;未签收<span id="spanOrderAccepted"></span>
-                </p>
-            </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="divOrderSearchCriteria">
-                <div class="form-group">
-                    <input id="txtOrderID" type="text" class="form-control" placeholder="订单号" />
-                    <input id="txtProdName" type="text" class="form-control" placeholder="商品名称" />
-                    <input id="txtStartOrderDate" type="date" class="form-control" placeholder="开始下单时间" />
-                    <input id="txtEndOrderDate" type="date" class="form-control" placeholder="结束下单时间" />
-                </div>
-                <button id="btnSearch" type="button" class="btn btn-info">查找订单</button>
-                <button id="btnAllOrder" type="button" class="btn btn-warning">全部订单</button>
-            </div>
-            <!-- /.navbar-collapse -->
-        </div>
-    </nav>
-
+    <form runat="server">
     <div class="container">
-        <div id="" class="row">
-        <div class="col-xs-12 col-sm-4">
-            <div class="order-item">
-
-                <div class="order-price-freight">
-                    <div class="order-total">
-
-                        <button id="btnWxPay1" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(1);"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                        <button id="btnWxPay2" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(2);"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                        <button id="btnWxPay3" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(3);"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                        <button id="btnWxPay303" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="WxPay(303);"><span class="ladda-label"><i class="fa fa-wechat fa-fw"></i>微信支付</span><span class="ladda-spinner"></span></button>
-                        <button id="btnStop" class="btn btn-info" type="button" onclick="stop();">停止</button>
-                    </div>
-                </div>
-
+        <div class="row" id="divWxCard">
+            <div class="col-sm-10">
+                微信优惠券
             </div>
         </div>
-
-
     </div>
-   </div>
-        <div class="container">
-        <div id="divOrderItems" class="row">
-        </div>
-    </div>
-
+    </form>
 </body>
 
 
@@ -112,6 +62,37 @@
 
 
     <script>
+        requirejs(['jquery', 'jweixin'], function ($, wx) {
+
+            $(function () {
+                if (typeof cardParam == "object") {
+                    $.extend(cardParam, {
+                        success: function (res) {
+                            var cardList = res.cardList; // 用户选中的卡券列表信息
+                            alert(JSON.stringify(cardList));
+                        }
+                    });
+
+                    //注册选择微信卡券点击事件处理函数
+                    $("#divWxCard").on("click", wx, wxChooseCard);
+                }
+                else {
+                    console.warn("微信卡券参数错误");
+                }
+
+            });
+        });
+
+        //拉取微信卡券列表并获取用户选择信息
+        function wxChooseCard(event) {
+            var wx = event.data;
+            try {
+                wx.chooseCard(cardParam);
+            }
+            catch (error) {
+                alert(error.message);
+            }
+        }
 
 </script>
 </html>

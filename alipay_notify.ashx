@@ -1,23 +1,13 @@
-﻿using System;
-using System.Data;
-using System.Configuration;
-using System.Collections;
+﻿<%@ WebHandler Language="C#" Class="alipay_notify" %>
+
+using System;
 using System.Web;
-using System.Web.Security;
-using System.Collections.Specialized;
-using System.Collections.Generic;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using Com.Alipay;
 
 /// <summary>
-/// 功能：服务器异步通知页面
-/// 版本：3.3
-/// 日期：2012-07-10
-/// 说明：
-/// 以下代码只是为了方便商户测试而提供的样例代码，商户可以根据自己网站的需要，按照技术文档编写,并非一定要使用该代码。
-/// 该代码仅供学习和研究支付宝接口使用，只是提供一个参考。
-/// 
-/// ///////////////////页面功能说明///////////////////
 /// 创建该页面文件时，请留心该页面文件中无任何HTML代码及空格。
 /// 该页面不能在本机电脑测试，请到服务器上做测试。请确保外部可以访问该页面。
 /// 该页面调试工具请使用写文本函数logResult。
@@ -25,13 +15,28 @@ using Com.Alipay;
 /// 该方式的作用主要防止订单丢失，即页面跳转同步通知没有处理订单更新，它则去处理；
 /// 当商户收到服务器异步通知并打印出success时，服务器异步通知参数notify_id才会失效。也就是说在支付宝发送同一条异步通知时（包含商户并未成功打印出success导致支付宝重发数次通知），服务器异步通知参数notify_id是不变的。
 /// </summary>
-public partial class alipay_notify1 : System.Web.UI.Page
+public class alipay_notify : IHttpHandler
 {
-    protected void Page_Load(object sender, EventArgs e)
+
+    public void ProcessRequest(HttpContext context)
     {
+
+        string replyStr = string.Empty;
+
         try
         {
-            SortedDictionary<string, string> sdParam = GetRequestPost();
+            SortedDictionary<string, string> sdParam = new SortedDictionary<string, string>();
+            NameValueCollection coll;
+            //Load Form variables into NameValueCollection variable.
+            coll = context.Request.Form;
+
+            // Get names of all forms into a string array.
+            string[] requestItem = coll.AllKeys;
+
+            for (int i = 0; i < requestItem.Length; i++)
+            {
+                sdParam.Add(requestItem[i], context.Request.Form[requestItem[i]]);
+            }
 
             //判断是否有带返回参数
             if (sdParam.Count > 0)
@@ -272,11 +277,14 @@ public partial class alipay_notify1 : System.Web.UI.Page
                                     //注册订单的支付宝支付状态变动事件处理函数，通知管理员
                                     po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
 
+                                    //注册订单的支付宝支付状态变动事件处理函数，核销微信卡券
+                                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
+
                                     //更新订单的支付宝支付状态
                                     ProductOrder.UpdateTradeState(po);
 
                                     //程序执行完后必须打印输出“success”（不包含引号）。如果商户反馈给支付宝的字符不是success这7个字符，支付宝服务器会不断重发通知，直到超过24小时22分钟。
-                                    Response.Write("success");
+                                    replyStr = "success";
                                 }
                                 else
                                 {
@@ -310,30 +318,22 @@ public partial class alipay_notify1 : System.Web.UI.Page
         }
         catch (Exception ex)
         {
-            Log.Error(this.GetType().ToString(), string.Format("支付宝通知出错 :{0}\n请求方IP：{1}", ex.Message + ex.StackTrace, Request.UserHostAddress));
-            Response.Write("fail");
+            Log.Error(this.GetType().ToString(), string.Format("支付宝通知出错 :{0}\n请求方IP：{1}", ex.Message + ex.StackTrace, context.Request.UserHostAddress));
+            replyStr = "fail";
         }
-    }
-
-    /// <summary>
-    /// 获取支付宝POST过来通知消息，并以“参数名=参数值”的形式组成数组
-    /// </summary>
-    /// <returns>request回来的信息组成的数组</returns>
-    public SortedDictionary<string, string> GetRequestPost()
-    {
-        SortedDictionary<string, string> sArray = new SortedDictionary<string, string>();
-        NameValueCollection coll;
-        //Load Form variables into NameValueCollection variable.
-        coll = Request.Form;
-
-        // Get names of all forms into a string array.
-        string[] requestItem = coll.AllKeys;
-
-        for (int i = 0; i < requestItem.Length; i++)
+        finally
         {
-            sArray.Add(requestItem[i], Request.Form[requestItem[i]]);
+            context.Response.ContentType = "text/plain";
+            context.Response.Write(replyStr);
         }
-
-        return sArray;
     }
+
+    public bool IsReusable
+    {
+        get
+        {
+            return false;
+        }
+    }
+
 }

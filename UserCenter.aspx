@@ -19,18 +19,18 @@
             </div>
         </div>
         <div class="row text-center">
-            <div class="col-xs-12" onclick="location.href='MyOrders.aspx'">
-                <div class="info-block myorders-block">我的订单</div>
-            </div>
-        </div>
-        <div class="row text-center">
-            <div class="col-xs-12" onclick="openModal('MemberPoints');">
-                <div class="info-block memberpoints-block">积分规则</div>
+            <div id="divWxCard" class="col-xs-12">
+                <div class="info-block myorders-block">微信卡券</div>
             </div>
         </div>
         <div class="row text-center">
             <div id="divWxAddress" class="col-xs-12" onclick="selectDeliverAddress();">
                 <div class="info-block deliver-addr-block">收货地址</div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col-xs-12" onclick="openModal('MemberPoints');">
+                <div class="info-block memberpoints-block">积分规则</div>
             </div>
         </div>
         <div class="row">
@@ -53,7 +53,7 @@
             </div>
         </div>--%>
     </div>
-    <div class="md-modal md-effect-13" id="divModal">
+    <div class="md-modal md-effect-1" id="divModal">
         <div class="md-content">
             <div id="QRCode">
                 <img id="imgQRCode" src="images/FruitUQRCode.jpg" />
@@ -76,11 +76,27 @@
 
     <script>
 
-        requirejs(['jquery'], function ($) {
+        requirejs(['jquery', 'jweixin110'], function ($, wx) {
 
             $(function () {
                 //注册选择收货人信息单击事件处理函数
                 //$("#divWxAddress").on("click", wx, wxOpenAddress);
+
+                if (typeof cardParam == "object" && cardParam.cardSign != undefined) {
+                    $.extend(cardParam, {
+                        complete: function () {
+                            alert("微信优惠券可在下单时使用");
+                        }
+                    });
+
+                    //注册选择微信卡券点击事件处理函数
+                    $("#divWxCard").on("click", function () {
+                        wx.chooseCard(cardParam);
+                    });
+                }
+                else {
+                    console.warn("微信卡券参数错误");
+                }
 
                 //点击遮罩层关闭模式窗口
                 $(".md-overlay").on("click", closeModal);
@@ -115,7 +131,7 @@
                 success: function (res) {
                     // 用户成功拉出地址 
                     if (res.errMsg.indexOf("ok") != -1) {
-                        alert("收货地址可在下单时选用。");
+                        alert("收货地址可在下单时选用");
                     }
                     else {
                         alert("无法获取您的地址");
@@ -123,7 +139,7 @@
                 },
                 cancel: function () {
                     // 用户取消拉出地址
-                    alert("收货地址可在下单时选用。");
+                    alert("收货地址可在下单时选用");
                 }
             });
         }
@@ -135,7 +151,7 @@
                 wxEditAddrParam,   //后端获取的参数
                   function (res) {
                       if (res.err_msg.indexOf("ok") != -1) {
-                          alert("收货地址可在下单时选用。");
+                          alert("收货地址可在下单时选用");
                       }
                       else {
                           if (res.err_msg.indexOf("function_not_exist") != -1) {
@@ -166,7 +182,6 @@
                 editAddress();
             }
         }
-
 
     </script>
 </asp:Content>

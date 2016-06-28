@@ -175,13 +175,23 @@ public class ProductOrder : IComparable<ProductOrder>
     public bool IsCalMemberPoints { get; set; }
 
     /// <summary>
-    /// 订单总价格 = 商品价格+运费-会员积分抵扣
+    /// 订单使用的微信优惠券
+    /// </summary>
+    public WxCard WxCard { get; set; }
+
+    /// <summary>
+    /// 订单使用的微信优惠券折扣金额
+    /// </summary>
+    public decimal WxCardDiscount { get; set; }
+
+    /// <summary>
+    /// 订单总价格 = 商品价格+运费-会员积分抵扣-微信优惠券抵扣
     /// </summary>
     public decimal OrderPrice
     {
         get
         {
-            return OrderDetailPrice + Freight - MemberPointsDiscount;
+            return OrderDetailPrice + Freight - MemberPointsDiscount - WxCardDiscount;
         }
     }
 
@@ -433,28 +443,6 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 提交新订单，货到付款
-    /// </summary>
-    /// <param name="po"></param>
-    /// <returns></returns>
-    public static ProductOrder SubmitOrder(ProductOrder po)
-    {
-        if (po == null)
-        {
-            throw new ArgumentNullException("ProductOrder对象不能为null");
-        }
-
-        //订单入库
-        ProductOrder.AddOrder(po);
-
-        //触发订单提交状态事件
-        po.OnOrderStateChanged(OrderState.Submitted);
-
-        return po;
-
-    }
-
-    /// <summary>
     /// 提交新订单，支付宝支付
     /// </summary>
     /// <param name="po"></param>
@@ -486,6 +474,28 @@ public class ProductOrder : IComparable<ProductOrder>
         sParaTemp.Add("body", po.OrderDetails);
 
         requestPara = Submit.BuildRequestPara(sParaTemp);
+
+        //触发订单提交状态事件
+        po.OnOrderStateChanged(OrderState.Submitted);
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 提交新订单，货到付款
+    /// </summary>
+    /// <param name="po"></param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrder(ProductOrder po)
+    {
+        if (po == null)
+        {
+            throw new ArgumentNullException("ProductOrder对象不能为null");
+        }
+
+        //订单入库
+        ProductOrder.AddOrder(po);
 
         //触发订单提交状态事件
         po.OnOrderStateChanged(OrderState.Submitted);
@@ -806,6 +816,24 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramSellerID.SqlValue = po.AP_SellerID;
                         cmdAddOrder.Parameters.Add(paramSellerID);
 
+                        SqlParameter paramWxCardID = cmdAddOrder.CreateParameter();
+                        paramWxCardID.ParameterName = "@WxCardID";
+                        paramWxCardID.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramWxCardID.SqlValue = (po.WxCard != null) ? po.WxCard.CardID : null;
+                        cmdAddOrder.Parameters.Add(paramWxCardID);
+
+                        SqlParameter paramWxCardCode = cmdAddOrder.CreateParameter();
+                        paramWxCardCode.ParameterName = "@WxCardCode";
+                        paramWxCardCode.SqlDbType = System.Data.SqlDbType.VarChar;
+                        paramWxCardCode.SqlValue = (po.WxCard != null) ? po.WxCard.Code : null;
+                        cmdAddOrder.Parameters.Add(paramWxCardCode);
+
+                        SqlParameter paramWxCardDiscount = cmdAddOrder.CreateParameter();
+                        paramWxCardDiscount.ParameterName = "@WxCardDiscount";
+                        paramWxCardDiscount.SqlDbType = System.Data.SqlDbType.Decimal;
+                        paramWxCardDiscount.SqlValue = po.WxCardDiscount;
+                        cmdAddOrder.Parameters.Add(paramWxCardDiscount);
+
                         foreach (SqlParameter param in cmdAddOrder.Parameters)
                         {
                             if (param.Value == null)
@@ -815,7 +843,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
 
                         //插入订单表
-                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [AgentOpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints], [AP_SellerID]) VALUES (@OrderID,@OpenID,@AgentOpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints,@AP_SellerID);select SCOPE_IDENTITY() as 'NewOrderID'";
+                        cmdAddOrder.CommandText = "INSERT INTO [dbo].[ProductOrder] ([OrderID], [OpenID], [AgentOpenID], [DeliverName], [DeliverPhone], [DeliverDate], [DeliverAddress], [OrderMemo], [OrderDate], [TradeState], [TradeStateDesc], [IsDelivered], [IsAccept], [AcceptDate], [PrepayID], [PaymentTerm], [ClientIP], [IsCancel], [CancelDate], [Freight], [MemberPointsDiscount], [UsedMemberPoints], [IsCalMemberPoints], [AP_SellerID], [WxCardID], [WxCardCode], [WxCardDiscount]) VALUES (@OrderID,@OpenID,@AgentOpenID,@DeliverName,@DeliverPhone,@DeliverDate,@DeliverAddress,@OrderMemo,@OrderDate,@TradeState,@TradeStateDesc,@IsDelivered,@IsAccept,@AcceptDate,@PrepayID,@PaymentTerm,@ClientIP,@IsCancel,@CancelDate,@Freight,@MemberPointsDiscount,@UsedMemberPoints,@IsCalMemberPoints,@AP_SellerID,@WxCardID,@WxCardCode,@WxCardDiscount);select SCOPE_IDENTITY() as 'NewOrderID'";
 
                         Log.Debug("插入订单表", cmdAddOrder.CommandText);
 
@@ -1038,14 +1066,14 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="deliveringOrderCount"></param>
     /// <param name="acceptingOrderCount"></param>
     /// <param name="cancelledOrderCount"></param>
-    /// <param name="orderPrice"></param>
+    /// <param name="totalOrderPrice"></param>
     /// <param name="startRowIndex"></param>
     /// <param name="maximumRows"></param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal totalOrderPrice, int startRowIndex, int maximumRows = 10)
     {
         //默认加载每个订单所属的用户信息
-        return FindProductOrderPager(true, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, out cancelledOrderCount, out orderPrice, startRowIndex, maximumRows);
+        return FindProductOrderPager(true, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, out cancelledOrderCount, out totalOrderPrice, startRowIndex, maximumRows);
     }
 
     /// <summary>
@@ -1059,11 +1087,11 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="deliveringOrderCount">未配送订单数</param>
     /// <param name="acceptingOrderCount">未签收订单数</param>
     /// <param name="cancelledOrderCount">已撤单订单数</param>
-    /// <param name="orderPrice">订单总金额</param>
+    /// <param name="totalOrderPrice">订单总金额</param>
     /// <param name="startRowIndex">每页开始行号</param>
     /// <param name="maximumRows">每页行数</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal orderPrice, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal totalOrderPrice, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -1073,7 +1101,7 @@ public class ProductOrder : IComparable<ProductOrder>
         deliveringOrderCount = 0;
         acceptingOrderCount = 0;
         cancelledOrderCount = 0;
-        orderPrice = 0;
+        totalOrderPrice = 0;
 
         try
         {
@@ -1148,13 +1176,13 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramCancelledOrderCount.Direction = ParameterDirection.Output;
                         cmdOrder.Parameters.Add(paramCancelledOrderCount);
 
-                        SqlParameter paramOrderPrice = cmdOrder.CreateParameter();
-                        paramOrderPrice.ParameterName = "@OrderPrice";
-                        paramOrderPrice.SqlDbType = SqlDbType.Decimal;
-                        paramOrderPrice.Precision = (byte)18;
-                        paramOrderPrice.Scale = (byte)2;
-                        paramOrderPrice.Direction = ParameterDirection.Output;
-                        cmdOrder.Parameters.Add(paramOrderPrice);
+                        SqlParameter paramTotalOrderPrice = cmdOrder.CreateParameter();
+                        paramTotalOrderPrice.ParameterName = "@TotalOrderPrice";
+                        paramTotalOrderPrice.SqlDbType = SqlDbType.Decimal;
+                        paramTotalOrderPrice.Precision = (byte)18;
+                        paramTotalOrderPrice.Scale = (byte)2;
+                        paramTotalOrderPrice.Direction = ParameterDirection.Output;
+                        cmdOrder.Parameters.Add(paramTotalOrderPrice);
 
                         foreach (SqlParameter param in cmdOrder.Parameters)
                         {
@@ -1218,9 +1246,9 @@ public class ProductOrder : IComparable<ProductOrder>
                             cancelledOrderCount = 0;
                         }
 
-                        if (!decimal.TryParse(paramOrderPrice.SqlValue.ToString(), out orderPrice))
+                        if (!decimal.TryParse(paramTotalOrderPrice.SqlValue.ToString(), out totalOrderPrice))
                         {
-                            orderPrice = 0;
+                            totalOrderPrice = 0;
                         }
                     }
                 }
@@ -1686,7 +1714,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         switch (po.PaymentTerm)
                         {
                             case PaymentTerm.WECHAT:
-                                cmdOrderID.CommandText = "update ProductOrder set PrepayID = @PrepayID, PaymentTerm = @PaymentTerm, TradeState = @TradeState where Id=@Id";
+                                cmdOrderID.CommandText = "update ProductOrder set PaymentTerm = @PaymentTerm, TradeState = @TradeState, PrepayID = @PrepayID where Id=@Id";
 
                                 SqlParameter paramPrepayID;
                                 paramPrepayID = cmdOrderID.CreateParameter();
@@ -2384,6 +2412,27 @@ public class ProductOrder : IComparable<ProductOrder>
         po.AP_BuyerID = sdr["AP_BuyerID"].ToString();
         po.AP_BuyerEmail = sdr["AP_BuyerEmail"].ToString();
         po.AP_RefundStatus = sdr["AP_RefundStatus"] != DBNull.Value ? sdr["AP_RefundStatus"] as RefundStatus? : null;
+        //加载微信卡券
+        if (sdr["WxCardID"] != DBNull.Value)
+        {
+            WxCard wxCard = WxCard.GetCard(sdr["WxCardID"].ToString());
+            if (wxCard != null)
+            {
+                po.WxCard = wxCard;
+                po.WxCard.Code = sdr["WxCardCode"].ToString();
+                po.WxCardDiscount = sdr["WxCardDiscount"] != DBNull.Value ? decimal.Parse(sdr["WxCardDiscount"].ToString()) : 0;
+            }
+            else
+            {
+                po.WxCard = null;
+                po.WxCardDiscount = 0;
+            }
+        }
+        else
+        {
+            po.WxCard = null;
+            po.WxCardDiscount = 0;
+        }
 
         return po;
     }

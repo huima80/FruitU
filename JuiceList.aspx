@@ -23,7 +23,12 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <img src="images/Juice-FreshJuice.gif" />
+                <img src="images/FreshJuiceBanner.gif" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/FreshJuice.gif" />
             </div>
         </div>
         <div runat="server" id="divFreshJuiceList" class="row">
@@ -235,7 +240,7 @@
                         $("#divModal").addClass("md-show");
 
                         //设置微信分享参数
-                        requirejs(['jweixin'], function (wx) {
+                        requirejs(['jweixin110'], function (wx) {
                             wxShareInfo.desc = '我买了【' + juiceList[i].FruitName + '】' + juiceList[i].FruitDesc;
                             wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
                             wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;

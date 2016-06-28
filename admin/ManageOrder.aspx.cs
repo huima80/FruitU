@@ -53,7 +53,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("deliveringOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("acceptingOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
                 this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("cancelledOrderCount", DbType.Int32, "0")].Direction = ParameterDirection.Output;
-                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("orderPrice", DbType.Decimal, "0")].Direction = ParameterDirection.Output;
+                this.odsOrderList.SelectParameters[this.odsOrderList.SelectParameters.Add("totalOrderPrice", DbType.Decimal, "0")].Direction = ParameterDirection.Output;
 
                 this.gvOrderList.AllowPaging = true;
                 this.gvOrderList.AllowCustomPaging = true;
@@ -105,7 +105,7 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         if (e.OutputParameters.Count != 0 && e.OutputParameters["totalRows"] != null && e.OutputParameters["payingOrderCount"] != null && e.OutputParameters["deliveringOrderCount"] != null && e.OutputParameters["acceptingOrderCount"] != null)
         {
-            this.lblOrderPrice.Text = string.Format("￥{0}元", decimal.Parse(e.OutputParameters["orderPrice"].ToString()));
+            this.lblOrderPrice.Text = string.Format("￥{0}元", decimal.Parse(e.OutputParameters["totalOrderPrice"].ToString()));
             this.lblTotalRows.Text = e.OutputParameters["totalRows"].ToString();
             this.lblPayingOrderCount.Text = e.OutputParameters["payingOrderCount"].ToString();
             this.lblDeliveringOrderCount.Text = e.OutputParameters["deliveringOrderCount"].ToString();
@@ -217,6 +217,12 @@ public partial class ManageOrder : System.Web.UI.Page
             {
                 pAgent.Visible = false;
             }
+
+            //控制显示积分优惠和微信优惠券优惠
+            HtmlGenericControl pMemberPointsDiscount = e.Row.FindControl("pMemberPointsDiscount") as HtmlGenericControl;
+            HtmlGenericControl pWxCardDiscount = e.Row.FindControl("pWxCardDiscount") as HtmlGenericControl;
+            pMemberPointsDiscount.Visible = (po.MemberPointsDiscount != 0) ? true : false;
+            pWxCardDiscount.Visible = (po.WxCardDiscount != 0) ? true : false;
 
             //支付方式和支付状态控件
             Label lblPaymentTerm = e.Row.FindControl("lblPaymentTerm") as Label;
@@ -583,6 +589,8 @@ public partial class ManageOrder : System.Web.UI.Page
                     po.PayCashDate = DateTime.Now;
                     //注册订单的支付状态变动事件处理函数，通知管理员
                     po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                    //注册订单的支付状态变动事件处理函数，核销微信卡券
+                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
                     ProductOrder.UpdateTradeState(po);
                     gvOrderList.DataBind();
                     break;

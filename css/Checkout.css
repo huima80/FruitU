@@ -144,3 +144,7 @@ hr {
 .md-content {
     max-width: 60%;
 }
+
+.wxcard-logo {
+    width: 80px;
+}

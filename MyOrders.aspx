@@ -60,13 +60,16 @@
                     <div class="order-total">
                         合计：￥<span class="order-price">{{:OrderPrice}}</span>元
                     </div>
-                    <div class="freight">(含运费{{:Freight}}元，积分优惠{{:MemberPointsDiscount}}元)</div>
+                    <div class="freight">
+                        (含运费{{:Freight}}元{{if MemberPointsDiscount != 0}}，积分优惠{{:MemberPointsDiscount}}元{{/if}}{{if WxCardDiscount != 0}}，微信优惠券优惠{{:WxCardDiscount}}元{{/if}})
+                    </div>
                 </div>
                 {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14)}}
                 <div class="btn-pay">
-                <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="wxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                        <button id="btnAliPay{{:ID}}" class="btn btn-alipay ladda-button" type="button" data-style="zoom-in" onclick="aliPay({{:ID}});">
-                            <img src="images/alipay.png" /> 支付宝</button>
+                    <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="wxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
+                    <button id="btnAliPay{{:ID}}" class="btn btn-alipay ladda-button" type="button" data-style="zoom-in" onclick="aliPay({{:ID}});">
+                        <img src="images/alipay.png" />
+                        支付宝</button>
                 </div>
                 {{/if}}
                 <hr />
@@ -104,12 +107,12 @@
         requirejs(['jquery', 'bootstrap', 'encoder'], function ($) {
             $(function () {
 
-                if (paymentTerm == undefined || typeof paymentTerm != "object") {
+                if (typeof paymentTerm == undefined) {
                     alert("参数错误：支付方式");
                     return false;
                 }
 
-                if (apGateway == undefined) {
+                if (typeof apGateway == undefined) {
                     alert("参数错误：支付宝网关");
                     return false;
                 }
@@ -129,7 +132,7 @@
                     $($.pager).on("onPageLoaded", function (event, data) {
                         //刷新订单各状态统计数
                         if (data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
-                            $.each(data.originalDataPerPage, function () {
+                            $(data.originalDataPerPage).each(function () {
                                 if (this.TotalRows != undefined) {
                                     $("#spanOrderSubmitted").text(this.TotalRows);
                                 }
