@@ -78,7 +78,7 @@
                         <i class="fa fa-file-o"></i>&nbsp;下单
                     </span>
                     {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14) && IsDelivered==0 && IsAccept==0}}
-                       <span id="CancelOrder{{:ID}}" class="doing btn-cancel" onclick="cancelOrder({{:ID}});">&nbsp;取消订单&nbsp;{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
+                       <span id="CancelOrder{{:ID}}" class="label label-warning" onclick="cancelOrder({{:ID}});">取消订单{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
                            <span class="done">—</span>
                            {{if TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14}}
                      <span class="done">{{else}}

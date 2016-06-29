@@ -151,7 +151,7 @@
                             $.cart.updateFreightTerm(freight, freightFreeCondition);
                         }
                         else {
-                            throw new Error("参数错误：运费条款");
+                            throw new Error("参数错误：运费标准");
                         }
 
                         if (typeof paymentTerm == undefined) {
@@ -173,6 +173,16 @@
                         //初始化购物车里的会员积分余额
                         if (typeof validMemberPoints != undefined && !isNaN(validMemberPoints) && validMemberPoints >= 0) {
                             $.cart.updateValidMemberPoints(validMemberPoints);
+
+                            if (validMemberPoints > 0) {
+                                //注册使用积分单选框点击事件处理函数
+                                $("#cbMemberPoints").on("click", switchMemberPoints);
+                                //注册积分变动事件处理函数
+                                $("#txtUsedMemberPoints").on({ "focus": function () { this.select(); }, "change": useMemberPoints });
+                            }
+                            else {
+                                $("#cbMemberPoints").attr({ disabled: "disabled" });
+                            }
                         }
                         else {
                             throw new Error("参数错误：会员积分余额");
@@ -243,12 +253,6 @@
                 try {
                     //注册选择收货人信息单击事件处理函数，使用此JSSDK获取地址信息，微信会提示用户，影响体验，暂不用
                     //$("#divPanelHeading").on("click", wx, wxOpenAddress);
-
-                    //注册使用积分单选框点击事件处理函数
-                    $("#cbMemberPoints").on("click", switchMemberPoints);
-
-                    //注册积分变动事件处理函数
-                    $("#txtUsedMemberPoints").on({ "focus": function () { this.select(); }, "change": useMemberPoints });
 
                     if (typeof cardParam == "object" && cardParam.cardSign != undefined) {
                         $.extend(cardParam, {

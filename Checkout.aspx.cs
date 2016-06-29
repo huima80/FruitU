@@ -81,14 +81,14 @@ public partial class Checkout : System.Web.UI.Page
             //    this.ddlWxCard.Items.Insert(0, new ListItem("请选择微信优惠券", "0"));
             //}
 
-            //定义前端JS全局变量：收货地址接口参数、会员积分兑换比率、会员积分余额、微信地址JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsMemberPoints", string.Format("var memberPointsExchangeRate = {0}, validMemberPoints = {1}, wxEditAddrParam = {2};", Config.MemberPointsExchangeRate, wxUser.MemberPoints, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
+            //定义前端JS全局变量：会员积分兑换比率、会员积分余额
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsMemberPoints", string.Format("var memberPointsExchangeRate = {0}, validMemberPoints = {1};", Config.MemberPointsExchangeRate, wxUser.MemberPoints), true);
             //定义前端JS全局变量：运费标准、免运费条件
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsFreightTerm", string.Format("var freight = {0}, freightFreeCondition = {1};", Config.Freight, Config.FreightFreeCondition), true);
             //定义前端JS全局变量：支付方式枚举值、支付宝网关
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPaymentTerm", string.Format("var paymentTerm={{wechat:{0},alipay:{1},cash:{2}}}, apGateway = '{3}';", (int)PaymentTerm.WECHAT, (int)PaymentTerm.ALIPAY, (int)PaymentTerm.CASH, AliPayConfig.AliPayGateway), true);
-            //定义前端JS全局变量：微信卡券JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
+            //定义前端JS全局变量：微信卡券JS参数、微信地址JS参数
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxJSParam", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}}, wxEditAddrParam = {3};", cardSign, timeStamp, nonceStr, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
 
         }
         catch (System.Threading.ThreadAbortException)

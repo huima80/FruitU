@@ -230,7 +230,13 @@
                     <p class="text-right">积分优惠：-￥<span>{{:MemberPointsDiscount}}</span></p>
                     {{/if}}
                      {{if WxCardDiscount != 0}}
-                    <p class="text-right">微信优惠券优惠：-￥<span>{{:WxCardDiscount}}</span></p>
+                    <p class="text-right">
+                        微信优惠券优惠：-￥<span>{{:WxCardDiscount}}</span>
+                        {{if WxCard.Title != ""}}
+                        <br />
+                        <span>【{{:WxCard.Title}}】</span>
+                        {{/if}}
+                    </p>
                     {{/if}}
                  <p class="order-price">订单总金额：￥<span>{{:OrderPrice}}</span></p>
                     <p class="text-right">
