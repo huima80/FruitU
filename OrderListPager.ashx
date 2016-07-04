@@ -192,7 +192,7 @@ public class OrderListPager : IHttpHandler, System.Web.SessionState.IReadOnlySes
                 jOrderListPerPage.Add(jOrderPrice);
 
                 context.Response.Clear();
-                context.Response.ContentType = "text/plain";
+                context.Response.ContentType = "application/json";
                 context.Response.Write(jOrderListPerPage.ToJson());
                 context.Response.End();
             }

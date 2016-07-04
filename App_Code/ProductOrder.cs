@@ -191,7 +191,15 @@ public class ProductOrder : IComparable<ProductOrder>
     {
         get
         {
-            return OrderDetailPrice + Freight - MemberPointsDiscount - WxCardDiscount;
+            decimal orderPrice = OrderDetailPrice + Freight - MemberPointsDiscount - WxCardDiscount;
+            if (orderPrice > 0)
+            {
+                return orderPrice;
+            }
+            else
+            {
+                throw new Exception("订单价格异常");
+            }
         }
     }
 

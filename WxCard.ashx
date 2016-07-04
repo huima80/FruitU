@@ -18,7 +18,7 @@ public class WxCardHandler : IHttpHandler {
             cardInfo = JsonMapper.ToJson(wxCard);
         }
         context.Response.Clear();
-        context.Response.ContentType = "text/plain";
+        context.Response.ContentType = "application/json";
         context.Response.Write(cardInfo);
         context.Response.End();
    }

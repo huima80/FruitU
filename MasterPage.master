@@ -89,11 +89,11 @@
                 <ul>
                     <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />
                         首页</a></li>
-                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="ProdAmountHints"></span><br />
+                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="spProdAmountHints"></span><br />
                         购物车</a></li>
                     <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><br />
                         我的订单</a></li>
-                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><br />
+                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><span id="spWxCardMenu"><img src="images/wxcard1.png" /></span><br />
                         个人中心</a></li>
                 </ul>
             </nav>
@@ -131,6 +131,14 @@
                     }
                 }
 
+                //显示用户的微信卡券
+                if (typeof wxCard != undefined && wxCard.length > 0) {
+                    $("#spWxCardMenu").addClass("wxcard-hint").show();
+                }
+                else {
+                    $("#spWxCardMenu").hide();
+                }
+
                 requirejs(['cart'], function () {
                     refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
 
@@ -144,7 +152,7 @@
                 requirejs(['jweixin110'], function (wx) {
 
                     try {
-                        if (typeof wxJsApiParam == undefined) {
+                        if (typeof wxJsApiParam == "undefined") {
                             throw new Error("微信JSSDK参数错误");
                         }
 
@@ -235,17 +243,17 @@
 
             //购物车抖动
             function shakeCart() {
-                $("#ProdAmountHints").addClass("shake shake-slow shake-constant");
-                setTimeout('$("#ProdAmountHints").removeClass("shake shake-slow shake-constant")', 300);
+                $("#spProdAmountHints").addClass("shake shake-slow shake-constant");
+                setTimeout('$("#spProdAmountHints").removeClass("shake shake-slow shake-constant")', 300);
             }
 
             //刷新购物车数量
             function refreshCartProdQty(event, data) {
                 if (data.prodQty != 0) {
-                    $("#ProdAmountHints").text(data.prodQty).addClass("cart-prod-hint").show();
+                    $("#spProdAmountHints").text(data.prodQty).addClass("cart-prod-hint").show();
                 }
                 else {
-                    $("#ProdAmountHints").hide();
+                    $("#spProdAmountHints").hide();
                 }
             }
         });

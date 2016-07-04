@@ -95,7 +95,7 @@ public class ProdListPager : IHttpHandler
 
             //向客户端返回JSON格式的查询结果
             context.Response.Clear();
-            context.Response.ContentType = "text/plain";
+            context.Response.ContentType = "application/json";
             context.Response.Write(jProdListPerPage.ToJson());
             context.Response.End();
         }

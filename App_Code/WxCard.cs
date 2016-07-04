@@ -355,33 +355,42 @@ public class WxCard
                     case "CASH":
                         JsonData jCash = jCardInfo["card"]["cash"];
                         jBaseInfo = jCash["base_info"];
-
                         wxCard.CardType = WxCardType.CASH;
+                        decimal leastCost, reduceCost;
 
-                        if (jCash.Keys.Contains("reduce_cost") && jCash.Keys.Contains("advanced_info") && jCash["advanced_info"].Keys.Contains("use_condition") && jCash["advanced_info"]["use_condition"].Keys.Contains("least_cost"))
+                        if (jCash.Keys.Contains("reduce_cost"))
                         {
-                            decimal leastCost, reduceCost;
-                            if (decimal.TryParse(jCash["advanced_info"]["use_condition"]["least_cost"].ToString(), out leastCost))
-                            {
-                                wxCard.LeastCost = leastCost / 100;
-                            }
-                            else
-                            {
-                                throw new Exception("代金券起用金额转换错误");
-                            }
                             if (decimal.TryParse(jCash["reduce_cost"].ToString(), out reduceCost))
                             {
                                 wxCard.ReduceCost = reduceCost / 100;
                             }
                             else
                             {
-                                throw new Exception("代金券减免金额转换错误");
+                                wxCard.ReduceCost = 0;
                             }
                         }
                         else
                         {
-                            throw new Exception("缺少代金券起用金额或减免金额");
+                            wxCard.ReduceCost = 0;
                         }
+
+                        if (jCash.Keys.Contains("advanced_info") && jCash["advanced_info"].Keys.Contains("use_condition") && jCash["advanced_info"]["use_condition"].Keys.Contains("least_cost"))
+                        {
+                            if (decimal.TryParse(jCash["advanced_info"]["use_condition"]["least_cost"].ToString(), out leastCost))
+                            {
+                                wxCard.LeastCost = leastCost / 100;
+                            }
+                            else
+                            {
+                                wxCard.ReduceCost = 0;
+                            }
+                        }
+                        else
+                        {
+                            //无门槛代金券没有起用金额字段least_cost
+                            wxCard.LeastCost = 0;
+                        }
+
                         break;
                     //折扣券
                     case "DISCOUNT":
@@ -389,7 +398,7 @@ public class WxCard
                         jBaseInfo = jDiscount["base_info"];
                         wxCard.CardType = WxCardType.DISCOUNT;
                         int discount;
-                        if (int.TryParse(jCardInfo["discount"].ToString(), out discount))
+                        if (int.TryParse(jDiscount["discount"].ToString(), out discount))
                         {
                             wxCard.Discount = discount;
                         }
@@ -403,14 +412,14 @@ public class WxCard
                         JsonData jGroupon = jCardInfo["card"]["groupon"];
                         jBaseInfo = jGroupon["base_info"];
                         wxCard.CardType = WxCardType.GROUPON;
-                        wxCard.DealDetail = jCardInfo["deal_detail"].ToString();
+                        wxCard.DealDetail = jGroupon["deal_detail"].ToString();
                         break;
                     //礼品券
                     case "GIFT":
                         JsonData jGift = jCardInfo["card"]["gift"];
                         jBaseInfo = jGift["base_info"];
                         wxCard.CardType = WxCardType.GIFT;
-                        wxCard.Gift = jCardInfo["gift"].ToString();
+                        wxCard.Gift = jGift["gift"].ToString();
                         break;
                     //通用券
                     case "GENERAL_COUPON":
@@ -816,27 +825,27 @@ public class WxCard
 
 }
 
-    /// <summary>
-    /// 微信卡券类型
-    /// </summary>
-    public enum WxCardType
+/// <summary>
+/// 微信卡券类型
+/// </summary>
+public enum WxCardType
 {
     /// <summary>
-    /// 团购券
+    /// 代金券
     /// </summary>
-    GROUPON = 1,
+    CASH = 1,
     /// <summary>
     /// 折扣券
     /// </summary>
     DISCOUNT = 2,
     /// <summary>
+    /// 团购券
+    /// </summary>
+    GROUPON = 3,
+    /// <summary>
     /// 礼品券
     /// </summary>
-    GIFT = 3,
-    /// <summary>
-    /// 代金券
-    /// </summary>
-    CASH = 4,
+    GIFT = 4,
     /// <summary>
     /// 通用券
     /// </summary>

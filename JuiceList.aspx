@@ -47,12 +47,22 @@
         </div>
         <div runat="server" id="divFruitVeggiesJuiceList" class="row">
         </div>
+       <div class="row">
+            <div class="col-xs-12">
+                <img src="images/delivery_area_tip.gif" />
+            </div>
+        </div>
         <div class="row">
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
         </div>
-    </div>
+         <div class="row">
+            <div class="col-xs-12">
+                <img src="images/delivery_area_vip.gif" />
+            </div>
+        </div>
+   </div>
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="" />

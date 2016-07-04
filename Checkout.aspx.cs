@@ -69,18 +69,6 @@ public partial class Checkout : System.Web.UI.Page
             apiTicket = WxJSAPI.GetAPITicket();
             cardSign = WxJSAPI.MakeCardSign(apiTicket, out nonceStr, out timeStamp);
 
-            ////获取用户的微信卡券列表
-            //List<WxCard> wxCardList;
-            //wxCardList = WxCard.GetCardList(wxUser.OpenID);
-            //if (wxCardList.Count != 0)
-            //{
-            //    this.ddlWxCard.DataSource = wxCardList;
-            //    this.ddlWxCard.DataTextField = "Title";
-            //    this.ddlWxCard.DataValueField = "Code";
-            //    this.ddlWxCard.DataBind();
-            //    this.ddlWxCard.Items.Insert(0, new ListItem("请选择微信优惠券", "0"));
-            //}
-
             //定义前端JS全局变量：会员积分兑换比率、会员积分余额
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsMemberPoints", string.Format("var memberPointsExchangeRate = {0}, validMemberPoints = {1};", Config.MemberPointsExchangeRate, wxUser.MemberPoints), true);
             //定义前端JS全局变量：运费标准、免运费条件
@@ -88,7 +76,9 @@ public partial class Checkout : System.Web.UI.Page
             //定义前端JS全局变量：支付方式枚举值、支付宝网关
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsPaymentTerm", string.Format("var paymentTerm={{wechat:{0},alipay:{1},cash:{2}}}, apGateway = '{3}';", (int)PaymentTerm.WECHAT, (int)PaymentTerm.ALIPAY, (int)PaymentTerm.CASH, AliPayConfig.AliPayGateway), true);
             //定义前端JS全局变量：微信卡券JS参数、微信地址JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxJSParam", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}}, wxEditAddrParam = {3};", cardSign, timeStamp, nonceStr, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxJSParam", string.Format("var wxCardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}}, wxEditAddrParam = {3};", cardSign, timeStamp, nonceStr, (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
+            //定义前端JS全局变量：微信卡券CardType枚举值
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsCardType", string.Format("var wxCardType={{cash:{0},discount:{1},groupon:{2},gift:{3},generalCoupon:{4},memberCard:{5},scenicTicket:{6},movieTicket:{7},boardingPass:{8},meetingTicket:{9},busTicket:{10}}};", (int)WxCardType.CASH, (int)WxCardType.DISCOUNT, (int)WxCardType.GROUPON, (int)WxCardType.GIFT, (int)WxCardType.GENERAL_COUPON, (int)WxCardType.MEMBER_CARD, (int)WxCardType.SCENIC_TICKET, (int)WxCardType.MOVIE_TICKET, (int)WxCardType.BOARDING_PASS, (int)WxCardType.MEETING_TICKET, (int)WxCardType.BUS_TICKET), true);
 
         }
         catch (System.Threading.ThreadAbortException)

@@ -138,7 +138,7 @@
 
                 requirejs(['cart'], function () {
                     try {
-                        if ($.cart == undefined || $.cart.prodAmount() == 0) {
+                        if ($.cart == "undefined" || $.cart.prodAmount() == 0) {
                             alert("您的购物车空空的哦，先去买点什么吧。");
                             location.href = ".";
                         }
@@ -146,24 +146,41 @@
                         //显示购物车里的商品项
                         showProdItems();
 
+                        //初始化购物车里的微信卡券类型枚举值
+                        if (typeof wxCardType == "object") {
+                            $.cart.updateWxCardType(wxCardType);
+                        }
+                        else {
+                            throw new Error("参数错误：微信卡券类型");
+                        }
+
+                        //初始化购物车里的使用会员积分点数，默认为0
+                        $.cart.updateUsedMemberPoints(0);
+
+                        //初始化购物车里的微信卡券，默认不使用优惠券
+                        var wxCard = new $.cart.WxCard();
+                        $.cart.updateWxCard(wxCard);
+
                         //初始化购物车里的运费条款
-                        if (typeof freight != undefined && !isNaN(freight) && freight >= 0 && freightFreeCondition != undefined && !isNaN(freightFreeCondition) && freightFreeCondition >= 0) {
+                        if (typeof freight != "undefined" && !isNaN(freight) && freight >= 0 && typeof freightFreeCondition != "undefined" && !isNaN(freightFreeCondition) && freightFreeCondition >= 0) {
                             $.cart.updateFreightTerm(freight, freightFreeCondition);
                         }
                         else {
                             throw new Error("参数错误：运费标准");
                         }
 
-                        if (typeof paymentTerm == undefined) {
+                        //校验支付方式JS全局变量
+                        if (typeof paymentTerm == "undefined") {
                             throw new Error("参数错误：支付方式");
                         }
 
-                        if (typeof apGateway == undefined) {
+                        //校验支付宝网关JS全局变量
+                        if (typeof apGateway == "undefined") {
                             throw new Error("参数错误：支付宝网关");
                         }
 
                         //初始化购物车里的会员积分兑换比率
-                        if (typeof memberPointsExchangeRate != undefined && !isNaN(memberPointsExchangeRate) && memberPointsExchangeRate > 0) {
+                        if (typeof memberPointsExchangeRate != "undefined" && !isNaN(memberPointsExchangeRate) && memberPointsExchangeRate > 0) {
                             $.cart.updateMemberPointsExchangeRate(memberPointsExchangeRate);
                         }
                         else {
@@ -171,7 +188,7 @@
                         }
 
                         //初始化购物车里的会员积分余额
-                        if (typeof validMemberPoints != undefined && !isNaN(validMemberPoints) && validMemberPoints >= 0) {
+                        if (typeof validMemberPoints != "undefined" && !isNaN(validMemberPoints) && validMemberPoints >= 0) {
                             $.cart.updateValidMemberPoints(validMemberPoints);
 
                             if (validMemberPoints > 0) {
@@ -187,13 +204,6 @@
                         else {
                             throw new Error("参数错误：会员积分余额");
                         }
-
-                        //初始化购物车里的使用会员积分点数，默认为0
-                        $.cart.updateUsedMemberPoints(0);
-
-                        //初始化购物车里的微信卡券，默认不使用优惠券
-                        var wxCard = new $.cart.WxCard();
-                        $.cart.updateWxCard(wxCard);
 
                         //注册购物车的事件处理函数
                         $($.cart).on({
@@ -254,8 +264,8 @@
                     //注册选择收货人信息单击事件处理函数，使用此JSSDK获取地址信息，微信会提示用户，影响体验，暂不用
                     //$("#divPanelHeading").on("click", wx, wxOpenAddress);
 
-                    if (typeof cardParam == "object" && cardParam.cardSign != undefined) {
-                        $.extend(cardParam, {
+                    if (typeof wxCardParam == "object" && wxCardParam.cardSign != undefined) {
+                        $.extend(wxCardParam, {
                             success: getWxCardInfo,
                             fail: getWxCardInfo,
                             cancel: getWxCardInfo
@@ -265,7 +275,7 @@
                         $("#cbWxCard").on("click", wx, wxChooseCard);
                     }
                     else {
-                        throw new Error("微信卡券参数错误");
+                        throw new Error("参数错误：微信卡券参数");
                     }
 
                     //注册点击遮罩层关闭模式窗口事件处理函数
@@ -321,14 +331,20 @@
                 if (data.isMeetCondition != undefined && !data.isMeetCondition) {
                     alert("未达到优惠券使用条件");
                 }
+                if (data.isSupported != undefined && !data.isSupported) {
+                    alert("不支持的微信卡券类型");
+                }
             }
         }
 
         //点击使用积分按钮时，填写当前可用的最大积分
-        function switchMemberPoints() {
+        function switchMemberPoints(event) {
             try {
                 var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
                 if ($("#cbMemberPoints").is(":checked")) {
+                    if ($("#cbWxCard").is(":checked")) {
+                        $("#cbWxCard").click();
+                    }
                     var maxDiscountMemberPoints = $.cart.getMaxDiscountMemberPoints();
                     $txtUsedMemberPoints.val(maxDiscountMemberPoints);
                     $.cart.updateUsedMemberPoints(maxDiscountMemberPoints);
@@ -542,40 +558,41 @@
 
                     //根据购物车生成JSON格式订单信息，包含订单收货人和商品项信息
                     var orderInfo = $.cart.makeOrderInfo();
-
-                    //提交订单，获取prepay_id后前台发起微信支付
-                    $.ajax({
-                        url: "PlaceOrder.ashx",
-                        data: orderInfo,
-                        type: "POST",
-                        dataType: "json",
-                        cache: false,
-                        success: function (jWxPayParam) {
-                            if (jWxPayParam["package"] != undefined)  //统一下单正常，取到了prepay_id，发起支付
-                            {
-                                wxPayParam = jWxPayParam;
-                                JsApiPay();
-                            }
-                            else {
-                                if (jWxPayParam["return_code"] != undefined)  //可能是签名错误或参数格式错误
+                    if (orderInfo != undefined) {
+                        //提交订单，获取prepay_id后前台发起微信支付
+                        $.ajax({
+                            url: "PlaceOrder.ashx",
+                            data: orderInfo,
+                            type: "POST",
+                            dataType: "json",
+                            cache: false,
+                            success: function (jWxPayParam) {
+                                if (jWxPayParam["package"] != undefined)  //统一下单正常，取到了prepay_id，发起支付
                                 {
-                                    alert(jWxPayParam["return_msg"]);
+                                    wxPayParam = jWxPayParam;
+                                    JsApiPay();
                                 }
                                 else {
-                                    if (jWxPayParam["result_code"] != undefined)  //可能是订单已支付、已关闭、订单号重复等错误
+                                    if (jWxPayParam["return_code"] != undefined)  //可能是签名错误或参数格式错误
                                     {
-                                        alert(jWxPayParam["err_code_des"]);
+                                        alert(jWxPayParam["return_msg"]);
                                     }
-                                }
+                                    else {
+                                        if (jWxPayParam["result_code"] != undefined)  //可能是订单已支付、已关闭、订单号重复等错误
+                                        {
+                                            alert(jWxPayParam["err_code_des"]);
+                                        }
+                                    }
 
+                                    lBtnWxPay.stop();   //停止按钮loading动画
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                alert(errorThrown + ":" + textStatus);
                                 lBtnWxPay.stop();   //停止按钮loading动画
                             }
-                        },
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            alert(errorThrown + ":" + textStatus);
-                            lBtnWxPay.stop();   //停止按钮loading动画
-                        }
-                    });
+                        });
+                    }
                 }
             }
             catch (error) {
@@ -765,7 +782,10 @@
             var wx = event.data;
             try {
                 if ($(this).is(":checked")) {
-                    wx.chooseCard(cardParam);
+                    if ($("#cbMemberPoints").is(":checked")) {
+                        $("#cbMemberPoints").click();
+                    }
+                    wx.chooseCard(wxCardParam);
                 }
                 else {
                     var wxCard = new $.cart.WxCard();
@@ -793,13 +813,16 @@
                             cache: false,
                             success: function (jCardInfo) {
                                 //把用户选择的微信卡券写入购物车
-                                var wxCard = new $.cart.WxCard(jCardInfo["CardID"], cardList[0]["encrypt_code"], jCardInfo["CardType"], jCardInfo["Title"], jCardInfo["LeastCost"], jCardInfo["ReduceCost"]);
+                                var wxCard = new $.cart.WxCard(jCardInfo["CardID"], cardList[0]["encrypt_code"], jCardInfo["CardType"], jCardInfo["Title"], jCardInfo["LeastCost"], jCardInfo["ReduceCost"], jCardInfo["Discount"]);
                                 $.cart.updateWxCard(wxCard);
                             },
                             error: function (jqXHR, textStatus, errorThrown) {
                                 alert(errorThrown + ":" + textStatus);
                             }
                         });
+                    }
+                    else {
+                        alert("没有获取到微信优惠券，请尝试刷新页面");
                     }
                 }
                 else {

@@ -67,13 +67,16 @@
             _storage = window.sessionStorage;
         }
 
+        //微信卡券类型枚举值，从服务器端获取值
+        Cart.prototype.WxCardType = undefined;
+
         //微信卡券类
-        Cart.prototype.WxCard = function (cardId, encryptCode, cardType, title, leastCost, reduceCost) {
+        Cart.prototype.WxCard = function (cardId, encryptCode, cardType, title, leastCost, reduceCost, discount) {
             //卡券ID
             this.cardId = cardId;
             //卡券加密CODE
             this.encryptCode = encryptCode;
-            //卡券类型
+            //卡券类型，枚举类型WxCardType
             this.cardType = cardType;
             //卡券名
             this.title = title;
@@ -81,6 +84,8 @@
             this.leastCost = leastCost;
             //代金券专用，表示减免金额
             this.reduceCost = reduceCost;
+            //折扣券专用，表示打折额度（百分比），例：填30为七折团购详情。
+            this.discount = discount;
         };
 
         //购物车商品项类
@@ -339,19 +344,46 @@
         //购物车订单总价格=商品价格+运费-积分抵扣金额-微信卡券优惠
         Cart.prototype.orderPrice = function () {
             try {
+                if (this.WxCardType == undefined) {
+                    throw new TypeError("微信卡券类型枚举值不能为空");
+                }
                 var orderPrice, subTotal, freight, memberPointsDiscount;
+                this.load();
                 subTotal = this.subTotal();
                 freight = this.calFreight();
                 //根据使用的会员积分和兑换比率计算积分抵扣
                 memberPointsDiscount = this.usedMemberPoints / this.memberPointsExchangeRate;
                 //计算微信卡券优惠
-                if (!isNaN(this.wxCard.leastCost) && !isNaN(this.wxCard.reduceCost) && (subTotal + freight) >= this.wxCard.leastCost) {
-                    //订单总价格=商品价格+运费-积分抵扣金额-微信卡券优惠
-                    orderPrice = subTotal + freight - memberPointsDiscount - this.wxCard.reduceCost;
-                }
-                else {
-                    //订单总价格=商品价格+运费-积分抵扣金额
-                    orderPrice = subTotal + freight - memberPointsDiscount;
+                switch (this.wxCard.cardType) {
+                    //代金券
+                    case this.WxCardType.cash:
+                        if (!isNaN(this.wxCard.leastCost) && !isNaN(this.wxCard.reduceCost)) {
+                            //订单总价格=商品价格+运费-积分抵扣金额-微信卡券优惠
+                            if ((subTotal + freight - memberPointsDiscount) >= this.wxCard.leastCost && (subTotal + freight - memberPointsDiscount) > this.wxCard.reduceCost) {
+                                orderPrice = subTotal + freight - memberPointsDiscount - this.wxCard.reduceCost;
+                            }
+                            else {
+                                throw new Error("价格异常：订单价格不能小于卡券优惠价格");
+                            }
+                        }
+                        else {
+                            throw new Error("价格异常：微信卡券起用金额和优惠金额不正确");
+                        }
+                        break;
+                        //折扣券
+                    case this.WxCardType.discount:
+                        if (!isNaN(this.wxCard.discount) && this.wxCard.discount > 0 && this.wxCard.discount < 100) {
+                            //订单总价格=商品价格+运费-积分抵扣金额-微信卡券优惠
+                            orderPrice = (subTotal + freight - memberPointsDiscount) * ((100 - this.wxCard.discount) / 100);
+                        }
+                        else {
+                            throw new Error("价格异常：折扣比例不正确");
+                        }
+                        break;
+                    default:
+                        //订单总价格=商品价格+运费-积分抵扣金额
+                        orderPrice = subTotal + freight - memberPointsDiscount;
+                        break;
                 }
                 return orderPrice;
             }
@@ -527,37 +559,87 @@
             }
         };
 
+        //更新微信卡券类型枚举值
+        Cart.prototype.updateWxCardType = function (wxCardType) {
+            try {
+                //校验参数
+                if (typeof wxCardType != "object") {
+                    throw new TypeError("微信卡券类型枚举值错误");
+                }
+                this.load();
+                this.WxCardType = wxCardType;
+                this.save();
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
+        };
+
         //更新微信卡券
         Cart.prototype.updateWxCard = function (wxCard) {
             try {
                 if (!(wxCard instanceof this.WxCard)) {
                     throw new TypeError("参数应该是WxCard类的实例");
                 }
-                var orderPrice, subTotal, freight, isMeetCondition = undefined;
+                if (this.WxCardType == {}) {
+                    throw new TypeError("微信卡券类型枚举值不能为空");
+                }
+                var orderPrice, subTotal, freight, isMeetCondition, isSupported;
                 this.load();
-                //cardId为空的场景：
+
+                //微信卡券为空的场景：
                 //1.用户取消勾选“微信卡券”checkbox
                 //2.在卡券列表中点击“取消”
                 if (wxCard.cardId == undefined) {
                     this.wxCard = wxCard;
                 }
                 else {
-                    subTotal = this.subTotal();
-                    freight = this.calFreight();
-                    //商品价格+运费>=微信优惠券起用金额，才能使用优惠券
-                    if (subTotal + freight >= wxCard.leastCost) {
-                        this.wxCard = wxCard;
-                        isMeetCondition = true;
-                    }
-                    else {
-                        wxCard = new this.WxCard();
-                        this.wxCard = wxCard;
-                        isMeetCondition = false;
+                    switch (wxCard.cardType) {
+                        //代金券
+                        case this.WxCardType.cash:
+                            subTotal = this.subTotal();
+                            freight = this.calFreight();
+                            //有门槛的代金券：商品价格+运费>=微信优惠券起用金额，才能使用优惠券
+                            if (wxCard.leastCost > 0) {
+                                if (subTotal + freight >= wxCard.leastCost) {
+                                    this.wxCard = wxCard;
+                                    isMeetCondition = true;
+                                }
+                                else {
+                                    wxCard = new this.WxCard();
+                                    this.wxCard = wxCard;
+                                    isMeetCondition = false;
+                                }
+                            }
+                            else {
+                                //无门槛的代金券：商品价格+运费>微信优惠券优惠金额，才能使用优惠券
+                                if (subTotal + freight > wxCard.reduceCost) {
+                                    this.wxCard = wxCard;
+                                    isMeetCondition = true;
+                                }
+                                else {
+                                    wxCard = new this.WxCard();
+                                    this.wxCard = wxCard;
+                                    isMeetCondition = false;
+                                }
+                            }
+                            break;
+                            //折扣券
+                        case this.WxCardType.discount:
+                            this.wxCard = wxCard;
+                            break;
+                        default:
+                            wxCard = new this.WxCard();
+                            this.wxCard = wxCard;
+                            isSupported = false;
+                            break;
                     }
                 }
                 this.save();
+
                 //触发使用微信卡券更新后事件，传递参数：微信卡券名称，订单总金额
-                $(this).trigger("onWxCardUpdated", { wxCard: wxCard, orderPrice: this.orderPrice(), isMeetCondition: isMeetCondition });
+                $(this).trigger("onWxCardUpdated", { wxCard: wxCard, orderPrice: this.orderPrice(), isMeetCondition: isMeetCondition, isSupported: isSupported });
             }
             catch (error) {
                 alert(error.message);
@@ -567,12 +649,15 @@
         //生成JSON格式订单信息
         Cart.prototype.makeOrderInfo = function () {
             try {
+                var orderInfo;
                 this.load();
-                return JSON.stringify(this);
+                //对特殊字符编码，如;/?:@&=+$,#
+                orderInfo = encodeURIComponent(JSON.stringify(this));
+                return orderInfo;
             }
             catch (error) {
                 alert(error.message);
-                return false;
+                return undefined;
             }
         };
     }

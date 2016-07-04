@@ -58,7 +58,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
         if (Session["WxUser"] != null)
         {
             WeChatUser wxUser = Session["WxUser"] as WeChatUser;
-            string jsTicket, jsSign, timestamp, nonceStr, url;
+            string jsTicket, jsSign, timestamp, nonceStr, url, jWxCard;
 
             url = Request.Url.ToString().Split('#')[0];
             jsTicket = WxJSAPI.GetJsAPITicket();
@@ -71,8 +71,14 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 wxUser.AgentOpenID = agentOpenID;
             }
 
-            //注册JS变量openID，用于用户分享页面时带上自己的OpenID
+            //查询用户的微信卡券
+            List<WxCard> wxCard = WxCard.GetCardList(wxUser.OpenID);
+            jWxCard = JsonMapper.ToJson(wxCard);
+
+            //注册JS变量openID，用于用户分享页面时带上自己的OpenID；微信卡券
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
+            //注册JS变量wxCard，微信卡券
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxCard", string.Format("var wxCard = {0};", jWxCard), true);
             //注册JS变量wxJsApiParam，用于调用微信的JS SDK
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxJSAPI", string.Format("var wxJsApiParam = {{appId:'{0}', timestamp:'{1}', nonceStr:'{2}', signature:'{3}'}};", Config.APPID, timestamp, nonceStr, jsSign), true);
             //注册JS变量webConfigServer，用于用户分享页面时设置页面title等信息

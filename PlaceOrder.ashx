@@ -190,36 +190,74 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                         WxCard wxCard = WxCard.GetCard(jOrderInfo["wxCard"]["cardId"].ToString());
                         if (wxCard != null)
                         {
+                            //解密卡券CODE
                             string wxCode = WxCard.DecryptCode(jOrderInfo["wxCard"]["encryptCode"].ToString());
                             if (!string.IsNullOrEmpty(wxCode))
                             {
-                                if ((newPO.OrderDetailPrice + newPO.Freight) >= wxCard.LeastCost)
+                                switch (wxCard.CardType)
                                 {
-                                    //只有微信卡券CODE解码正确，且满足使用条件，此优惠券才有效
-                                    newPO.WxCard = wxCard;
-                                    newPO.WxCard.Code = wxCode;
-                                    newPO.WxCardDiscount = wxCard.ReduceCost;
-                                }
-                                else
-                                {
-                                    newPO.WxCard = null;
-                                    newPO.WxCardDiscount = 0;
+                                    //代金券
+                                    case WxCardType.CASH:
+                                        if (wxCard.LeastCost > 0)
+                                        {
+                                            //有门槛的代金券，订单金额>=优惠券起用金额
+                                            if ((newPO.OrderDetailPrice + newPO.Freight) >= wxCard.LeastCost)
+                                            {
+                                                newPO.WxCard = wxCard;
+                                                newPO.WxCard.Code = wxCode;
+                                                newPO.WxCardDiscount = wxCard.ReduceCost;
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("订单价格未达到代金券使用条件");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            //无门槛的代金券，订单金额>优惠券优惠金额
+                                            if ((newPO.OrderDetailPrice + newPO.Freight) > wxCard.ReduceCost)
+                                            {
+                                                newPO.WxCard = wxCard;
+                                                newPO.WxCard.Code = wxCode;
+                                                newPO.WxCardDiscount = wxCard.ReduceCost;
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("订单价格未达到代金券使用条件");
+                                            }
+                                        }
+                                        break;
+                                    //折扣券
+                                    case WxCardType.DISCOUNT:
+                                        if (wxCard.Discount > 0 && wxCard.Discount < 100)
+                                        {
+                                            newPO.WxCard = wxCard;
+                                            newPO.WxCard.Code = wxCode;
+                                            newPO.WxCardDiscount = (newPO.OrderDetailPrice + newPO.Freight) * ((decimal)wxCard.Discount / 100);
+                                        }
+                                        else
+                                        {
+                                            throw new Exception("折扣券异常");
+                                        }
+
+                                        break;
+                                    default:
+                                        throw new Exception("不支持的微信卡券");
                                 }
                             }
                             else
                             {
-                                newPO.WxCard = null;
-                                newPO.WxCardDiscount = 0;
+                                throw new Exception("微信卡券CODE异常");
                             }
                         }
                         else
                         {
-                            newPO.WxCard = null;
-                            newPO.WxCardDiscount = 0;
+                            throw new Exception("微信卡券ID异常");
                         }
                     }
                     else
                     {
+                        //未使用微信卡券
                         newPO.WxCard = null;
                         newPO.WxCardDiscount = 0;
                     }
@@ -317,7 +355,7 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
         finally
         {
             context.Response.Clear();
-            context.Response.ContentType = "text/plain";
+            context.Response.ContentType = "application/json";
 
             //提交值校验错误，或者统一下单有错误发生
             if (stateCode != null && stateCode.Count != 0)

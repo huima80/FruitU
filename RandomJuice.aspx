@@ -18,10 +18,20 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
+                <img src="images/delivery_area_tip.gif" />
+            </div>
+        </div>
+       <div class="row">
+            <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
         </div>
-    </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/delivery_area_vip.gif" />
+            </div>
+        </div>
+   </div>
     <map name="buyButton" id="buyButton">
         <area shape="rect" coords="" href="" alt="购买" />
     </map>

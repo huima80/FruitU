@@ -76,7 +76,7 @@ public class CancelOrder : IHttpHandler, System.Web.SessionState.IReadOnlySessio
         finally
         {
             context.Response.Clear();
-            context.Response.ContentType = "text/plain";
+            context.Response.ContentType = "application/json";
             context.Response.Write(jStateCode.ToJson());
             context.Response.End();
         }

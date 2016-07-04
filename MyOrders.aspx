@@ -107,12 +107,12 @@
         requirejs(['jquery', 'bootstrap', 'encoder'], function ($) {
             $(function () {
 
-                if (typeof paymentTerm == undefined) {
+                if (typeof paymentTerm == "undefined") {
                     alert("参数错误：支付方式");
                     return false;
                 }
 
-                if (typeof apGateway == undefined) {
+                if (typeof apGateway == "undefined") {
                     alert("参数错误：支付宝网关");
                     return false;
                 }
@@ -133,16 +133,16 @@
                         //刷新订单各状态统计数
                         if (data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
                             $(data.originalDataPerPage).each(function () {
-                                if (this.TotalRows != undefined) {
+                                if (this.TotalRows != "undefined") {
                                     $("#spanOrderSubmitted").text(this.TotalRows);
                                 }
-                                if (this.PayingOrderCount != undefined) {
+                                if (this.PayingOrderCount != "undefined") {
                                     $("#spanOrderPaid").text(this.PayingOrderCount);
                                 }
-                                if (this.DeliveringOrderCount != undefined) {
+                                if (this.DeliveringOrderCount != "undefined") {
                                     $("#spanOrderDelivered").text(this.DeliveringOrderCount);
                                 }
-                                if (this.AcceptingOrderCount != undefined) {
+                                if (this.AcceptingOrderCount != "undefined") {
                                     $("#spanOrderAccepted").text(this.AcceptingOrderCount);
                                 }
                             });
@@ -241,7 +241,7 @@
             lastPoID = poID;
 
             //如果JS支付参数不为空，说明已经获取到prepay_id，则直接发起支付
-            if (wxPayParam != "" && wxPayParam.package != undefined) {
+            if (wxPayParam != "" && wxPayParam.package != "undefined") {
 
                 JsApiPay();
             }
@@ -300,7 +300,7 @@
                 dataType: "text",
                 cache: false,
                 success: function (alipayParam) {
-                    if (typeof encoder == "object" && apGateway != undefined && alipayParam != undefined && alipayParam.indexOf("sign") != -1) {
+                    if (typeof encoder == "object" && apGateway != "undefined" && alipayParam != "undefined" && alipayParam.indexOf("sign") != -1) {
                         //后台获取到支付宝请求参数，前台再跳转到支付宝进行付款
                         var aliPayUrl = apGateway + "?" + alipayParam;
                         location.href = "AliPayTip.aspx?goto=" + encoder.encode(aliPayUrl);
@@ -333,19 +333,19 @@
                     success: function (response) {
                         if (response["result_code"] == "SUCCESS") {
                             alert("撤单成功");
-                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("doing btn-cancel").addClass("done");
+                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("label label-warning").addClass("done");
                             $("#AcceptOrder" + poID).prop("onclick", "");
                             $("#btnWxPay" + poID).hide();
                             $("#btnAliPay" + poID).hide();
                         }
                         else {
                             alert("撤单失败：" + response["err_code_des"]);
-                            $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('(<i class="fa fa-close"></i>&nbsp;撤单)').removeClass("done").addClass("doing");
+                            $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('取消订单').removeClass("done").addClass("label label-warning");
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         alert("撤单失败：" + textStatus);
-                        $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('(<i class="fa fa-close"></i>&nbsp;撤单)').removeClass("done").addClass("doing");
+                        $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('取消订单').removeClass("done").addClass("label label-warning");
                         console.warn(errorThrown + ":" + textStatus);
                     }
                 });

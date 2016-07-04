@@ -190,7 +190,7 @@ public static class WxTmplMsg
                     jTmplMsgData["keyword1"] = jTmplMsgDataValue;
 
                     jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("￥{0}元【{1}】", po.OrderPrice.ToString(), paymentTerm);
+                    jTmplMsgDataValue["value"] = string.Format("{0}元【{1}】", po.OrderPrice.ToString("C"), paymentTerm);
                     jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                     jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
@@ -302,7 +302,7 @@ public static class WxTmplMsg
                         jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
                         jTmplMsgDataValue = new JsonData();
-                        jTmplMsgDataValue["value"] = string.Format("￥{0}元", po.OrderPrice.ToString());
+                        jTmplMsgDataValue["value"] = string.Format("{0}元", po.OrderPrice.ToString("C"));
                         jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                         jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
@@ -379,7 +379,7 @@ public static class WxTmplMsg
                     jTmplMsgData["keyword2"] = jTmplMsgDataValue;
 
                     jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("￥{0}元【{1}】", po.OrderPrice.ToString(), tradeState);
+                    jTmplMsgDataValue["value"] = string.Format("{0}元【{1}】", po.OrderPrice.ToString("C"), tradeState);
                     jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                     jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
@@ -433,7 +433,7 @@ public static class WxTmplMsg
                     jTmplMsgData["keynote1"] = jTmplMsgDataValue;
 
                     jTmplMsgDataValue = new JsonData();
-                    jTmplMsgDataValue["value"] = string.Format("￥{0}元", po.OrderPrice.ToString());
+                    jTmplMsgDataValue["value"] = string.Format("{0}元", po.OrderPrice.ToString("C"));
                     jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                     jTmplMsgData["keynote2"] = jTmplMsgDataValue;
 
