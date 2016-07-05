@@ -77,7 +77,7 @@
                     };
                     var goto = getQueryString(location.href, 'goto') || '';
                     if (typeof encoder == "object" && goto != '') {
-                        redirectAlipay.innerText = "正在打开支付宝，请稍等...";
+                        redirectAlipay.innerHTML = "正在打开支付宝，请稍等...<br>如果页面长时间无反应，请点击<a href='javascript:location.reload();'>刷新</a>";
                         location.href = encoder.decode(goto);
                     }
                     else {
