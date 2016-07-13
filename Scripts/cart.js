@@ -132,7 +132,7 @@
                     if (isNaN(prodItem.price) || prodItem.price < 0) {
                         throw new TypeError("商品价格不正确");
                     }
-                    if (isNaN(prodItem.qty) || prodItem.qty < 0) {
+                    if (isNaN(prodItem.qty) || prodItem.qty < 1) {
                         throw new TypeError("商品购买数量不正确");
                     }
                     if (isNaN(prodItem.inventoryQty)) {
@@ -205,7 +205,7 @@
                     if (isNaN(prodItem.prodID)) {
                         throw new TypeError("商品ID不正确");
                     }
-                    if (isNaN(prodItem.qty) || prodItem.qty < 0) {
+                    if (isNaN(prodItem.qty) || prodItem.qty < 1) {
                         throw new TypeError("商品购买数量不正确");
                     }
                 }
