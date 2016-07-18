@@ -478,7 +478,7 @@ public class ProductOrder : IComparable<ProductOrder>
         sParaTemp.Add("out_trade_no", po.OrderID);
         sParaTemp.Add("subject", po.ProductNames);
         sParaTemp.Add("total_fee", po.OrderPrice.ToString());
-        sParaTemp.Add("show_url", "http://mahui.me");
+        sParaTemp.Add("show_url", "http://" + HttpContext.Current.Request.Url.Host);
         sParaTemp.Add("body", po.OrderDetails);
 
         requestPara = Submit.BuildRequestPara(sParaTemp);
@@ -544,7 +544,7 @@ public class ProductOrder : IComparable<ProductOrder>
             sParaTemp.Add("out_trade_no", po.OrderID);
             sParaTemp.Add("subject", po.ProductNames);
             sParaTemp.Add("total_fee", po.OrderPrice.ToString());
-            sParaTemp.Add("show_url", "http://mahui.me");
+            sParaTemp.Add("show_url", "http://" + HttpContext.Current.Request.Url.Host);
             sParaTemp.Add("body", po.OrderDetails);
 
             requestPara = Submit.BuildRequestPara(sParaTemp);

@@ -32,6 +32,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AliPay", "..\AliPay\AliPay.csproj", "{9FBED01C-986B-4D34-BBFD-548A853F166B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMS", "..\SMS\SMS.csproj", "{EFE26CE7-4971-4B26-93B9-631317B13D78}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -49,6 +51,10 @@ Global
 		{9FBED01C-986B-4D34-BBFD-548A853F166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FBED01C-986B-4D34-BBFD-548A853F166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FBED01C-986B-4D34-BBFD-548A853F166B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
