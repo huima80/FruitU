@@ -22,6 +22,11 @@
                 微信优惠券
             </div>
         </div>
+        收件人号码：<asp:TextBox ID="txtTo" runat="server"></asp:TextBox>
+        <br />
+        信息内容：<asp:TextBox ID="txtBody" runat="server" Rows="4" TextMode="MultiLine"></asp:TextBox>
+        <br />
+        <asp:Button ID="btnSendSMS" runat="server" OnClick="btnSendSMS_Click" Text="发送短信" />
     </div>
     </form>
 </body>

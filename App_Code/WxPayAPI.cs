@@ -339,6 +339,7 @@ public class WxPayAPI
         catch (Exception ex)
         {
             Log.Error("WxPayAPI", ex.Message);
+            throw ex;
         }
 
         return null;

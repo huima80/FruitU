@@ -826,7 +826,7 @@
                     }
                 }
                 else {
-                    //在微信卡券列表中点击取消后，iOS系统返回cancel，安卓系统返回fail
+                    //在微信卡券列表中点击取消后，iOS系统返回cancel，android系统返回fail
                     if (res["errMsg"].indexOf("cancel") != -1 || res["errMsg"].indexOf("fail") != -1) {
                         var wxCard = new $.cart.WxCard();
                         $.cart.updateWxCard(wxCard);

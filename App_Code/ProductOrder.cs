@@ -480,6 +480,8 @@ public class ProductOrder : IComparable<ProductOrder>
         sParaTemp.Add("total_fee", po.OrderPrice.ToString());
         sParaTemp.Add("show_url", "http://" + HttpContext.Current.Request.Url.Host);
         sParaTemp.Add("body", po.OrderDetails);
+        //尝试唤起支付宝客户端进行支付，若用户未安装支付宝，则继续使用wap收银台进行支付。
+        sParaTemp.Add("app_pay", "Y");
 
         requestPara = Submit.BuildRequestPara(sParaTemp);
 
@@ -546,6 +548,8 @@ public class ProductOrder : IComparable<ProductOrder>
             sParaTemp.Add("total_fee", po.OrderPrice.ToString());
             sParaTemp.Add("show_url", "http://" + HttpContext.Current.Request.Url.Host);
             sParaTemp.Add("body", po.OrderDetails);
+            //尝试唤起支付宝客户端进行支付，若用户未安装支付宝，则继续使用wap收银台进行支付。
+            sParaTemp.Add("app_pay", "Y");
 
             requestPara = Submit.BuildRequestPara(sParaTemp);
 

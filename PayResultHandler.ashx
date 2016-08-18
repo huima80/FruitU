@@ -92,7 +92,124 @@ public class PayResultHandler : IHttpHandler
                     {
                         //获取微信支付通知的订单ID，用于阶段2的查询
                         orderID = notifyPayData.GetValue("out_trade_no").ToString();
-                        if (string.IsNullOrEmpty(orderID))
+                        if (!string.IsNullOrEmpty(orderID))
+                        {
+                            //根据微信支付“查询订单”接口的结果构造ProductOrder对象
+                            ProductOrder po = new ProductOrder(orderID);
+
+                            //如果此订单已经通知处理过，则直接向微信返回SUCCESS
+                            if (po.TradeState == TradeState.SUCCESS && !string.IsNullOrEmpty(po.TransactionID))
+                            {
+                                replyPayData.SetValue("return_code", "SUCCESS");
+                                replyPayData.SetValue("return_msg", "OK");
+                                Log.Info(this.GetType().ToString(), string.Format("订单{0}已处理过", orderID));
+                            }
+                            else
+                            {
+                                //如果此订单没有处理过，则调用微信“查询订单”接口，获取订单实际支付状态
+                                WeChatPayData queryOrderPayData;
+                                queryOrderPayData = WxPayAPI.OrderQueryByOutTradeNo(orderID);
+
+                                if (queryOrderPayData != null)
+                                {
+                                    Log.Info(this.GetType().ToString(), "向微信查询订单实际支付状态：" + queryOrderPayData.ToXml());
+
+                                    //校验微信支付返回的OpenID与原订单OpenID是否相符
+                                    if (queryOrderPayData.IsSet("openid"))
+                                    {
+                                        if (po.Purchaser.OpenID != queryOrderPayData.GetValue("openid").ToString())
+                                        {
+                                            throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), po.Purchaser.OpenID));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("微信支付没有返回OpenID");
+                                    }
+
+                                    //校验微信支付返回的总金额与原订单金额是否相符
+                                    if (queryOrderPayData.IsSet("total_fee"))
+                                    {
+                                        decimal totalFee;
+                                        if (decimal.TryParse(queryOrderPayData.GetValue("total_fee").ToString(), out totalFee))
+                                        {
+                                            totalFee = totalFee / 100;
+                                            if (po.OrderPrice != totalFee)
+                                            {
+                                                throw new Exception(string.Format("微信支付返回的订单总金额{0}元与原订单金额{1}元不符", totalFee, po.OrderPrice));
+                                            }
+                                        }
+                                        else
+                                        {
+                                            throw new Exception("微信支付返回的订单总金额格式转换错误total_fee");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("微信支付没有返回订单总金额total_fee");
+                                    }
+
+                                    //获取返回的微信支付状态
+                                    if (queryOrderPayData.IsSet("trade_state"))
+                                    {
+                                        switch (queryOrderPayData.GetValue("trade_state").ToString().ToUpper())
+                                        {
+                                            case "SUCCESS": //支付成功
+                                                po.TradeState = TradeState.SUCCESS;
+                                                break;
+                                            case "REFUND":  //转入退款
+                                                po.TradeState = TradeState.REFUND;
+                                                break;
+                                            case "NOTPAY":  //未支付状态，就没有交易时间time_end
+                                                po.TradeState = TradeState.NOTPAY;
+                                                break;
+                                            case "CLOSED":  //已关闭
+                                                po.TradeState = TradeState.CLOSED;
+                                                break;
+                                            case "REVOKED": //已撤销（刷卡支付）
+                                                po.TradeState = TradeState.REVOKED;
+                                                break;
+                                            case "USERPAYING":  //用户支付中
+                                                po.TradeState = TradeState.USERPAYING;
+                                                break;
+                                            case "PAYERROR":    //支付失败(其他原因，如银行返回失败)
+                                                po.TradeState = TradeState.PAYERROR;
+                                                break;
+                                            default:    //未知状态，默认为未支付
+                                                po.TradeState = TradeState.NOTPAY;
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("微信支付没有返回支付状态trade_state");
+                                    }
+
+                                    //获取微信支付交易流水号、交易时间、交易描述
+                                    po.TransactionID = queryOrderPayData.IsSet("transaction_id") ? queryOrderPayData.GetValue("transaction_id").ToString() : string.Empty;
+                                    po.TransactionTime = queryOrderPayData.IsSet("time_end") ? (DateTime?)DateTime.ParseExact(queryOrderPayData.GetValue("time_end").ToString(), "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture) : null;
+                                    po.TradeStateDesc = queryOrderPayData.IsSet("trade_state_desc") ? queryOrderPayData.GetValue("trade_state_desc").ToString() : string.Empty;
+
+                                    //更新为微信支付方式
+                                    po.PaymentTerm = PaymentTerm.WECHAT;
+
+                                    //注册订单的微信支付状态变动事件处理函数，通知管理员
+                                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+
+                                    //注册订单的微信支付状态变动事件处理函数，核销微信卡券
+                                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
+
+                                    //更新订单的微信支付状态
+                                    ProductOrder.UpdateTradeState(po);
+
+                                    //微信支付通知消息中的return_code、result_code都是SUCCESS，且存在transaction_id订单，则向微信支付返回接收通知成功
+                                    replyPayData.SetValue("return_code", "SUCCESS");
+                                    replyPayData.SetValue("return_msg", "OK");
+                                    Log.Info(this.GetType().ToString(), "向微信支付通知返回成功: " + replyPayData.ToXml());
+                                }
+                            }
+                        }
+                        else
                         {
                             throw new Exception("微信支付通知参数out_trade_no为空");
                         }
@@ -100,111 +217,6 @@ public class PayResultHandler : IHttpHandler
                     else
                     {
                         throw new Exception("微信支付通知缺少参数out_trade_no");
-                    }
-
-                    //阶段2：调用微信“查询订单”接口，获取订单实际支付状态
-                    WeChatPayData queryOrderPayData;
-                    queryOrderPayData = WxPayAPI.OrderQueryByOutTradeNo(orderID);
-
-                    if (queryOrderPayData != null)
-                    {
-                        Log.Info(this.GetType().ToString(), "向微信查询订单实际支付状态：" + queryOrderPayData.ToXml());
-
-                        //根据微信支付“查询订单”接口的结果构造ProductOrder对象
-                        ProductOrder po = new ProductOrder(orderID);
-
-                        //校验微信支付返回的OpenID与原订单OpenID是否相符
-                        if (queryOrderPayData.IsSet("openid"))
-                        {
-                            if (po.Purchaser.OpenID != queryOrderPayData.GetValue("openid").ToString())
-                            {
-                                throw new Exception(string.Format("微信支付返回的OpenID：{0}与原订单OpenID：{1}不符", queryOrderPayData.GetValue("openid").ToString(), po.Purchaser.OpenID));
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception("微信支付没有返回OpenID");
-                        }
-
-                        //校验微信支付返回的总金额与原订单金额是否相符
-                        if (queryOrderPayData.IsSet("total_fee"))
-                        {
-                            decimal totalFee;
-                            if (decimal.TryParse(queryOrderPayData.GetValue("total_fee").ToString(), out totalFee))
-                            {
-                                totalFee = totalFee / 100;
-                                if (po.OrderPrice != totalFee)
-                                {
-                                    throw new Exception(string.Format("微信支付返回的订单总金额{0}元与原订单金额{1}元不符", totalFee, po.OrderPrice));
-                                }
-                            }
-                            else
-                            {
-                                throw new Exception("微信支付返回的订单总金额格式转换错误total_fee");
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception("微信支付没有返回订单总金额total_fee");
-                        }
-
-                        //获取返回的微信支付状态
-                        if (queryOrderPayData.IsSet("trade_state"))
-                        {
-                            switch (queryOrderPayData.GetValue("trade_state").ToString().ToUpper())
-                            {
-                                case "SUCCESS": //支付成功
-                                    po.TradeState = TradeState.SUCCESS;
-                                    break;
-                                case "REFUND":  //转入退款
-                                    po.TradeState = TradeState.REFUND;
-                                    break;
-                                case "NOTPAY":  //未支付状态，就没有交易时间time_end
-                                    po.TradeState = TradeState.NOTPAY;
-                                    break;
-                                case "CLOSED":  //已关闭
-                                    po.TradeState = TradeState.CLOSED;
-                                    break;
-                                case "REVOKED": //已撤销（刷卡支付）
-                                    po.TradeState = TradeState.REVOKED;
-                                    break;
-                                case "USERPAYING":  //用户支付中
-                                    po.TradeState = TradeState.USERPAYING;
-                                    break;
-                                case "PAYERROR":    //支付失败(其他原因，如银行返回失败)
-                                    po.TradeState = TradeState.PAYERROR;
-                                    break;
-                                default:    //未知状态，默认为未支付
-                                    po.TradeState = TradeState.NOTPAY;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception("微信支付没有返回支付状态trade_state");
-                        }
-
-                        //获取微信支付交易流水号、交易时间、交易描述
-                        po.TransactionID = queryOrderPayData.IsSet("transaction_id") ? queryOrderPayData.GetValue("transaction_id").ToString() : string.Empty;
-                        po.TransactionTime = queryOrderPayData.IsSet("time_end") ? (DateTime?)DateTime.ParseExact(queryOrderPayData.GetValue("time_end").ToString(), "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture) : null;
-                        po.TradeStateDesc = queryOrderPayData.IsSet("trade_state_desc") ? queryOrderPayData.GetValue("trade_state_desc").ToString() : string.Empty;
-
-                        //更新为微信支付方式
-                        po.PaymentTerm = PaymentTerm.WECHAT;
-
-                        //注册订单的微信支付状态变动事件处理函数，通知管理员
-                        po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-
-                        //注册订单的微信支付状态变动事件处理函数，核销微信卡券
-                        po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
-
-                        //更新订单的微信支付状态
-                        ProductOrder.UpdateTradeState(po);
-
-                        //微信支付通知消息中的return_code、result_code都是SUCCESS，且存在transaction_id订单，则向微信支付返回接收通知成功
-                        replyPayData.SetValue("return_code", "SUCCESS");
-                        replyPayData.SetValue("return_msg", "OK");
-                        Log.Info(this.GetType().ToString(), "向微信支付通知返回成功: " + replyPayData.ToXml());
                     }
                 }
                 else
