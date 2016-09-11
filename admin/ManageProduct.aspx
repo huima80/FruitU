@@ -75,7 +75,7 @@
                                 <asp:Label ID="Label1" runat="server" Text='<%# "【"+ Eval("Category.CategoryName")+"】"+Eval("FruitName") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" />
+                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ItemStyle-CssClass="col-lg-4" />
                         <asp:TemplateField HeaderText="商品价格" SortExpression="FruitPrice">
                             <ItemTemplate>
                                 <asp:Label ID="Label2" runat="server" Text='<%# Eval("FruitPrice", "{0:c2}")+"元/"+Eval("FruitUnit") %>'></asp:Label>

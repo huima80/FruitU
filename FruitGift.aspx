@@ -1,26 +1,43 @@
-﻿<%@ Page Title="水果单品" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="FruitList.aspx.cs" Inherits="FruitList" %>
+﻿<%@ Page Title="精选水果礼盒" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="FruitGift.aspx.cs" Inherits="FruitGift" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/FruitList.css" rel="stylesheet" />
     <link href="Scripts/modal/component.css" rel="stylesheet" />
+    <style>
+        area {
+            outline: none;
+        }
+
+        .sell-out-198 {
+            position: absolute;
+            top: 82px;
+            left: 65px;
+        }
+
+        .sell-out-298 {
+            position: absolute;
+            top: 82px;
+            left: 198px;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container text-center fruit-list">
         <div class="row fruit-list text-center">
             <div class="col-xs-12">
-                <img src="images/PureFruit_01.gif" />
+                <img src="images/FruitGift_01.gif" />
             </div>
         </div>
-        <div class="row fruit-list text-center">
+        <div class="row">
             <div class="col-xs-12">
-                <img src="images/PureFruit_02.gif" />
+                <img src="images/FruitGift_02.gif" usemap="#buyButton" hidefocus="true" />
+                <span id="spanSellout198" runat="server" class="label label-danger sell-out-198">今日售罄</span>
+                <span id="spanSellout298" runat="server" class="label label-danger sell-out-298">今日售罄</span>
             </div>
         </div>
-        <div runat="server" id="divFruitList" class="row">
-        </div>
-        <div class="row fruit-list text-center">
+        <div class="row">
             <div class="col-xs-12">
-                <img src="images/PureFruit_03.gif" />
+                <img src="images/FruitGift_03.gif" />
             </div>
         </div>
         <div class="row">
@@ -29,6 +46,10 @@
             </div>
         </div>
     </div>
+    <map name="buyButton" id="buyButton">
+        <area runat="server" id="gift198" shape="rect" coords="70,80,200,260" href="" alt="购买" />
+        <area runat="server" id="gift298" shape="rect" coords="200,80,340,310" href="" alt="购买" />
+    </map>
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="" />
@@ -53,7 +74,6 @@
 
     <div class="md-overlay"></div>
     <!-- the overlay element -->
-
     <script>
 
         requirejs(['jquery'], function ($) {
@@ -64,87 +84,87 @@
                     $($.cart).on("onOutOfStock", function (event, data) {
                         alert("您购买的数量超过库存数了哦。");
                     });
-
-                });
-
-                //递减商品数量
-                $("#btnDesc").on("click", function () {
-                    var currQty = $("#txtQty").val();
-                    if (!isNaN(currQty)) {
-                        currQty = parseInt(currQty);
-                        if (currQty > 1) {
-                            currQty--;
-                        }
-                        else {
-                            currQty = 1;
-                        }
-                    }
-                    else {
-                        currQty = 1;
-                    }
-
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
-
-                });
-
-                //递增商品数量
-                $("#btnAsc").on("click", function () {
-                    var currQty = $("#txtQty").val();
-                    var inventory = $("#hfInventory").val();
-                    if (!isNaN(currQty)) {
-                        currQty = parseInt(currQty);
-                        inventory = parseInt(inventory);
-                        if (inventory == -1 || currQty < inventory) {
-                            currQty++;
-                        }
-                    }
-                    else {
-                        currQty = 1;
-                    }
-
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
-
-                });
-
-                //校验是否输入数值
-                $('#txtQty').on('change', function () {
-                    var currQty = $("#txtQty").val();
-                    if (isNaN(currQty)) {
-                        $("#txtQty").val(1);
-                    }
-                });
-
-                $(".md-overlay").on("click", closeModal);
-
-                $("#btnClose").on("click", function () {
-                    closeModal();
-                    event.stopPropagation();
-                });
-
-                $("#imgDetailImg").on("load", function () {
-                    $("#faLoading").hide();
-                    $("#imgDetailImg").show();
                 });
             });
+
+            //递减商品数量
+            $("#btnDesc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    if (currQty > 1) {
+                        currQty--;
+                    }
+                    else {
+                        currQty = 1;
+                    }
+                }
+                else {
+                    currQty = 1;
+                }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
+            });
+
+            //递增商品数量
+            $("#btnAsc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                var inventory = $("#hfInventory").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    inventory = parseInt(inventory);
+                    if (inventory == -1 || currQty < inventory) {
+                        currQty++;
+                    }
+                }
+                else {
+                    currQty = 1;
+                }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
+            });
+
+            //校验是否输入数值
+            $('#txtQty').on('change', function () {
+                var currQty = $("#txtQty").val();
+                if (isNaN(currQty)) {
+                    $("#txtQty").val(1);
+                }
+            });
+
+            $(".md-overlay").on("click", closeModal);
+
+            $("#btnClose").on("click", function () {
+                closeModal();
+                event.stopPropagation();
+            });
+
+            $("#imgDetailImg").on("load", function () {
+                $("#faLoading").hide();
+                $("#imgDetailImg").show();
+            });
+
         });
 
         //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
         function openModal(prodID) {
             var mainImg, detailImg, jLen;
 
-            if (fruitList && Array.isArray(fruitList)) {
-                jLen = fruitList.length;
+            if (fruitGiftList && Array.isArray(fruitGiftList)) {
+                jLen = fruitGiftList.length;
                 for (var i = 0; i < jLen; i++) {
-                    if (fruitList[i]["ID"] == prodID && fruitList[i]["FruitImgList"] && Array.isArray(fruitList[i]["FruitImgList"])) {
+                    if (fruitGiftList[i]["ID"] == prodID && fruitGiftList[i]["FruitImgList"] && Array.isArray(fruitGiftList[i]["FruitImgList"])) {
                         //查找商品详图
-                        for (var j = 0; j < fruitList[i]["FruitImgList"].length; j++) {
-                            if (fruitList[i]["FruitImgList"][j]["MainImg"]) {
-                                mainImg = fruitList[i]["FruitImgList"][j]["ImgName"];
+                        for (var j = 0; j < fruitGiftList[i]["FruitImgList"].length; j++) {
+                            if (fruitGiftList[i]["FruitImgList"][j]["MainImg"]) {
+                                mainImg = fruitGiftList[i]["FruitImgList"][j]["ImgName"];
                             }
-                            if (fruitList[i]["FruitImgList"][j]["DetailImg"]) {
-                                detailImg = fruitList[i]["FruitImgList"][j]["ImgName"];
+                            if (fruitGiftList[i]["FruitImgList"][j]["DetailImg"]) {
+                                detailImg = fruitGiftList[i]["FruitImgList"][j]["ImgName"];
                             }
                         }
 
@@ -157,24 +177,24 @@
                         $("#faLoading").show();
 
                         //商品库存量
-                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "不限量" : fruitList[i]["InventoryQty"]);
-                        $("#hfInventory").val(fruitList[i]["InventoryQty"]);
+                        $("#spanInventory").text(fruitGiftList[i]["InventoryQty"] == -1 ? "不限量" : fruitGiftList[i]["InventoryQty"]);
+                        $("#hfInventory").val(fruitGiftList[i]["InventoryQty"]);
 
                         //商品单价
-                        $("span.prod-price").text("￥" + fruitList[i]["FruitPrice"] + "元/" + fruitList[i]["FruitUnit"]);
+                        $("span.prod-price").text("￥" + fruitGiftList[i]["FruitPrice"] + "元/" + fruitGiftList[i]["FruitUnit"]);
 
                         //商品购买数量默认为1
                         $("input#txtQty").val(1);
 
                         //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
-                        $("#btnAddToCart").off("click").on("click", fruitList[i], addToCart);
+                        $("#btnAddToCart").off("click").on("click", fruitGiftList[i], addToCart);
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
 
                         //设置微信分享参数
-                        requirejs(['jweixin'], function (wx) {
-                            wxShareInfo.desc = '我买了【' + fruitList[i].FruitName + '】' + fruitList[i].FruitDesc;
+                        requirejs(['jweixin110'], function (wx) {
+                            wxShareInfo.desc = '我买了【' + fruitGiftList[i].FruitName + '】' + fruitGiftList[i].FruitDesc;
                             wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
                             wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
 
@@ -200,7 +220,7 @@
             }
             else {
                 alert("商品数据异常");
-                console.warn("var fruitList=" + fruitList);
+                console.warn("var fruitGiftList=" + fruitGiftList);
             }
         }
 
@@ -240,7 +260,7 @@
             }
 
         }
-
+        
     </script>
-
 </asp:Content>
+

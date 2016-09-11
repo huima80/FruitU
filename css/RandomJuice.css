@@ -31,3 +31,7 @@
 .add-to-cart-button{
     text-align:right;
 }
+
+area {
+    outline: none;
+}

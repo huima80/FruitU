@@ -576,54 +576,88 @@ public partial class ManageOrder : System.Web.UI.Page
     {
         ProductOrder po = new ProductOrder();
         int poID;
-        if (int.TryParse(e.CommandArgument.ToString(), out poID))
+        //根据命令值修改订单
+        switch (e.CommandName)
         {
-            //根据订单ID加载完整订单信息
-            po.FindOrderByID(poID);
+            case "PayCash":
+                //根据订单ID加载完整订单信息
+                if (int.TryParse(e.CommandArgument.ToString(), out poID))
+                {
+                    //根据订单ID加载完整订单信息
+                    po.FindOrderByID(poID);
+                }
+                else
+                {
+                    throw new Exception("订单ID错误");
+                }
 
-            //根据命令值修改订单
-            switch (e.CommandName)
-            {
-                case "PayCash":
-                    po.TradeState = TradeState.CASHPAID;
-                    po.PayCashDate = DateTime.Now;
-                    //注册订单的支付状态变动事件处理函数，通知管理员
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    //注册订单的支付状态变动事件处理函数，核销微信卡券
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
-                    ProductOrder.UpdateTradeState(po);
-                    gvOrderList.DataBind();
-                    break;
-                case "Deliver":
-                    po.IsDelivered = true;
-                    po.DeliverDate = DateTime.Now;
-                    //注册订单发货事件处理函数，通知用户
-                    po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
-                    po.OrderDetailList.ForEach(od =>
-                    {
-                        //注册商品库存量报警事件处理函数，通知管理员
-                        od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
-                    });
-                    ProductOrder.DeliverOrder(po);
-                    gvOrderList.DataBind();
-                    break;
-                case "Accept":
-                    po.IsAccept = true;
-                    po.AcceptDate = DateTime.Now;
-                    ProductOrder.AcceptOrder(po);
-                    gvOrderList.DataBind();
-                    break;
-                case "CalMemberPoints":
-                    //注册订单的发放积分事件处理函数，通知下单人和推荐人
-                    po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
-                    ProductOrder.EarnMemberPoints(po);
-                    gvOrderList.DataBind();
-                    break;
-            }
-        }
-        else
-        {
-            throw new Exception("订单ID错误");
+                po.TradeState = TradeState.CASHPAID;
+                po.PayCashDate = DateTime.Now;
+                //注册订单的支付状态变动事件处理函数，通知管理员
+                po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                //注册订单的支付状态变动事件处理函数，核销微信卡券
+                po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
+                ProductOrder.UpdateTradeState(po);
+                gvOrderList.DataBind();
+                break;
+            case "Deliver":
+                //根据订单ID加载完整订单信息
+                if (int.TryParse(e.CommandArgument.ToString(), out poID))
+                {
+                    //根据订单ID加载完整订单信息
+                    po.FindOrderByID(poID);
+                }
+                else
+                {
+                    throw new Exception("订单ID错误");
+                }
+
+                po.IsDelivered = true;
+                po.DeliverDate = DateTime.Now;
+                //注册订单发货事件处理函数，通知用户
+                po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
+                po.OrderDetailList.ForEach(od =>
+                {
+                    //注册商品库存量报警事件处理函数，通知管理员
+                    od.InventoryWarn += new EventHandler(WxTmplMsg.SendMsgOnInventoryWarn);
+                });
+                ProductOrder.DeliverOrder(po);
+                gvOrderList.DataBind();
+                break;
+            case "Accept":
+                //根据订单ID加载完整订单信息
+                if (int.TryParse(e.CommandArgument.ToString(), out poID))
+                {
+                    //根据订单ID加载完整订单信息
+                    po.FindOrderByID(poID);
+                }
+                else
+                {
+                    throw new Exception("订单ID错误");
+                }
+
+                po.IsAccept = true;
+                po.AcceptDate = DateTime.Now;
+                ProductOrder.AcceptOrder(po);
+                gvOrderList.DataBind();
+                break;
+            case "CalMemberPoints":
+                //根据订单ID加载完整订单信息
+                if (int.TryParse(e.CommandArgument.ToString(), out poID))
+                {
+                    //根据订单ID加载完整订单信息
+                    po.FindOrderByID(poID);
+                }
+                else
+                {
+                    throw new Exception("订单ID错误");
+                }
+
+                //注册订单的发放积分事件处理函数，通知下单人和推荐人
+                po.MemberPointsCalculated += new EventHandler<ProductOrder.MemberPointsCalculatedEventArgs>(WxTmplMsg.SendMsgOnMemberPoints);
+                ProductOrder.EarnMemberPoints(po);
+                gvOrderList.DataBind();
+                break;
         }
 
     }

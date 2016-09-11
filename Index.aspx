@@ -23,11 +23,21 @@
                 </a>
             </div>
             <div class="col-xs-12">
-                <a href="FruitList.aspx">
+                <a href="SliceList.aspx">
                     <img src="images/fruit-category.gif" />
                 </a>
             </div>
+             <div class="col-xs-12">
+                <a href="FruitGift.aspx">
+                    <img src="images/fruit-gift.gif" />
+                </a>
+            </div>
             <div class="col-xs-12">
+                <a href="FruitList.aspx">
+                    <img src="images/pure-fruit.gif" />
+                </a>
+            </div>
+           <div class="col-xs-12">
                 <img src="images/OnDutyTime.png" />
             </div>
         </div>
@@ -61,7 +71,7 @@
         })
 
 
-        //显示模式窗口，在图片load事件完成后回调
+        //显示模式窗口
         function switchModalShow() {
             $("#divModal").addClass("md-show");
             event.preventDefault();

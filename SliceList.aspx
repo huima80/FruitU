@@ -1,4 +1,4 @@
-﻿<%@ Page Title="新鲜水果切片" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="FruitList - 复制.aspx.cs" Inherits="FruitList" %>
+﻿<%@ Page Title="新鲜水果切片" Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="SliceList.aspx.cs" Inherits="SliceList" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/FruitList.css" rel="stylesheet" />
@@ -16,14 +16,42 @@
                 <img src="images/ShareIncentive.jpg" />
             </div>
         </div>
-        <div runat="server" id="divFruitList" class="row">
+        <div id="divSlices" runat="server" class="row"></div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/TodayFruitMenu.jpg" />
+            </div>
         </div>
-        <div class="row fruit-list text-center">
+        <div class="row">
+            <div class="col-xs-12">
+                <asp:DataList ID="dlFruits" runat="server" RepeatColumns="3" RepeatDirection="Horizontal" CssClass="table">
+                    <ItemTemplate>
+                        <li runat="server"><%# Eval("FruitName") %></li>
+                    </ItemTemplate>
+                </asp:DataList>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/FruitTip.jpg" />
+            </div>
+        </div>
+       <div class="row">
+            <div class="col-xs-12">
+                <img src="images/delivery_area_tip.gif" />
+            </div>
+        </div>
+     <div class="row">
             <div class="col-xs-12">
                 <img src="images/delivery-area.gif" />
             </div>
         </div>
-    </div>
+         <div class="row">
+            <div class="col-xs-12">
+                <img src="images/delivery_area_vip.gif" />
+            </div>
+        </div>
+   </div>
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="" />
@@ -101,85 +129,86 @@
                     //$.pager.loadPage();
 
                 });
-
-                //递减商品数量
-                $("#btnDesc").on("click", function () {
-                    var currQty = $("#txtQty").val();
-                    if (!isNaN(currQty)) {
-                        currQty = parseInt(currQty);
-                        if (currQty > 1) {
-                            currQty--;
-                        }
-                        else {
-                            currQty = 1;
-                        }
-                    }
-                    else {
-                        currQty = 1;
-                    }
-
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
-
-                });
-
-                //递增商品数量
-                $("#btnAsc").on("click", function () {
-                    var currQty = $("#txtQty").val();
-                    var inventory = $("#hfInventory").val();
-                    if (!isNaN(currQty)) {
-                        currQty = parseInt(currQty);
-                        inventory = parseInt(inventory);
-                        if (inventory == -1 || currQty < inventory) {
-                            currQty++;
-                        }
-                    }
-                    else {
-                        currQty = 1;
-                    }
-
-                    //显示更新的数量
-                    $("#txtQty").val(currQty);
-
-                });
-
-                //校验是否输入数值
-                $('#txtQty').on('change', function () {
-                    var currQty = $("#txtQty").val();
-                    if (isNaN(currQty)) {
-                        $("#txtQty").val(1);
-                    }
-                });
-
-                $(".md-overlay").on("click", closeModal);
-
-                $("#btnClose").on("click", function () {
-                    closeModal();
-                    event.stopPropagation();
-                });
-
-                $("#imgDetailImg").on("load", function () {
-                    $("#faLoading").hide();
-                    $("#imgDetailImg").show();
-                });
             });
+
+            //递减商品数量
+            $("#btnDesc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    if (currQty > 1) {
+                        currQty--;
+                    }
+                    else {
+                        currQty = 1;
+                    }
+                }
+                else {
+                    currQty = 1;
+                }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
+            });
+
+            //递增商品数量
+            $("#btnAsc").on("click", function () {
+                var currQty = $("#txtQty").val();
+                var inventory = $("#hfInventory").val();
+                if (!isNaN(currQty)) {
+                    currQty = parseInt(currQty);
+                    inventory = parseInt(inventory);
+                    if (inventory == -1 || currQty < inventory) {
+                        currQty++;
+                    }
+                }
+                else {
+                    currQty = 1;
+                }
+
+                //显示更新的数量
+                $("#txtQty").val(currQty);
+
+            });
+
+            //校验是否输入数值
+            $('#txtQty').on('change', function () {
+                var currQty = $("#txtQty").val();
+                if (isNaN(currQty)) {
+                    $("#txtQty").val(1);
+                }
+            });
+
+            $(".md-overlay").on("click", closeModal);
+
+            $("#btnClose").on("click", function () {
+                closeModal();
+                event.stopPropagation();
+            });
+
+            $("#imgDetailImg").on("load", function () {
+                $("#faLoading").hide();
+                $("#imgDetailImg").show();
+            });
+
         });
 
         //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
         function openModal(prodID) {
             var mainImg, detailImg, jLen;
 
-            if (fruitList && Array.isArray(fruitList)) {
-                jLen = fruitList.length;
+            if (sliceList && Array.isArray(sliceList)) {
+                jLen = sliceList.length;
                 for (var i = 0; i < jLen; i++) {
-                    if (fruitList[i]["ID"] == prodID && fruitList[i]["FruitImgList"] && Array.isArray(fruitList[i]["FruitImgList"])) {
+                    if (sliceList[i]["ID"] == prodID && sliceList[i]["FruitImgList"] && Array.isArray(sliceList[i]["FruitImgList"])) {
                         //查找商品详图
-                        for (var j = 0; j < fruitList[i]["FruitImgList"].length; j++) {
-                            if (fruitList[i]["FruitImgList"][j]["MainImg"]) {
-                                mainImg = fruitList[i]["FruitImgList"][j]["ImgName"];
+                        for (var j = 0; j < sliceList[i]["FruitImgList"].length; j++) {
+                            if (sliceList[i]["FruitImgList"][j]["MainImg"]) {
+                                mainImg = sliceList[i]["FruitImgList"][j]["ImgName"];
                             }
-                            if (fruitList[i]["FruitImgList"][j]["DetailImg"]) {
-                                detailImg = fruitList[i]["FruitImgList"][j]["ImgName"];
+                            if (sliceList[i]["FruitImgList"][j]["DetailImg"]) {
+                                detailImg = sliceList[i]["FruitImgList"][j]["ImgName"];
                             }
                         }
 
@@ -192,24 +221,24 @@
                         $("#faLoading").show();
 
                         //商品库存量
-                        $("#spanInventory").text(fruitList[i]["InventoryQty"] == -1 ? "不限量" : fruitList[i]["InventoryQty"]);
-                        $("#hfInventory").val(fruitList[i]["InventoryQty"]);
+                        $("#spanInventory").text(sliceList[i]["InventoryQty"] == -1 ? "不限量" : sliceList[i]["InventoryQty"]);
+                        $("#hfInventory").val(sliceList[i]["InventoryQty"]);
 
                         //商品单价
-                        $("span.prod-price").text("￥" + fruitList[i]["FruitPrice"] + "元/" + fruitList[i]["FruitUnit"]);
+                        $("span.prod-price").text("￥" + sliceList[i]["FruitPrice"] + "元/" + sliceList[i]["FruitUnit"]);
 
                         //商品购买数量默认为1
                         $("input#txtQty").val(1);
 
                         //去掉上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
-                        $("#btnAddToCart").off("click").on("click", fruitList[i], addToCart);
+                        $("#btnAddToCart").off("click").on("click", sliceList[i], addToCart);
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
 
                         //设置微信分享参数
-                        requirejs(['jweixin'], function (wx) {
-                            wxShareInfo.desc = '我买了【' + fruitList[i].FruitName + '】' + fruitList[i].FruitDesc;
+                        requirejs(['jweixin110'], function (wx) {
+                            wxShareInfo.desc = '我买了【' + sliceList[i].FruitName + '】' + sliceList[i].FruitDesc;
                             wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
                             wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
 
@@ -235,7 +264,7 @@
             }
             else {
                 alert("商品数据异常");
-                console.warn("var fruitList=" + fruitList);
+                console.warn("var sliceList=" + sliceList);
             }
         }
 
@@ -275,7 +304,6 @@
             }
 
         }
-
     </script>
 
 </asp:Content>
