@@ -185,6 +185,49 @@ public static class Config
     /// </summary>
     public static readonly decimal FreightFreeCondition;
 
+    //////////////////////支付宝配置参数open.alipay.com////////////////////
+    /// <summary>
+    /// 支付宝开放平台网关
+    /// </summary>
+    public const string AlipayGateway = "https://openapi.alipay.com/gateway.do";
+
+    /// <summary>
+    /// 支付宝开放平台应用ID，查看地址：https://open.alipay.com
+    /// </summary>
+    public static readonly string AlipayAPPID;
+
+    /// <summary>
+    // 支付宝合作身份者ID，签约账号，以2088开头由16位纯数字组成的字符串，查看地址：https://b.alipay.com/order/pidAndKey.htm
+    /// </summary>
+    public static readonly string Partner;
+
+    /// <summary>
+    // 收款支付宝账号，以2088开头由16位纯数字组成的字符串，一般情况下收款账号就是签约账号
+    /// </summary>
+    public static readonly string SellerID = Partner;
+
+    /// <summary>
+    //商户的私钥文件路径,原始格式，RSA公私钥生成：https://doc.open.alipay.com/doc2/detail.htm?spm=a219a.7629140.0.0.nBDxfy&treeId=58&articleId=103242&docType=1
+    /// </summary>
+    public static readonly string PrivateKey;
+
+    /// <summary>
+    //支付宝的公钥文件路径，查看地址：https://b.alipay.com/order/pidAndKey.htm 
+    /// </summary>
+    public static readonly string AlipayPublicKey;
+
+    /// <summary>
+    // 服务器异步通知页面路径，需http://格式的完整路径，不能加?id=123这类自定义参数,必须外网可以正常访问
+    /// </summary>
+    public static readonly string AlipayNotifyUrl;
+
+    /// <summary>
+    // 页面跳转同步通知页面路径，需http://格式的完整路径，不能加?id=123这类自定义参数，必须外网可以正常访问
+    /// </summary>
+    public static readonly string AlipayReturnUrl;
+
+    //////////////////////支付宝配置参数////////////////////
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
@@ -199,6 +242,12 @@ public static class Config
         Config.TestToken = ConfigurationManager.AppSettings["TestToken"].ToString();
         Config.AllowedUploadFileExt = ConfigurationManager.AppSettings["AllowedUploadFileExt"].ToString();
         Config.DefaultImg = ConfigurationManager.AppSettings["DefaultImg"].ToString();
+        Config.AlipayAPPID = ConfigurationManager.AppSettings["AlipayAPPID"].ToString();
+        Config.Partner = ConfigurationManager.AppSettings["Partner"].ToString();
+        Config.PrivateKey = ConfigurationManager.AppSettings["PrivateKey"].ToString();
+        Config.AlipayPublicKey = ConfigurationManager.AppSettings["AlipayPublicKey"].ToString();
+        Config.AlipayNotifyUrl = ConfigurationManager.AppSettings["AlipayNotifyUrl"].ToString();
+        Config.AlipayReturnUrl = ConfigurationManager.AppSettings["AlipayReturnUrl"].ToString();
 
         int productListPageSize;
         if (int.TryParse(ConfigurationManager.AppSettings["ProductListPageSize"].ToString(), out productListPageSize))

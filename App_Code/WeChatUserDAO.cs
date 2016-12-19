@@ -943,7 +943,7 @@ public static class WeChatUserDAO
                     {
                         if (jUserInfoList["user_info_list"][j].Keys.Contains("subscribe") && jUserInfoList["user_info_list"][j].Keys.Contains("openid"))
                         {
-                            WeChatUser user = wxUsers.Find(delegate (WeChatUser wxUser)
+                            WeChatUser user = wxUsers.Find(wxUser =>
                             {
                                 if (wxUser.OpenID == jUserInfoList["user_info_list"][j]["openid"].ToString())
                                 {

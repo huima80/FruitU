@@ -29,6 +29,14 @@ public partial class FruitGift : System.Web.UI.Page
                     {
                         this.spanSellout198.Visible = true;
                     }
+                    if(fruit.ActiveGroupPurchase != null)
+                    {
+                        this.spGroupPurchase198.Visible = true;
+                    }
+                    else
+                    {
+                        this.spGroupPurchase198.Visible = false;
+                    }
                     break;
                 case 115:
                     if (fruit.InventoryQty != 0)
@@ -39,6 +47,14 @@ public partial class FruitGift : System.Web.UI.Page
                     else
                     {
                         this.spanSellout298.Visible = true;
+                    }
+                    if (fruit.ActiveGroupPurchase != null)
+                    {
+                        this.spGroupPurchase298.Visible = true;
+                    }
+                    else
+                    {
+                        this.spGroupPurchase298.Visible = false;
                     }
                     break;
             }

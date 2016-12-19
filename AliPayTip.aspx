@@ -41,10 +41,11 @@
     <div class="weixin-tip">
         <div class="weixin-tip-arrow"><i class="fa fa-hand-o-up fa-3x"></i></div>
         <div class="jumbotron">
-            <h4 class="text-center">您已下单成功</h4>
+            <h4 class="text-center">打开支付宝</h4>
             <ol>
                 <li>请点击右上角菜单“在浏览器中打开”</li>
-                <li>支付宝付款后，请返回微信查看订单</li>
+                <li>支付宝付款后，请返回FruitU查看订单</li>
+                <li>如果您是团购，请在“我的订单”中邀请好友拼团</li>
             </ol>
         </div>
         <div class="weixin-tip-img"></div>

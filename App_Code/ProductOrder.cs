@@ -6,6 +6,9 @@ using System.Data.SqlClient;
 using System.Globalization;
 using LitJson;
 using Com.Alipay;
+using Aop.Api;
+using Aop.Api.Request;
+using Aop.Api.Response;
 
 /// <summary>
 /// ProductOrder 的摘要说明
@@ -454,9 +457,9 @@ public class ProductOrder : IComparable<ProductOrder>
     /// 提交新订单，支付宝支付
     /// </summary>
     /// <param name="po"></param>
-    /// <param name="requestPara">支付宝请求参数</param>
+    /// <param name="alipayParam">支付宝请求参数</param>
     /// <returns></returns>
-    public static ProductOrder SubmitOrder(ProductOrder po, out string requestPara)
+    public static ProductOrder SubmitOrder(ProductOrder po, out string alipayParam)
     {
         if (po == null)
         {
@@ -480,10 +483,50 @@ public class ProductOrder : IComparable<ProductOrder>
         sParaTemp.Add("total_fee", po.OrderPrice.ToString());
         sParaTemp.Add("show_url", "http://" + HttpContext.Current.Request.Url.Host);
         sParaTemp.Add("body", po.OrderDetails);
-        //尝试唤起支付宝客户端进行支付，若用户未安装支付宝，则继续使用wap收银台进行支付。
+        //尝试唤起支付宝客户端进行支付，若用户未安装支付宝，则继续使用H5收银台进行支付。
         sParaTemp.Add("app_pay", "Y");
 
-        requestPara = Submit.BuildRequestPara(sParaTemp);
+        alipayParam = Submit.BuildRequestPara(sParaTemp);
+
+        //触发订单提交状态事件
+        po.OnOrderStateChanged(OrderState.Submitted);
+
+        return po;
+
+    }
+
+    /// <summary>
+    /// 支付宝手机支付接口V2
+    /// </summary>
+    /// <param name="po"></param>
+    /// <param name="alipayParam"></param>
+    /// <returns></returns>
+    public static ProductOrder SubmitOrderV2(ProductOrder po, out string alipayParam)
+    {
+        if (po == null)
+        {
+            throw new ArgumentNullException("ProductOrder对象不能为null");
+        }
+
+        //订单入库
+        ProductOrder.AddOrder(po);
+
+        //生成支付宝请求参数
+        IAopClient aopClient = new DefaultAopClient(Config.AlipayGateway, Config.AlipayAPPID, Config.PrivateKey, Config.AlipayPublicKey);
+        AlipayTradeWapPayRequest aopRequest = new AlipayTradeWapPayRequest();
+        aopRequest.ReturnUrl = Config.AlipayReturnUrl;
+        aopRequest.NotifyUrl = Config.AlipayNotifyUrl;
+        aopRequest.BizContent = "{" +
+        string.Format("\"body\":\"{0}\",", po.OrderDetails) +
+        string.Format("\"subject\":\"{0}\",", po.ProductNames) +
+        string.Format("\"out_trade_no\":\"{0}\",", po.OrderID) +
+        "\"timeout_express\":\"90m\"," +
+        string.Format("\"total_amount\":\"{0}\",", po.OrderPrice) +
+        "\"product_code\":\"QUICK_WAP_PAY\"" +
+        "}";
+        AlipayTradeWapPayResponse aopResponse = aopClient.pageExecute(aopRequest, null, "GET");
+
+        alipayParam = aopResponse.Body;
 
         //触发订单提交状态事件
         po.OnOrderStateChanged(OrderState.Submitted);
@@ -655,7 +698,7 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 增加订单，插入订单表、订单明细表
+    /// 增加订单，插入订单表、订单明细表，如果订单明细中有团购活动，则插入团购活动表、团购活动成员表
     /// </summary>
     /// <param name="po"></param>
     /// <returns></returns>
@@ -670,6 +713,7 @@ public class ProductOrder : IComparable<ProductOrder>
 
                 try
                 {
+                    //插入订单表
                     using (SqlCommand cmdAddOrder = conn.CreateCommand())
                     {
                         cmdAddOrder.Transaction = trans;
@@ -872,6 +916,133 @@ public class ProductOrder : IComparable<ProductOrder>
                         }
                     }
 
+                    //判断订单项中是否有团购活动
+                    if (po.OrderDetailList.Exists(od => od.GroupPurchaseEvent != null))
+                    {
+                        //插入团购活动表
+                        using (SqlCommand cmdAddGroupEvent = conn.CreateCommand())
+                        {
+                            cmdAddGroupEvent.Transaction = trans;
+
+                            SqlParameter paramGroupID = cmdAddGroupEvent.CreateParameter();
+                            paramGroupID.ParameterName = "@GroupID";
+                            paramGroupID.SqlDbType = System.Data.SqlDbType.Int;
+                            cmdAddGroupEvent.Parameters.Add(paramGroupID);
+
+                            SqlParameter paramOrganizer = cmdAddGroupEvent.CreateParameter();
+                            paramOrganizer.ParameterName = "@Organizer";
+                            paramOrganizer.SqlDbType = System.Data.SqlDbType.NVarChar;
+                            cmdAddGroupEvent.Parameters.Add(paramOrganizer);
+
+                            SqlParameter paramLaunchDate = cmdAddGroupEvent.CreateParameter();
+                            paramLaunchDate.ParameterName = "@LaunchDate";
+                            paramLaunchDate.SqlDbType = System.Data.SqlDbType.DateTime;
+                            cmdAddGroupEvent.Parameters.Add(paramLaunchDate);
+
+                            po.OrderDetailList.ForEach(od =>
+                            {
+                                //如果当前订单项有新开的团购活动，则插入团购活动表
+                                if (od.GroupPurchaseEvent != null && od.GroupPurchaseEvent.ID == 0)
+                                {
+                                    paramGroupID.SqlValue = od.GroupPurchaseEvent.GroupPurchase.ID;
+                                    paramOrganizer.SqlValue = od.GroupPurchaseEvent.Organizer.OpenID;
+                                    paramLaunchDate.SqlValue = od.GroupPurchaseEvent.LaunchDate;
+
+                                    //插入团购活动表
+                                    cmdAddGroupEvent.CommandText = "INSERT INTO [dbo].[GroupPurchaseEvent] ([GroupID], [Organizer], [LaunchDate]) VALUES (@GroupID,@Organizer,@LaunchDate);select SCOPE_IDENTITY() as 'NewGroupEventID'";
+
+                                    var newGroupEventID = cmdAddGroupEvent.ExecuteScalar();
+
+                                    //新增的团购活动ID
+                                    if (newGroupEventID != DBNull.Value)
+                                    {
+                                        od.GroupPurchaseEvent.ID = int.Parse(newGroupEventID.ToString());
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("插入团购活动表错误");
+                                    }
+                                }
+                            });
+                        }
+
+                        //插入团购活动成员表
+                        using (SqlCommand cmdAddGroupEventMember = conn.CreateCommand())
+                        {
+                            cmdAddGroupEventMember.Transaction = trans;
+
+                            SqlParameter paramID = cmdAddGroupEventMember.CreateParameter();
+                            paramID.ParameterName = "@ID";
+                            paramID.SqlDbType = System.Data.SqlDbType.Int;
+
+                            SqlParameter paramGroupEventID = cmdAddGroupEventMember.CreateParameter();
+                            paramGroupEventID.ParameterName = "@GroupEventID";
+                            paramGroupEventID.SqlDbType = System.Data.SqlDbType.Int;
+
+                            SqlParameter paramGroupMember = cmdAddGroupEventMember.CreateParameter();
+                            paramGroupMember.ParameterName = "@GroupMember";
+                            paramGroupMember.SqlDbType = System.Data.SqlDbType.NVarChar;
+
+                            SqlParameter paramJoinDate = cmdAddGroupEventMember.CreateParameter();
+                            paramJoinDate.ParameterName = "@JoinDate";
+                            paramJoinDate.SqlDbType = System.Data.SqlDbType.DateTime;
+
+                            po.OrderDetailList.ForEach(od =>
+                            {
+                                //如果当前订单项有团购活动，且也有团购活动成员，则插入团购活动成员表
+                                if (od.GroupPurchaseEvent != null && od.GroupPurchaseEvent.GroupPurchaseEventMembers != null)
+                                {
+                                    od.GroupPurchaseEvent.GroupPurchaseEventMembers.ForEach(eventMember =>
+                                    {
+                                        //如果此成员是新增团购成员则插入成员表，或者是已有的团购成员则更新成员表
+                                        if (eventMember.ID == 0)
+                                        {
+                                            cmdAddGroupEventMember.Parameters.Clear();
+                                            cmdAddGroupEventMember.Parameters.Add(paramGroupEventID);
+                                            cmdAddGroupEventMember.Parameters.Add(paramGroupMember);
+                                            cmdAddGroupEventMember.Parameters.Add(paramJoinDate);
+
+                                            paramGroupEventID.SqlValue = od.GroupPurchaseEvent.ID;
+                                            paramGroupMember.SqlValue = eventMember.GroupMember.OpenID;
+                                            paramJoinDate.SqlValue = eventMember.JoinDate;
+
+                                            //插入团购活动成员表
+                                            cmdAddGroupEventMember.CommandText = "INSERT INTO [dbo].[GroupPurchaseEventMember] ([GroupEventID], [GroupMember], [JoinDate]) VALUES (@GroupEventID,@GroupMember,@JoinDate);select SCOPE_IDENTITY() as 'NewGroupEventMemberID'";
+
+                                            var newGroupEventMemberID = cmdAddGroupEventMember.ExecuteScalar();
+
+                                            //新增的团购活动成员ID
+                                            if (newGroupEventMemberID != DBNull.Value)
+                                            {
+                                                eventMember.ID = int.Parse(newGroupEventMemberID.ToString());
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("插入团购活动成员表错误");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            cmdAddGroupEventMember.Parameters.Clear();
+                                            cmdAddGroupEventMember.Parameters.Add(paramID);
+                                            cmdAddGroupEventMember.Parameters.Add(paramJoinDate);
+
+                                            paramID.SqlValue = eventMember.ID;
+                                            paramJoinDate.SqlValue = eventMember.JoinDate;
+
+                                            cmdAddGroupEventMember.CommandText = "UPDATE [dbo].[GroupPurchaseEventMember] set [JoinDate] = @JoinDate WHERE Id = @ID";
+                                            if (cmdAddGroupEventMember.ExecuteNonQuery() != 1)
+                                            {
+                                                throw new Exception("更新团购活动成员表错误");
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    }
+
+                    //插入订单明细表
                     using (SqlCommand cmdAddDetail = conn.CreateCommand())
                     {
                         cmdAddDetail.Transaction = trans;
@@ -909,6 +1080,11 @@ public class ProductOrder : IComparable<ProductOrder>
                         paramPurchaseUnit.Size = 50;
                         cmdAddDetail.Parameters.Add(paramPurchaseUnit);
 
+                        SqlParameter paramGroupEventID = cmdAddDetail.CreateParameter();
+                        paramGroupEventID.ParameterName = "@GroupEventID";
+                        paramGroupEventID.SqlDbType = System.Data.SqlDbType.Int;
+                        cmdAddDetail.Parameters.Add(paramGroupEventID);
+
                         po.OrderDetailList.ForEach(od =>
                         {
                             paramProductID.SqlValue = od.ProductID;
@@ -916,9 +1092,26 @@ public class ProductOrder : IComparable<ProductOrder>
                             paramPurchaseQty.SqlValue = od.PurchaseQty;
                             paramPurchasePrice.SqlValue = od.PurchasePrice;
                             paramPurchaseUnit.SqlValue = od.PurchaseUnit;
+                            //如果此订单商品项有对应的团购活动，则插入团购活动ID
+                            if (od.GroupPurchaseEvent != null)
+                            {
+                                paramGroupEventID.SqlValue = od.GroupPurchaseEvent.ID;
+                            }
+                            else
+                            {
+                                paramGroupEventID.SqlValue = DBNull.Value;
+                            }
+
+                            foreach (SqlParameter param in cmdAddDetail.Parameters)
+                            {
+                                if (param.Value == null)
+                                {
+                                    param.Value = DBNull.Value;
+                                }
+                            }
 
                             //插入订单明细表
-                            cmdAddDetail.CommandText = "INSERT INTO [dbo].[OrderDetail] ([PoID], [ProductID], [OrderProductName], [PurchaseQty], [PurchasePrice], [PurchaseUnit]) VALUES (@PoID,@ProductID,@OrderProductName,@PurchaseQty,@PurchasePrice,@PurchaseUnit);select SCOPE_IDENTITY() as 'NewOrderDetailID'";
+                            cmdAddDetail.CommandText = "INSERT INTO [dbo].[OrderDetail] ([PoID], [ProductID], [OrderProductName], [PurchaseQty], [PurchasePrice], [PurchaseUnit], [GroupEventID]) VALUES (@PoID,@ProductID,@OrderProductName,@PurchaseQty,@PurchasePrice,@PurchaseUnit,@GroupEventID);select SCOPE_IDENTITY() as 'NewOrderDetailID'";
 
                             var newOrderDetailID = cmdAddDetail.ExecuteScalar();
 
@@ -1068,30 +1261,9 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 按条件加载订单信息、订单所属下单人信息
-    /// 用于ManageOrder.aspx后台订单管理页面里的分页显示订单，需要加载订单的下单人信息，用于显示订单的下单人微信昵称等信息
+    /// 用于后台：ManageOrder.aspx后台订单管理页面里的分页显示订单，需要加载订单的下单人信息，用于显示订单的下单人微信昵称等信息
+    /// 用户前台：分页查询订单，可指定是否加载订单的下单人信息，用于前台MyOrders.aspx我的订单页面，不需要加载订单的下单人信息，避免对象转换JSON数据出错
     /// </summary>
-    /// <param name="strWhere"></param>
-    /// <param name="strOrder"></param>
-    /// <param name="totalRows"></param>
-    /// <param name="payingOrderCount"></param>
-    /// <param name="deliveringOrderCount"></param>
-    /// <param name="acceptingOrderCount"></param>
-    /// <param name="cancelledOrderCount"></param>
-    /// <param name="totalOrderPrice"></param>
-    /// <param name="startRowIndex"></param>
-    /// <param name="maximumRows"></param>
-    /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal totalOrderPrice, int startRowIndex, int maximumRows = 10)
-    {
-        //默认加载每个订单所属的用户信息
-        return FindProductOrderPager(true, strWhere, strOrder, out totalRows, out payingOrderCount, out deliveringOrderCount, out acceptingOrderCount, out cancelledOrderCount, out totalOrderPrice, startRowIndex, maximumRows);
-    }
-
-    /// <summary>
-    /// 分页查询订单，可指定是否加载订单的下单人信息，用于前台MyOrders.aspx我的订单页面，不需要加载订单的下单人信息，避免对象转换JSON数据出错
-    /// </summary>
-    /// <param name="isLoadPurchaser">是否加载订单所属的下单人信息</param>
     /// <param name="strWhere">条件SQL字句</param>
     /// <param name="strOrder">排序SQL字句</param>
     /// <param name="totalRows">总记录数</param>
@@ -1103,7 +1275,7 @@ public class ProductOrder : IComparable<ProductOrder>
     /// <param name="startRowIndex">每页开始行号</param>
     /// <param name="maximumRows">每页行数</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindProductOrderPager(bool isLoadPurchaser, string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal totalOrderPrice, int startRowIndex, int maximumRows = 10)
+    public static List<ProductOrder> FindProductOrderPager(string strWhere, string strOrder, out int totalRows, out int payingOrderCount, out int deliveringOrderCount, out int acceptingOrderCount, out int cancelledOrderCount, out decimal totalOrderPrice, int startRowIndex, int maximumRows = 10)
     {
         List<ProductOrder> poPerPage = new List<ProductOrder>();
         ProductOrder po;
@@ -1214,14 +1386,11 @@ public class ProductOrder : IComparable<ProductOrder>
 
                                 SDR2PO(po, sdrOrder);
 
-                                if (isLoadPurchaser)
+                                //此订单的下单人信息，不需要再加载下单人的所有订单列表信息，也不需要刷新下单人活动时间
+                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                if (sdrOrder["AgentOpenID"] != null)
                                 {
-                                    //此订单的下单人信息，不需要再加载下单人的所有订单列表信息，也不需要刷新下单人活动时间
-                                    po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
-                                    if (sdrOrder["AgentOpenID"] != null)
-                                    {
-                                        po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
-                                    }
+                                    po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
                                 }
 
                                 //此订单的商品详情
@@ -1579,6 +1748,83 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
+    /// 根据团购活动ID，查询所有相关的订单
+    /// </summary>
+    /// <param name="eventID">团购活动ID</param>
+    /// <returns></returns>
+    public static List<ProductOrder> FindOrderByGroupEventID(int eventID)
+    {
+        List<ProductOrder> poList = new List<ProductOrder>();
+        ProductOrder po;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                try
+                {
+                    using (SqlCommand cmdOrder = conn.CreateCommand())
+                    {
+                        cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID)";
+
+                        SqlParameter paramEventID = cmdOrder.CreateParameter();
+                        paramEventID.ParameterName = "@EventID";
+                        paramEventID.SqlDbType = System.Data.SqlDbType.Int;
+                        paramEventID.SqlValue = eventID;
+                        cmdOrder.Parameters.Add(paramEventID);
+
+                        using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
+                        {
+                            while (sdrOrder.Read())
+                            {
+                                po = new ProductOrder();
+
+                                SDR2PO(po, sdrOrder);
+
+                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                                if (sdrOrder["AgentOpenID"] != null)
+                                {
+                                    po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                                }
+
+                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
+
+                                poList.Add(po);
+
+                            }
+                            sdrOrder.Close();
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error("ProductOrder", ex.ToString());
+            throw ex;
+        }
+
+        return poList;
+
+    }
+
+
+    /// <summary>
     /// 根据订单ID查询订单明细
     /// 重要：如果订单项对应的商品项被删除，则会导致OrderDetail关联的Product和ProductImg表相关字段为null值。
     /// 此时对应的业务场景为此订单项对应的商品已下架。
@@ -1625,6 +1871,15 @@ public class ProductOrder : IComparable<ProductOrder>
                         od.PurchaseQty = int.Parse(sdrOrderDetail["PurchaseQty"].ToString());
                         od.PurchaseUnit = sdrOrderDetail["PurchaseUnit"].ToString();
                         od.FruitImgList = Fruit.FindFruitImgByProdID(conn, od.ProductID);
+                        if (sdrOrderDetail["GroupEventID"] != DBNull.Value)
+                        {
+                            //加载此订单商品项对应的团购活动，包括团购成员
+                            od.GroupPurchaseEvent = GroupPurchaseEvent.FindGroupPurchaseEventByID(conn, int.Parse(sdrOrderDetail["GroupEventID"].ToString()), true);
+                        }
+                        else
+                        {
+                            od.GroupPurchaseEvent = null;
+                        }
 
                         odList.Add(od);
                     }
@@ -2459,6 +2714,127 @@ public class ProductOrder : IComparable<ProductOrder>
         {
             return -1;
         }
+    }
+
+    /// <summary>
+    /// 把对象序列化为JSON对象，用于MyOrders.aspx页面展示用户的订单列表
+    /// </summary>
+    /// <param name="poList"></param>
+    /// <param name="totalRows"></param>
+    /// <param name="payingOrderCount"></param>
+    /// <param name="deliveringOrderCount"></param>
+    /// <param name="acceptingOrderCount"></param>
+    /// <param name="cancelledOrderCount"></param>
+    /// <returns>JSON格式的订单列表数据</returns>
+    public static string PO2JSONForClient(List<ProductOrder> poList, int totalRows, int payingOrderCount, int deliveringOrderCount, int acceptingOrderCount, int cancelledOrderCount)
+    {
+        JsonData jPOList = new JsonData();
+
+        if (poList != null && poList.Count > 0)
+        {
+            JsonData jPO;
+            poList.ForEach(po =>
+            {
+                jPO = new JsonData();
+                jPO["ID"] = po.ID;
+                jPO["OrderID"] = po.OrderID.Substring(18);
+                jPO["OrderDate"] = string.Format("{0}/{1}/{2} {3}", po.OrderDate.Year, po.OrderDate.Month, po.OrderDate.Day, po.OrderDate.ToLongTimeString());
+                jPO["OrderMemo"] = po.OrderMemo;
+                jPO["Freight"] = po.Freight.ToString();
+                jPO["MemberPointsDiscount"] = po.MemberPointsDiscount.ToString();
+                jPO["WxCardDiscount"] = po.WxCardDiscount.ToString();
+                jPO["TradeState"] = (int)po.TradeState;
+                jPO["IsCancel"] = po.IsCancel ? 1 : 0;
+                jPO["IsDelivered"] = po.IsDelivered ? 1 : 0;
+                jPO["IsAccept"] = po.IsAccept ? 1 : 0;
+                jPO["OrderPrice"] = po.OrderPrice.ToString();
+                jPO["OrderDetailList"] = new JsonData();
+
+                //处理订单明细项数据
+                if (po.OrderDetailList != null)
+                {
+                    JsonData jOD;
+                    po.OrderDetailList.ForEach(od =>
+                    {
+                        jOD = new JsonData();
+                        jOD["OrderProductName"] = od.OrderProductName;
+                        jOD["PurchasePrice"] = od.PurchasePrice.ToString();
+                        jOD["PurchaseUnit"] = od.PurchaseUnit;
+                        jOD["PurchaseQty"] = od.PurchaseQty;
+                        jOD["FruitImgList"] = new JsonData();
+
+                        //订单商品的图片
+                        if (!string.IsNullOrEmpty(od.FruitName))
+                        {
+                            od.FruitImgList.ForEach(img =>
+                            {
+                                JsonData jFruitImg = new JsonData();
+                                jFruitImg["ImgName"] = img.ImgName;
+                                jOD["FruitImgList"].Add(jFruitImg);
+                            });
+                        }
+                        else
+                        {
+                            //已下架商品的图片已被删除，所以需要显示默认图片
+                            jOD["FruitName"] = "此商品已下架";
+                            JsonData jFruitImg = new JsonData();
+                            jFruitImg["ImgName"] = Config.DefaultImg;
+                            jOD["FruitImgList"].Add(jFruitImg);
+                        }
+
+                        //订单商品对应的团购活动
+                        if (od.GroupPurchaseEvent != null)
+                        {
+                            jOD["GroupPurchaseEvent"] = new JsonData();
+                            jOD["GroupPurchaseEvent"]["IsSuccessful"] = od.GroupPurchaseEvent.IsSuccessful;
+                            jOD["GroupPurchaseEvent"]["EventID"] = od.GroupPurchaseEvent.ID;
+                            jOD["GroupPurchaseEvent"]["RequiredNumber"] = od.GroupPurchaseEvent.GroupPurchase.RequiredNumber;
+                            if (od.GroupPurchaseEvent.GroupPurchaseEventMembers != null)
+                            {
+                                jOD["GroupPurchaseEvent"]["GroupMemberCount"] = od.GroupPurchaseEvent.GroupPurchaseEventMembers.Count;
+                            }
+                            else
+                            {
+                                jOD["GroupPurchaseEvent"]["GroupMemberCount"] = 0;
+                            }
+                        }
+
+                        jPO["OrderDetailList"].Add(jOD);
+
+                    });
+                }
+
+                jPOList.Add(jPO);
+
+            });
+        }
+
+        //本次查询总订单数
+        JsonData jTotalRows = new JsonData();
+        jTotalRows["TotalRows"] = totalRows;
+        jPOList.Add(jTotalRows);
+
+        //本次查询待支付订单数
+        JsonData jPayingOrder = new JsonData();
+        jPayingOrder["PayingOrderCount"] = payingOrderCount;
+        jPOList.Add(jPayingOrder);
+
+        //本次查询待发货订单数
+        JsonData jDeliveringOrder = new JsonData();
+        jDeliveringOrder["DeliveringOrderCount"] = deliveringOrderCount;
+        jPOList.Add(jDeliveringOrder);
+
+        //本次查询待签收订单数
+        JsonData jAcceptingOrder = new JsonData();
+        jAcceptingOrder["AcceptingOrderCount"] = acceptingOrderCount;
+        jPOList.Add(jAcceptingOrder);
+
+        //本次查询已撤单订单数
+        JsonData jCancelledOrder = new JsonData();
+        jCancelledOrder["CancelledOrderCount"] = cancelledOrderCount;
+        jPOList.Add(jCancelledOrder);
+
+        return jPOList.ToJson();
     }
 
 }

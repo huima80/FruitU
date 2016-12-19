@@ -311,7 +311,10 @@ public class WxCard
                     for (int i = 0; i < jCardInfo["card_list"].Count; i++)
                     {
                         wxCard = GetCard(jCardInfo["card_list"][i]["card_id"].ToString());
-                        wxCard.Code = jCardInfo["card_list"][i]["code"].ToString();
+                        if (wxCard != null)
+                        {
+                            wxCard.Code = jCardInfo["card_list"][i]["code"].ToString();
+                        }
 
                         cardList.Add(wxCard);
                     }
@@ -358,6 +361,7 @@ public class WxCard
                         wxCard.CardType = WxCardType.CASH;
                         decimal leastCost, reduceCost;
 
+                        //代金券减免金额
                         if (jCash.Keys.Contains("reduce_cost"))
                         {
                             if (decimal.TryParse(jCash["reduce_cost"].ToString(), out reduceCost))
@@ -374,6 +378,7 @@ public class WxCard
                             wxCard.ReduceCost = 0;
                         }
 
+                        //代金券起用金额
                         if (jCash.Keys.Contains("advanced_info") && jCash["advanced_info"].Keys.Contains("use_condition") && jCash["advanced_info"]["use_condition"].Keys.Contains("least_cost"))
                         {
                             if (decimal.TryParse(jCash["advanced_info"]["use_condition"]["least_cost"].ToString(), out leastCost))
@@ -382,7 +387,7 @@ public class WxCard
                             }
                             else
                             {
-                                wxCard.ReduceCost = 0;
+                                wxCard.LeastCost = 0;
                             }
                         }
                         else
@@ -432,14 +437,14 @@ public class WxCard
                         JsonData jMemberCard = jCardInfo["card"]["member_card"];
                         jBaseInfo = jMemberCard["base_info"];
                         wxCard.CardType = WxCardType.MEMBER_CARD;
-                        wxCard.SupplyBalance = jMemberCard["supply_balance"].ToString() == "true" ? true : false;
-                        wxCard.SupplyBonus = jMemberCard["supply_bonus"].ToString() == "true" ? true : false;
-                        wxCard.BonusCleared = jMemberCard["bonus_cleared"].ToString();
-                        wxCard.BonusRules = jMemberCard["bonus_rules"].ToString();
-                        wxCard.BalanceRules = jMemberCard["balance_rules"].ToString();
-                        wxCard.Prerogative = jMemberCard["prerogative"].ToString();
-                        wxCard.BindOldCardUrl = jMemberCard["bind_old_card_url"].ToString();
-                        wxCard.ActivateUrl = jMemberCard["activate_url"].ToString();
+                        //wxCard.SupplyBalance = jMemberCard["supply_balance"].ToString() == "true" ? true : false;
+                        //wxCard.SupplyBonus = jMemberCard["supply_bonus"].ToString() == "true" ? true : false;
+                        //wxCard.BonusCleared = jMemberCard["bonus_cleared"].ToString();
+                        //wxCard.BonusRules = jMemberCard["bonus_rules"].ToString();
+                        //wxCard.BalanceRules = jMemberCard["balance_rules"].ToString();
+                        //wxCard.Prerogative = jMemberCard["prerogative"].ToString();
+                        //wxCard.BindOldCardUrl = jMemberCard["bind_old_card_url"].ToString();
+                        //wxCard.ActivateUrl = jMemberCard["activate_url"].ToString();
                         break;
                     //景点门票
                     case "SCENIC_TICKET":

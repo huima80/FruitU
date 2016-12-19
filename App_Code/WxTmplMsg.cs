@@ -101,6 +101,36 @@ public static class WxTmplMsg
     private const string TMPL_MEMBER_POINTS_NOTIFY = "iSX4_ghQqpXxS3GxtbQWdDC7wE5V5D_BiBJR13ICEso";
 
     /// <summary>
+    /// 拼团成功通知
+    //{{first.DATA}}
+    //商品名称：{{keyword1.DATA}}
+    //价格：{{keyword2.DATA}}
+    //时间：{{keyword3.DATA}}
+    //{{remark.DATA}}
+    /// </summary>
+    private const string TMPL_GROUP_PURCHASE_EVENT_SUCCESS = "kmxxztFhXIOZKutHNByXv4yi2HAIFefpBj-d867CNeQ";
+
+    /// <summary>
+    /// 拼团失败提醒
+    //{{first.DATA}}
+    //订单金额：{{keyword1.DATA}}
+    //商品详情：{{keyword2.DATA}}
+    //订单编号：{{keyword3.DATA}}
+    //{{remark.DATA}}
+    /// </summary>
+    private const string TMPL_GROUP_PURCHASE_EVENT_FAIL = "IirQLyiGHz-OwlX5PNU0Rnddl_xBNpWkhUvkVot6odA";
+
+    /// <summary>
+    /// 参团成功通知
+    //{{first.DATA}}
+    //订单金额：{{keyword1.DATA}}
+    //商品详情：{{keyword2.DATA}}
+    //收货信息：{{keyword3.DATA}}
+    //{{remark.DATA}}
+    /// </summary>
+    private const string TMPL_JOIN_GROUP_PURCHASE_EVENT = "91e6T0wR2BKnbLWSYeHor4uaX198ajg3C168PJGmjRg";
+
+    /// <summary>
     /// 消息头颜色
     /// </summary>
     private const string MSG_HEAD_COLOR = "#FF0000";
@@ -663,6 +693,95 @@ public static class WxTmplMsg
             Log.Info("SendMsgOnMemberPoints", jRet.ToJson());
         }
 
+    }
+
+    /// <summary>
+    /// 团购状态变动事件处理函数，通知管理员和所有团购活动成员
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="gpe"></param>
+    /// <returns></returns>
+    public static void GroupPurchaseEventNotify(object sender, GroupPurchaseEvent.GroupPurchaseEventEventArgs gpe)
+    {
+        if (sender == null || gpe == null)
+        {
+            throw new ArgumentNullException("sender或事件参数对象不能为null");
+        }
+
+        JsonData jRet;
+
+        try
+        {
+            GroupPurchaseEvent groupEvent = sender as GroupPurchaseEvent;
+            List<string> adminReceivers, userReceivers;
+            JsonData jTmplMsg = new JsonData(), jTmplMsgData = new JsonData(), jTmplMsgDataValue;
+
+            adminReceivers = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+
+            //构造模板消息
+            jTmplMsg["touser"] = string.Empty;
+            jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
+            jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = string.Format("{0} x{1}", gpe.orderDetail.OrderProductName, gpe.orderDetail.PurchaseQty);
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = string.Format("{0}元", (gpe.orderDetail.PurchasePrice * gpe.orderDetail.PurchaseQty).ToString("C"));
+            jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+            jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = gpe.joinGroupEventDate.ToString();
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
+            jTmplMsgDataValue = new JsonData();
+            jTmplMsgDataValue["value"] = "感谢您参与团购！";
+            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+            jTmplMsgData["remark"] = jTmplMsgDataValue;
+
+            //根据团购活动事件成功标志，发送不同的微信模板消息
+            if (gpe.isGroupEventSuccess)
+            {
+                jTmplMsg["template_id"] = TMPL_GROUP_PURCHASE_EVENT_SUCCESS;
+
+                jTmplMsgDataValue = new JsonData();
+                jTmplMsgDataValue["value"] = "您好，您的拼团已成功，请注意查收发货消息";
+                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                jTmplMsgData["first"] = jTmplMsgDataValue;
+
+            }
+            else
+            {
+                jTmplMsg["template_id"] = TMPL_GROUP_PURCHASE_EVENT_FAIL;
+
+                jTmplMsgDataValue = new JsonData();
+                jTmplMsgDataValue["value"] = "您好，您的拼团在有效期内没有达到规定人数，已取消";
+                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                jTmplMsgData["first"] = jTmplMsgDataValue;
+            }
+
+            jTmplMsg["data"] = jTmplMsgData;
+
+            //发送模板消息，通知管理员
+            jRet = SendTmplMsg(adminReceivers, jTmplMsg);
+
+            //发送模板消息，通知用户
+            userReceivers = new List<string>();
+            groupEvent.GroupPurchaseEventMembers.ForEach(eventMember =>
+            {
+                userReceivers.Add(eventMember.GroupMember.OpenID);
+            });
+            jRet.Add(SendTmplMsg(userReceivers, jTmplMsg));
+        }
+        catch (Exception ex)
+        {
+            Log.Error("GroupPurchaseEventSuccessOnOrderStateChanged", ex.Message);
+            throw ex;
+        }
     }
 
 

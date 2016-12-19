@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web;
 
 /// <summary>
-/// OrderDetail 的摘要说明
+/// 订单商品项
 /// </summary>
 public class OrderDetail : Fruit
 {
@@ -35,6 +35,11 @@ public class OrderDetail : Fruit
     /// </summary>
     public string PurchaseUnit { get; set; }
 
+    /// <summary>
+    /// 订单商品项对应的团购活动
+    /// </summary>
+    public GroupPurchaseEvent GroupPurchaseEvent { get; set; }
+
     public OrderDetail()
     {
         //
@@ -48,13 +53,4 @@ public class OrderDetail : Fruit
         // TODO: 在此处添加构造函数逻辑
         //
     }
-
-    //public OrderDetail(int purchaseQty, decimal purchasePrice)
-    //{
-    //    //
-    //    // TODO: 在此处添加构造函数逻辑
-    //    //
-    //    this.PurchaseQty = purchaseQty;
-    //    this.PurchasePrice = purchasePrice;
-    //}
 }

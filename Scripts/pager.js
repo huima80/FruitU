@@ -227,7 +227,7 @@
                 cache: false,
                 success: function (jDataPerPage) {
 
-                    if (jDataPerPage && Array.isArray(jDataPerPage)) {
+                    if (!!jDataPerPage && Array.isArray(jDataPerPage)) {
                         //当前页数据
                         var htmlItem = "";
 

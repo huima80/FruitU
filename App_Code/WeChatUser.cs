@@ -70,6 +70,11 @@ public class WeChatUser : User, IComparable<WeChatUser>
     /// </summary>
     public string AgentOpenID { get; set; }
 
+    /// <summary>
+    /// 用户参加的团购活动列表
+    /// </summary>
+    public List<GroupPurchaseEvent> JoinedGroupPurchaseEvents { get; set; }
+
     public WeChatUser()
     {
         //
@@ -195,6 +200,8 @@ public class WeChatUser : User, IComparable<WeChatUser>
             return -1;
         }
     }
+
+
 }
 
 /// <summary>

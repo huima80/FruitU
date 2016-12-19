@@ -68,7 +68,7 @@ public partial class ManageProduct : System.Web.UI.Page
 
     protected void gvFruitList_SelectedIndexChanged(object sender, EventArgs e)
     {
-        //根据用户选择的商品条目，显示商品详情
+        ////根据用户选择的商品条目，显示商品详情
         this.odsFruit.SelectParameters[0].DefaultValue = this.gvFruitList.SelectedDataKey[0].ToString();
 
         this.dvFruit.ChangeMode(DetailsViewMode.Edit);
@@ -308,9 +308,6 @@ public partial class ManageProduct : System.Web.UI.Page
                 List<FruitImg> fruitImgList = new List<FruitImg>();
                 FruitImg fruitImg;
 
-                //新上传图片的备注信息，如果是多个图片，则以,分割
-                TextBox txtImgDesc = ((DetailsView)sender).FindControl("txtImgDescInsert") as TextBox;
-
                 //根据gridstack.js网格数、网格项宽度参数计算每行的网格项数量，用于后续计算每个网格项的X/Y坐标值
                 int gridItemCount = GRID_COL / GRID_ITEM_WIDTH, currentIndex;
 
@@ -322,13 +319,26 @@ public partial class ManageProduct : System.Web.UI.Page
                     string fileName, fileExtension;
                     fileName = System.IO.Path.GetFileName(imgFile.FileName);
                     fileExtension = System.IO.Path.GetExtension(fileName);
+                    //处理图片备注
+                    string strImgDesc;
+                    if (i == 0)
+                    {
+                        TextBox txtImgDesc = ((DetailsView)sender).FindControl("txtImgDescInsert") as TextBox;
+                        strImgDesc = txtImgDesc.Text;
+                    }
+                    else
+                    {
+                        string txtImgDescID = "dvFruit$txtImgDescInsert" + (i + 1);
+                        strImgDesc = Request.Form[txtImgDescID].ToString();
+                    }
+
                     if (Regex.IsMatch(fileExtension, string.Format("({0})", Config.AllowedUploadFileExt), RegexOptions.IgnoreCase))
                     {
                         fruitImg = new FruitImg();
                         fruitImgList.Add(fruitImg);
 
                         fruitImg.ImgName = fileName;
-                        fruitImg.ImgDesc = txtImgDesc.Text.Split(',')[i];
+                        fruitImg.ImgDesc = strImgDesc;
                         fruitImg.DetailImg = false;
 
                         //根据上传图片的序列号计算其gridstack的X/Y坐标值
@@ -522,9 +532,6 @@ public partial class ManageProduct : System.Web.UI.Page
                 List<FruitImg> newFruitImgList = new List<FruitImg>();
                 FruitImg newFruitImg;
 
-                //新上传图片的备注信息，如果是多个图片，则以,分割
-                TextBox txtImgDesc = dvFruit.FindControl("txtImgDescEdit") as TextBox;
-
                 int gridItemCount = GRID_COL / GRID_ITEM_WIDTH, currentIndex = fruitImgList.Count;
 
                 for (int i = 0; i < imgFiles.Count; i++)
@@ -534,13 +541,26 @@ public partial class ManageProduct : System.Web.UI.Page
                     string fileName, fileExtension;
                     fileName = System.IO.Path.GetFileName(imgFile.FileName);
                     fileExtension = System.IO.Path.GetExtension(fileName);
+                    //处理图片备注
+                    string strImgDesc;
+                    if (i == 0)
+                    {
+                        TextBox txtImgDesc = dvFruit.FindControl("txtImgDescEdit") as TextBox;
+                        strImgDesc = txtImgDesc.Text;
+                    }
+                    else
+                    {
+                        string txtImgDescID = "dvFruit$txtImgDescEdit" + (i + 1);
+                        strImgDesc = Request.Form[txtImgDescID].ToString();
+                    }
+
                     if (Regex.IsMatch(fileExtension, string.Format("({0})", Config.AllowedUploadFileExt), RegexOptions.IgnoreCase))
                     {
                         newFruitImg = new FruitImg();
                         newFruitImgList.Add(newFruitImg);
 
                         newFruitImg.ImgName = fileName;
-                        newFruitImg.ImgDesc = txtImgDesc.Text.Split(',')[i];
+                        newFruitImg.ImgDesc = strImgDesc;
                         newFruitImg.MainImg = false;
                         newFruitImg.DetailImg = false;
 
@@ -847,6 +867,17 @@ public partial class ManageProduct : System.Web.UI.Page
                 {
                     lblInventoryQty.Text = (prod.InventoryQty == -1 ? "不限量" : prod.InventoryQty.ToString());
                 }
+                break;
+        }
+    }
+
+    protected void gvFruitList_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        switch (e.CommandName)
+        {
+            case "LaunchGroupPurchase":
+                //带商品ID参数重定向到团购管理页面
+                Response.Redirect(string.Format("ManageGroupPurchase.aspx?Action=add&ProductID={0}", e.CommandArgument.ToString()));
                 break;
         }
     }

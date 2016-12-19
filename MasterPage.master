@@ -14,7 +14,7 @@
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <meta property="qc:admins" content="543230621051655" />
     <meta property="wb:webmaster" content="db2652c9f08157d9" />
-    <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
+    <link href="css/bootstrap.min-3.3.7.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/MasterPage.css" rel="stylesheet" />
     <link href="css/shake.css" rel="stylesheet" />
@@ -40,7 +40,7 @@
             paths: {
                 jquery: ['jquery/jquery-1.12.2.min', 'http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min'],
                 jqueryui: ['jquery/jquery-ui-1.11.4.min', 'http://apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min'],
-                bootstrap: ['bootstrap-3.3.6.min', 'http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min'],
+                bootstrap: ['bootstrap-3.3.7.min', 'http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min'],
                 easyui: 'easyui-1.4.4',
                 modernizr: 'modernizr',
                 gridstack: ['gridstack/gridstack-0.2.5.min', '//cdnjs.cloudflare.com/ajax/libs/gridstack.js/0.2.5/gridstack.min'],
@@ -52,7 +52,7 @@
                 lodash: 'lodash.min',
                 html5shiv: 'http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min',
                 respond: 'http://apps.bdimg.com/libs/respond.js/1.4.2/respond',
-                jsrender: 'jsrender',
+                jsrender: 'jsrender-0.9.83.min',
                 flexslider: 'jquery.flexslider-min',
                 jssorslider: 'jssor.slider.mini',
                 cart: 'cart',
@@ -65,7 +65,7 @@
                 'flexslider': ['jquery'],
                 'jssorslider': ['jquery']
             }
-            //, urlArgs: "bust=" + (new Date()).getTime()
+            , urlArgs: "bust=" + (new Date()).getTime()
         });
 
         requirejs.onError = function (err) {
@@ -76,82 +76,68 @@
 
             throw err;
         };
-    </script>
 
-</head>
-<body>
-    <form id="form1" runat="server">
-        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" ClientIDMode="Static">
-        </asp:ContentPlaceHolder>
-
-        <footer class="footer">
-            <nav>
-                <ul>
-                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />
-                        首页</a></li>
-                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="spProdAmountHints"></span><br />
-                        购物车</a></li>
-                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><br />
-                        我的订单</a></li>
-                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><span id="spWxCardMenu"><img src="images/wxcard1.png" /></span><br />
-                        个人中心</a></li>
-                </ul>
-            </nav>
-        </footer>
-    </form>
-
-    <script>
         var wxShareInfo;
 
         requirejs(['jquery', 'webConfig'], function ($) {
             $(function () {
+                try {
+                    //检测是否在微信中打开网页
+                    if (!webConfig.browserVersion.wechat) {
+                        //如果打开的不是阿里支付宝网页，则报错；否则不报错，直接返回
+                        if (location.href.toLowerCase().indexOf('alipay') == -1) {
+                            throw new Error("请在微信中打开链接");
+                        } else {
+                            return false;
+                        }
+                    }
 
-                if (!!webConfigServer) {
-                    $.extend(webConfig, webConfigServer);
-                }
-                webConfig.init();
+                    //加载服务器端的系统配置参数，并初始化
+                    if (!!webConfigServer) {
+                        $.extend(webConfig, webConfigServer);
+                    }
+                    webConfig.init();
 
-                //根据当前页面高亮菜单项
-                if (location.href.toLowerCase().indexOf("index") != -1) {
-                    $("#navHomeBtn").addClass("active");
-                }
-                else {
-                    if (location.href.toLowerCase().indexOf("mycart") != -1) {
-                        $("#navCartListBtn").addClass("active");
+                    //根据当前页面高亮菜单项
+                    if (location.href.toLowerCase().indexOf("index") != -1) {
+                        $("#navHomeBtn").addClass("active");
                     }
                     else {
-                        if (location.href.toLowerCase().indexOf("myorders") != -1) {
-                            $("#navOrderListBtn").addClass("active");
+                        if (location.href.toLowerCase().indexOf("mycart") != -1) {
+                            $("#navCartListBtn").addClass("active");
                         }
                         else {
-                            if (location.href.toLowerCase().indexOf("usercenter") != -1) {
-                                $("#navInfoCenterBtn").addClass("active");
+                            if (location.href.toLowerCase().indexOf("myorders") != -1) {
+                                $("#navOrderListBtn").addClass("active");
+                            }
+                            else {
+                                if (location.href.toLowerCase().indexOf("usercenter") != -1) {
+                                    $("#navInfoCenterBtn").addClass("active");
+                                }
                             }
                         }
                     }
-                }
 
-                //显示用户的微信卡券
-                if (typeof wxCard != undefined && wxCard.length > 0) {
-                    $("#spWxCardMenu").addClass("wxcard-hint").show();
-                }
-                else {
-                    $("#spWxCardMenu").hide();
-                }
+                    //显示购物车里的商品数量，并注册购物车事件处理函数
+                    requirejs(['cart'], function () {
+                        refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
 
-                requirejs(['cart'], function () {
-                    refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
-
-                    //注册购物车商品变动前事件处理函数
-                    $($.cart).on({
-                        "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemClearing": shakeCart,
-                        "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemCleared": refreshCartProdQty
+                        //注册购物车商品变动前后的事件处理函数
+                        $($.cart).on({
+                            "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemClearing": shakeCart,
+                            "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemCleared": refreshCartProdQty
+                        });
                     });
-                });
 
-                requirejs(['jweixin110'], function (wx) {
+                    //显示用户的微信卡券
+                    if (typeof wxCard != undefined && wxCard.length > 0) {
+                        $("#spWxCardMenu").addClass("wxcard-hint").show();
+                    }
+                    else {
+                        $("#spWxCardMenu").hide();
+                    }
 
-                    try {
+                    requirejs(['jweixin110'], function (wx) {
                         if (typeof wxJsApiParam == "undefined") {
                             throw new Error("微信JSSDK参数错误");
                         }
@@ -208,14 +194,8 @@
                                 desc: webConfig.siteDesc, // 分享描述
                                 link: location.origin + "/index.aspx?AgentOpenID=" + openID, // 分享链接
                                 imgUrl: location.origin + "/images/" + webConfig.defaultImg, // 分享图标
-                                success: function () {
-                                    // 用户确认分享后执行的回调函数
-                                    alert("分享给朋友消费有100积分(5元)奖励哦！");
-                                },
-                                cancel: function () {
-                                    // 用户取消分享后执行的回调函数
-                                    alert("分享给朋友消费有100积分(5元)奖励哦！");
-                                }
+                                success: shareTipForMemberPoints,
+                                cancel: shareTipForMemberPoints
                             };
 
                             //分享到朋友圈
@@ -233,12 +213,12 @@
                             //分享到QQ空间
                             wx.onMenuShareQZone(wxShareInfo);
                         });
-                    }
-                    catch (error) {
-                        alert(error.message);
-                        return false;
-                    }
-                });
+                    });
+                }
+                catch (error) {
+                    alert(error.message);
+                    return false;
+                }
             });
 
             //购物车抖动
@@ -256,9 +236,35 @@
                     $("#spProdAmountHints").hide();
                 }
             }
+
+            function shareTipForMemberPoints() {
+                alert("分享给朋友消费有100积分(5元)奖励哦！");
+            }
         });
 
     </script>
+
+</head>
+<body>
+    <form id="form1" runat="server">
+        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" ClientIDMode="Static">
+        </asp:ContentPlaceHolder>
+
+        <footer class="footer">
+            <nav>
+                <ul>
+                    <li><a id="navHomeBtn" class="nav-controller" href="Index.aspx"><%--<i class="fa fa-home"></i>--%><img src="images/HomePage.png" /><br />
+                        首页</a></li>
+                    <li><a id="navCartListBtn" class="nav-controller" href="MyCart.aspx"><%--<i class="fa fa-shopping-cart"></i>--%><img src="images/cart.png" /><span id="spProdAmountHints"></span><br />
+                        购物车</a></li>
+                    <li><a id="navOrderListBtn" class="nav-controller" href="MyOrders.aspx"><%--<i class="fa fa-list"></i>--%><img src="images/MyOrders.png" /><span id="spGroupPurchaseEventHints" style="display: none">团</span><br />
+                        我的订单</a></li>
+                    <li><a id="navInfoCenterBtn" class="nav-controller" href="UserCenter.aspx"><%--<i class="fa fa-user"></i>--%><img src="images/UserCenter.png" /><span id="spWxCardMenu" style="display: none"><img src="images/wxcard1.png" /></span><br />
+                        个人中心</a></li>
+                </ul>
+            </nav>
+        </footer>
+    </form>
 
     <!-- #include file="cs.aspx" -->
     <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />

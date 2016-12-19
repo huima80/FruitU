@@ -48,10 +48,10 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                     JsonData jOrderInfo = JsonMapper.ToObject(strOrderInfo);
                     if (jOrderInfo == null || !jOrderInfo.Keys.Contains("name") || !jOrderInfo.Keys.Contains("phone") || !jOrderInfo.Keys.Contains("address")
                             || !jOrderInfo.Keys.Contains("memo") || !jOrderInfo.Keys.Contains("paymentTerm") || !jOrderInfo.Keys.Contains("usedMemberPoints")
-                            || !jOrderInfo.Keys.Contains("wxCard")
+                            || !jOrderInfo.Keys.Contains("wxCard") || !jOrderInfo.Keys.Contains("freightTerm")
                             || !jOrderInfo.Keys.Contains("prodItems") || !jOrderInfo["prodItems"].IsArray || jOrderInfo["prodItems"].Count < 1)
                     {
-                        throw new Exception("订单姓名、电话、地址、支付方式、会员积分、微信优惠券、备注、商品项信息不完整。");
+                        throw new Exception("订单姓名、电话、地址、支付方式、会员积分、微信优惠券、运费、备注、商品项信息不完整。");
                     }
 
                     //--------------生成订单业务对象START-----------------
@@ -106,7 +106,9 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                     //订单商品项信息
                     OrderDetail od;
                     int prodID, qty;
-                    List<string> outOfStockProdItems = new List<string>();
+                    //客户端提交的商品价格，用于校验
+                    decimal clientPrice;
+                    List<string> notFoundProdItems = new List<string>(), outOfStockProdItems = new List<string>();
 
                     for (int i = 0; i < jOrderInfo["prodItems"].Count; i++)
                     {
@@ -119,8 +121,13 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                                     qty = 1;
                                 }
 
+                                if (!decimal.TryParse(jOrderInfo["prodItems"][i]["price"].ToString(), out clientPrice))
+                                {
+                                    throw new Exception(string.Format("商品“{0}”的价格错误，请在购物车里删除后重新下单", jOrderInfo["prodItems"][i]["prodName"].ToString()));
+                                }
+
                                 //根据订单中每个商品ID查询其详细信息，并放入OrderDetail对象
-                                Fruit fruit = Fruit.FindFruitByID(prodID);
+                                Fruit fruit = Fruit.FindFruitByID(prodID, false);
 
                                 if (fruit != null)
                                 {
@@ -129,20 +136,134 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                                     {
                                         od = new OrderDetail(fruit);
 
+                                        //只有商品ID和购买数量使用客户端提交的值，其他都使用数据库原始值，避免客户端非法修改
                                         od.ProductID = prodID;
                                         od.PurchaseQty = qty;
                                         od.OrderProductName = fruit.FruitName;
                                         od.PurchasePrice = fruit.FruitPrice;
                                         od.PurchaseUnit = fruit.FruitUnit;
 
+                                        //获取订单项对应的团购信息，没有团购活动ID，即新开团
+                                        if (jOrderInfo["prodItems"][i].Keys.Contains("groupPurchase") && jOrderInfo["prodItems"][i]["groupPurchase"] != null
+                                                && jOrderInfo["prodItems"][i].Keys.Contains("groupPurchaseEventID") && jOrderInfo["prodItems"][i]["groupPurchaseEventID"] == null)
+                                        {
+                                            //用户参加的团购ID
+                                            int groupPurchaseID;
+                                            if (int.TryParse(jOrderInfo["prodItems"][i]["groupPurchase"]["id"].ToString(), out groupPurchaseID))
+                                            {
+                                                //构造团购活动对象
+                                                GroupPurchaseEvent groupPurchaseEvent = new GroupPurchaseEvent();
+                                                groupPurchaseEvent.ID = 0;
+                                                groupPurchaseEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(groupPurchaseID, false, false);
+                                                groupPurchaseEvent.Organizer = wxUser;
+                                                groupPurchaseEvent.LaunchDate = DateTime.Now;
+
+                                                //构造团购活动成员对象并加入团购活动对象
+                                                GroupPurchaseEventMember groupMember = new GroupPurchaseEventMember();
+                                                groupMember.ID = 0;
+                                                groupMember.GroupMember = wxUser;
+                                                groupMember.GroupPurchaseEvent = groupPurchaseEvent;
+                                                groupMember.JoinDate = groupPurchaseEvent.LaunchDate;
+
+                                                groupPurchaseEvent.GroupPurchaseEventMembers.Add(groupMember);
+
+                                                //把新构造的团购活动对象加入到订单项对象中
+                                                od.GroupPurchaseEvent = groupPurchaseEvent;
+
+                                                //使用团购价格作为订单商品价格
+                                                od.PurchasePrice = groupPurchaseEvent.GroupPurchase.GroupPrice;
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("订单项的团购ID错误");
+                                            }
+                                        }
+
+                                        //用户指定了团购活动ID，即参加团购活动
+                                        if (jOrderInfo["prodItems"][i].Keys.Contains("groupPurchase") && jOrderInfo["prodItems"][i]["groupPurchase"] != null
+                                                && jOrderInfo["prodItems"][i].Keys.Contains("groupPurchaseEventID") && jOrderInfo["prodItems"][i]["groupPurchaseEventID"] != null)
+                                        {
+                                            //用户参加的团购活动ID
+                                            int groupPurchaseEventID;
+                                            if (int.TryParse(jOrderInfo["prodItems"][i]["groupPurchaseEventID"].ToString(), out groupPurchaseEventID))
+                                            {
+                                                //查询ID指定的团购活动
+                                                GroupPurchaseEvent groupPurchaseEvent;
+                                                groupPurchaseEvent = GroupPurchaseEvent.FindGroupPurchaseEventByID(groupPurchaseEventID);
+                                                if (groupPurchaseEvent != null)
+                                                {
+                                                    //判断此用户是否已参加过此团购活动
+                                                    if (groupPurchaseEvent.GroupPurchaseEventMembers != null && groupPurchaseEvent.GroupPurchaseEventMembers.Exists(member => member.GroupMember.OpenID == wxUser.OpenID))
+                                                    {
+                                                        //如果此用户已经参加过此团购，则更新此用户最新的参团时间
+                                                        GroupPurchaseEventMember updatedMember;
+                                                        updatedMember = groupPurchaseEvent.GroupPurchaseEventMembers.Find(member => member.GroupMember.OpenID == wxUser.OpenID);
+                                                        updatedMember.JoinDate = DateTime.Now;
+
+                                                        //清空已有的团购成员列表，只保存更新的参团成员，以便只更新此用户的参团时间
+                                                        groupPurchaseEvent.GroupPurchaseEventMembers.Clear();
+                                                        groupPurchaseEvent.GroupPurchaseEventMembers.Add(updatedMember);
+                                                    }
+                                                    else
+                                                    {
+                                                        //如果此用户没有参加过此团购活动，则构造团购活动成员对象并加入指定的团购活动对象
+                                                        GroupPurchaseEventMember newMember = new GroupPurchaseEventMember();
+                                                        newMember.ID = 0;
+                                                        newMember.GroupMember = wxUser;
+                                                        newMember.GroupPurchaseEvent = groupPurchaseEvent;
+                                                        newMember.JoinDate = DateTime.Now;
+
+                                                        //清空已有的团购成员列表，本次只新增参团成员
+                                                        groupPurchaseEvent.GroupPurchaseEventMembers.Clear();
+                                                        groupPurchaseEvent.GroupPurchaseEventMembers.Add(newMember);
+                                                    }
+
+                                                    //把新构造的团购活动对象加入到订单项对象中
+                                                    od.GroupPurchaseEvent = groupPurchaseEvent;
+
+                                                    //使用团购价格作为订单商品价格
+                                                    od.PurchasePrice = groupPurchaseEvent.GroupPurchase.GroupPrice;
+                                                }
+                                                else
+                                                {
+                                                    throw new Exception("找不到ID对应的团购活动");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("订单项的团购活动ID错误");
+                                            }
+                                        }
+
+                                        //校验客户端提交的商品价格和服务端的商品价格是否一致
+                                        if (od.PurchasePrice != clientPrice)
+                                        {
+                                            throw new Exception(string.Format("此商品“{0}”的价格有变动，请在购物车里删除此商品后重新选择", od.FruitName));
+                                        }
+
                                         newPO.OrderDetailList.Add(od);
                                     }
                                     else
                                     {
+                                        //此商品库存量不足
                                         outOfStockProdItems.Add(fruit.FruitName);
                                     }
                                 }
+                                else
+                                {
+                                    //此商品不存在
+                                    notFoundProdItems.Add(prodID.ToString());
+                                }
                             }
+                            else
+                            {
+                                //此商品不存在
+                                notFoundProdItems.Add(jOrderInfo["prodItems"][i]["prodID"].ToString());
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("购物车里缺少商品项和数量");
                         }
                     }
 
@@ -150,6 +271,12 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                     if (outOfStockProdItems.Count > 0)
                     {
                         throw new Exception(string.Format("抱歉，商品“{0}”库存量不足，请调整购买数量后重新下单。", string.Join<string>(",", outOfStockProdItems)));
+                    }
+
+                    //校验订单中的商品是否存在
+                    if (notFoundProdItems.Count > 0)
+                    {
+                        throw new Exception(string.Format("抱歉，商品“{0}”不存在，请在购物车里删除后重新下单。", string.Join<string>(",", outOfStockProdItems)));
                     }
 
                     //根据订单商品项金额计算运费
@@ -305,8 +432,9 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                         case PaymentTerm.CASH:
                             ProductOrder.SubmitOrder(newPO);
                             break;
+                        default:
+                            throw new Exception("未知的支付方式PaymentTerm");
                     }
-
                 }
                 else
                 {

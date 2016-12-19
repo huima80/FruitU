@@ -51,11 +51,17 @@
 
         //展示购物车里的商品
         function displayCart() {
-            var htmlItem = "";
+            var htmlItem = "", groupPurchaseLabel;
 
             //遍历购物车，显示所有的商品项
             $.cart.getProdItems().each(function () {
-                htmlItem += '<div class="row prod-item" id="ProdItem' + this["prodID"] + '"><div class="col-xs-5 prod-item-left"><i class="fa fa-close fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
+                if (!!this["groupPurchase"]) {
+                    //如果此商品项参加了团购，则显示团购标志
+                    groupPurchaseLabel = "<span class=\"label label-warning group-purchase-label\"><i class=\"fa fa-group\"></i> 团购</span>";
+                } else {
+                    groupPurchaseLabel = "";
+                }
+                htmlItem += '<div class="row prod-item" id="ProdItem' + this["prodID"] + '">' + groupPurchaseLabel + '<div class="col-xs-5 prod-item-left"><i class="fa fa-close fa-lg remove-prod-item" onclick="removeProdItem(' + this["prodID"] + ');"></i><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                     + '<div class="col-xs-7 prod-item-right"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div><div><span class="prod-price">￥' + this["price"] + '</span><span class="inventory-qty">库存数：' + (this["inventoryQty"] == -1 ? "不限量" : this["inventoryQty"]) + '</span></div>'
                     + '<div><span class="input-group"><span id="btnDec" class="input-group-addon" onclick="decQty(' + this["prodID"] + ');">-</span><input class="form-control" type="text" id="txtQty' + this["prodID"] + '" value="' + this["qty"] + '" onchange="checkIsNaN(' + this["prodID"] + ');"/><span id="btnInc" class="input-group-addon" onclick="incQty(' + this["prodID"] + ');">+</span></span></div></div></div>';
             });

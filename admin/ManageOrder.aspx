@@ -64,8 +64,12 @@
                                     <asp:TextBox ID="txtOrderID" runat="server" placeholder="订单ID" CssClass="form-control" Width="150"></asp:TextBox>
                                 </div>
                                 <div class="form-group">
+                                    <label for="txtGroupEventID" class="sr-only">团购活动ID</label>
+                                    <asp:TextBox ID="txtGroupEventID" runat="server" placeholder="团购活动ID" CssClass="form-control" Width="150"></asp:TextBox>
+                                </div>
+                                <div class="form-group">
                                     <label for="txtOrderDetail" class="sr-only">订单商品</label>
-                                    <asp:TextBox ID="txtOrderDetail" runat="server" placeholder="商品详情" CssClass="form-control" Width="100"></asp:TextBox>
+                                    <asp:TextBox ID="txtOrderDetail" runat="server" placeholder="商品详情" CssClass="form-control" Width="200"></asp:TextBox>
                                 </div>
                                 <div class="form-group">
                                     <label for="txtTransactionID" class="sr-only">微信支付交易号</label>
@@ -117,19 +121,20 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="收货人信息" SortExpression="DeliverName">
                             <ItemTemplate>
-                                <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-pencil-square-o\"></i>&nbsp;"+Server.HtmlEncode(Eval("OrderMemo").ToString())+"</p>" %>'></asp:Label>
+                                <asp:Label ID="Label3" runat="server" Text='<%# "<p title=\"收货人\"><i class=\"fa fa-user\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverName").ToString())+"("+Server.HtmlEncode(Eval("DeliverPhone").ToString())+")</p><p title=\"收货地址\"><i class=\"fa fa-map-marker\"></i>&nbsp;"+Server.HtmlEncode(Eval("DeliverAddress").ToString())+"</p><p title=\"订单备注\"><i class=\"fa fa-info-circle\"></i>&nbsp;" + Server.HtmlEncode(Eval("OrderMemo").ToString()) + "</p>" %>'></asp:Label>
                             </ItemTemplate>
                             <ItemStyle CssClass="col-lg-3"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField ConvertEmptyStringToNull="False" HeaderText="订单商品详情" SortExpression="OrderDetailList">
                             <ItemTemplate>
-                                <asp:DataList ID="dlOrderDetail" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow" ShowFooter="False" DataSource='<%# Eval("OrderDetailList") %>'>
+                                <asp:DataList ID="dlOrderDetail" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow" ShowFooter="False" DataSource='<%# Eval("OrderDetailList") %>' OnItemDataBound="dlOrderDetail_ItemDataBound">
                                     <ItemTemplate>
                                         <li>
                                             <asp:Label ID="OrderProductNameLabel" runat="server" Text='<%# Eval("OrderProductName") %>' />
                                             <asp:Label ID="PurchasePriceLabel" runat="server" Text='<%# Eval("PurchasePrice", "{0:C}") %>' CssClass="purchase-price" />
                                             元/<asp:Label ID="PurchaseUnitLabel" runat="server" Text='<%# Eval("PurchaseUnit") %>' />
                                             <asp:Label ID="PurchaseQtyLabel" runat="server" Text='<%# "x "+Eval("PurchaseQty") %>' CssClass="purchase-qty" />
+                                            <asp:HyperLink ID="hlGroupPurchaseEventStatus" runat="server" CssClass="label label-warning"></asp:HyperLink>
                                         </li>
                                     </ItemTemplate>
                                 </asp:DataList>

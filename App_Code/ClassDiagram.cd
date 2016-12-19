@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Category" Collapsed="true">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAQAgAAAAgAAAAAAACAAAAAAAABAgAAACAg=</HashCode>
+      <FileName>App_Code\Category.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Config" Collapsed="true">
+    <Position X="7" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CggAAXRABRGIQBJAAAAIAAIiIEgQQAIRAUiIQAARJAg=</HashCode>
+      <FileName>App_Code\Config.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Fruit" Collapsed="true">
+    <Position X="0.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAMQCiSIEAiAIGAAgAAEAABIEAJASAAAAQAAAQCgA=</HashCode>
+      <FileName>App_Code\Fruit.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FruitImg" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="8.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAAAQAAAQAwEAAIAAABAAAAAAIAAAAAA=</HashCode>
+      <FileName>App_Code\Fruit.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="HttpService" Collapsed="true">
+    <Position X="10.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAACAAAgAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\HttpService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Log" Collapsed="true">
+    <Position X="5.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQAAAYAAAEACAAAAAAABAAAAAAAAAEEAAAA=</HashCode>
+      <FileName>App_Code\Log.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OrderDetail" Collapsed="true">
+    <Position X="0.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAACAAAAAAAAgAAIAABAAAAAAAAACAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\OrderDetail.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ProductOrder" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="7" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>LBRASTBwC0Ar5BQOkFEMA4kwIAAgACCCEwIQIggIAIA=</HashCode>
+      <FileName>App_Code\ProductOrder.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="QQUser" Collapsed="true">
+    <Position X="0.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAIASAAAAAAAAWAAAAAAEAAIAQAACAAAAEAAAAA=</HashCode>
+      <FileName>App_Code\QQUser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="User" Collapsed="true">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAhAQIAAAAEAAEAAIAAAEAAAAAQggAAQA=</HashCode>
+      <FileName>App_Code\User.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="UtilityHelper" Collapsed="true">
+    <Position X="8.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQACAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAEARACAAAA=</HashCode>
+      <FileName>App_Code\UtilityHelper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WeChatPayData" Collapsed="true">
+    <Position X="10.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAgAAAIAAACQBAACAACAEICAAAAABAIA=</HashCode>
+      <FileName>App_Code\WeChatPayData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WeChatUser" Collapsed="true">
+    <Position X="2.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AECAAgAAAAGAAiQACAA1AAAAACBACAACAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\WeChatUser.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="WeChatUserDAO" Collapsed="true">
+    <Position X="5.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAEAKAAAAAAAMAAUAAwAAAAABAAACAAAA=</HashCode>
+      <FileName>App_Code\WeChatUserDAO.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="wsRefreshTradeState" Collapsed="true">
+    <Position X="7" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\wsRefreshTradeState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WxCard" Collapsed="true">
+    <Position X="8.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QogEQAA1RgghgGIBAAAgBECASIgqAAZgBhAMpQiggQg=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WxJSAPI" Collapsed="true">
+    <Position X="10.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAgAABAEAAAEAAAAAQAAABAAgBQAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>App_Code\WxJSAPI.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WxPayAPI" Collapsed="true">
+    <Position X="5.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAAAAAAAABAAAAAAAAAAACQAAAAAAAAAAAAACAA=</HashCode>
+      <FileName>App_Code\WxPayAPI.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="WxTmplMsg" Collapsed="true">
+    <Position X="7" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAABAAACAAEACAAAAAIAgQAEAAigAAAAQAAiA=</HashCode>
+      <FileName>App_Code\WxTmplMsg.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GroupPurchase">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\GroupPurchase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="OrderState" Collapsed="true">
+    <Position X="8.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAACAgAAAAAAAAACAAAAIAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\ProductOrder.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PaymentTerm" Collapsed="true">
+    <Position X="10.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAIA=</HashCode>
+      <FileName>App_Code\ProductOrder.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="TradeState" Collapsed="true">
+    <Position X="7" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IIAAAACEAgAAAAwCAAAAACAAgAAAIAAAAAAAAQACAAA=</HashCode>
+      <FileName>App_Code\ProductOrder.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="RefundStatus" Collapsed="true">
+    <Position X="5.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\ProductOrder.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="WeChatAuthScope" Collapsed="true">
+    <Position X="10.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>App_Code\WeChatUser.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="WxCardType" Collapsed="true">
+    <Position X="5.25" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQIAgAAQAAAAQA0AAAAEAAAAQgAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="WxCodeType" Collapsed="true">
+    <Position X="7" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAQAAAAAgAEAAAQAAAAEAAAAAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="CardStatus" Collapsed="true">
+    <Position X="7" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAACAAAQAABAAAAAAAAAAAAACAAAAAAA=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="UserCardStatus" Collapsed="true">
+    <Position X="8.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAACAAERAAAACAAQAAAAAAAAAAAAAAAAAAQAA=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AvailableDateType" Collapsed="true">
+    <Position X="5.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAgAAAAAAAAA=</HashCode>
+      <FileName>App_Code\WxCard.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="微软雅黑" Size="9" />
+</ClassDiagram>

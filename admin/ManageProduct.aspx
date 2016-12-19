@@ -3,17 +3,6 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="../css/ManageProduct.css" rel="stylesheet" />
     <link href="../Scripts/gridstack/gridstack-0.2.4.css" rel="stylesheet" />
-    <style>
-        .fa-check {
-            color: red;
-            font-size: 20px;
-        }
-
-        .fa-close {
-            color: grey;
-            font-size: 20px;
-        }
-    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container-fluid">
@@ -67,7 +56,7 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <asp:GridView ID="gvFruitList" runat="server" AutoGenerateColumns="False" DataSourceID="odsFruitList" DataKeyNames="ID" AllowPaging="True" OnSelectedIndexChanged="gvFruitList_SelectedIndexChanged" OnRowDataBound="gvFruitList_RowDataBound" OnRowDeleted="gvFruitList_RowDeleted" OnRowDeleting="gvFruitList_RowDeleting" CssClass="table table-striped table-hover table-responsive" AllowCustomPaging="True" PagerStyle-CssClass="pager">
+                <asp:GridView ID="gvFruitList" runat="server" AutoGenerateColumns="False" DataSourceID="odsFruitList" DataKeyNames="ID" AllowPaging="True" OnSelectedIndexChanged="gvFruitList_SelectedIndexChanged" OnRowDataBound="gvFruitList_RowDataBound" OnRowDeleted="gvFruitList_RowDeleted" OnRowDeleting="gvFruitList_RowDeleting" CssClass="table table-striped table-hover table-responsive" AllowCustomPaging="True" PagerStyle-CssClass="pager" OnRowCommand="gvFruitList_RowCommand">
                     <Columns>
                         <asp:CommandField ShowDeleteButton="True" />
                         <asp:TemplateField HeaderText="商品名称" SortExpression="FruitName">
@@ -75,7 +64,9 @@
                                 <asp:Label ID="Label1" runat="server" Text='<%# "【"+ Eval("Category.CategoryName")+"】"+Eval("FruitName") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ItemStyle-CssClass="col-lg-4" />
+                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ItemStyle-CssClass="col-lg-4" >
+<ItemStyle CssClass="col-lg-4"></ItemStyle>
+                        </asp:BoundField>
                         <asp:TemplateField HeaderText="商品价格" SortExpression="FruitPrice">
                             <ItemTemplate>
                                 <asp:Label ID="Label2" runat="server" Text='<%# Eval("FruitPrice", "{0:c2}")+"元/"+Eval("FruitUnit") %>'></asp:Label>
@@ -97,6 +88,12 @@
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:BoundField DataField="Priority" HeaderText="优先级" SortExpression="Priority" />
+                        <asp:TemplateField ShowHeader="False">
+                            <ItemTemplate>
+                                <asp:Button ID="btnLaunchGroupPurchase" runat="server" CausesValidation="false" CommandName="LaunchGroupPurchase" Text="创建团购" CommandArgument='<%# Eval("ID") %>' />
+                            </ItemTemplate>
+                            <ControlStyle CssClass="btn btn-default" />
+                        </asp:TemplateField>
                         <asp:CommandField ButtonType="Button" ShowSelectButton="True">
                             <ControlStyle CssClass="btn btn-default" />
                         </asp:CommandField>
@@ -403,14 +400,14 @@
         //增减图片上传框
         function addImg(whichTemplate) {
             fuNum++;
-            $("#ulFileUpload" + whichTemplate).append("<li id='li" + fuNum + whichTemplate + "'><div class='form-group'><input type='file' class='form-control' name='dvFruit$fuImg" + fuNum + "' id='fuImg" + fuNum + "'/></div> <div class='form-group'><input type='text' class='form-control' name='dvFruit$txtImgDesc" + whichTemplate + "' id='txtImgDesc" + fuNum + whichTemplate + "' placeholder='图片说明...'/></div></li>");
+            $("#ulFileUpload" + whichTemplate).append("<li id='li" + whichTemplate + fuNum + "'><div class='form-group'><input type='file' class='form-control' name='dvFruit$fuImg" + fuNum + "' id='fuImg" + fuNum + "'/></div> <div class='form-group'><input type='text' class='form-control' name='dvFruit$txtImgDesc" + whichTemplate + fuNum + "' id='txtImgDesc" + whichTemplate + fuNum + "' placeholder='图片说明...'/></div></li>");
             if (fuNum > 1) {
                 $("#btnDelImg" + whichTemplate).removeAttr("disabled");
             }
         }
 
         function removeImg(whichTemplate) {
-            $("#li" + fuNum + whichTemplate).remove();
+            $("#li" + whichTemplate + fuNum).remove();
             fuNum--;
             if (fuNum == 1) {
                 $("#btnDelImg" + whichTemplate).attr("disabled", "disabled");

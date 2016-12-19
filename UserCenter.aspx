@@ -20,22 +20,28 @@
         </div>
         <div class="row text-center">
             <div id="divWxCard" class="col-xs-12">
-                <div class="info-block myorders-block">微信卡券<span id="spWxCardCount"></span></div>
+                <div class="btn btn-block btn-info">
+                    <img src="images/wxcard1.png" class="wx-card" />&nbsp;&nbsp;微信卡券<span id="spWxCardCount"></span></div>
             </div>
         </div>
         <div class="row text-center">
             <div id="divWxAddress" class="col-xs-12" onclick="selectDeliverAddress();">
-                <div class="info-block deliver-addr-block">收货地址</div>
+                <div class="btn btn-block btn-primary"><i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货地址</div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col-xs-12" onclick="openModal('GroupPurchase');">
+                <div class="btn btn-block btn-warning"><i class="fa fa-group"></i>&nbsp;&nbsp;团购规则</div>
             </div>
         </div>
         <div class="row text-center">
             <div class="col-xs-12" onclick="openModal('MemberPoints');">
-                <div class="info-block memberpoints-block">积分规则</div>
+                <div class="btn btn-block btn-danger"><i class="fa fa-line-chart"></i>&nbsp;&nbsp;积分规则</div>
             </div>
         </div>
         <div class="row">
             <div class="col-xs-12" onclick="openModal('QRCode');">
-                <div class="info-block wx-qrcode-block">微信客服</div>
+                <div class="btn btn-block btn-wx-qrcode"><i class="fa fa-wechat"></i>&nbsp;&nbsp;微信客服</div>
             </div>
         </div>
         <%--        <div class="row">
@@ -59,13 +65,22 @@
                 <img id="imgQRCode" src="images/FruitUQRCode.jpg" />
                 <h5 class="text-danger">长按二维码关注我们，接收订单即时消息</h5>
             </div>
-            <div id="MemberPoints" class="text-left">
-                <h4 class="text-center">Fruit U 积分规则</h4>
+            <div id="MemberPoints" class="text-left member-points-rule">
+                <h4 class="text-center">积分规则</h4>
                 <ul>
                     <li>您在Fruit U消费成功后，消费金额将自动转化为积分，每消费1元可累计1积分，积分永久有效。</li>
                     <li>积分可在下次消费时直接抵扣现金，<asp:Label CssClass="member-points-exchage-rate" ID="lblMemberPointsExchageRate" runat="server" Text=""></asp:Label>积分抵扣1元，单次消费最多可抵扣订单总金额的50%。</li>
-                    <li>您可以分享页面给好友、群，或者发布在朋友圈，好友点击消费后您可获得100积分（5元）奖励。</li>
+                    <li>您可以分享页面给朋友、微信群，或者发布在朋友圈，好友点击消费后您可获得100积分（5元）奖励。</li>
                     <li>您的会员积分可在个人中心查看。</li>
+                </ul>
+            </div>
+            <div id="GroupPurchase" class="text-left group-purchase-rule">
+                <h4 class="text-center">团购规则</h4>
+                <ul>
+                    <li>您可以在有团购标签的商品中，选择发起团购，享受团购价；或者以零售价单独购买。</li>
+                    <li>团购商品订单支付成功后，您可以在“我的订单”中点击“分享团购”，分享给朋友、微信群、朋友圈，邀请拼团。</li>
+                    <li>当您的团购达到规定人数后，我们将发货给所有参团人员，请注意Fruit U公众号消息。</li>
+                    <li>如果您的团购在活动期限内没有达到规定人数，我们将退款给所有参团人员，请注意Fruit U公众号消息。</li>
                 </ul>
             </div>
         </div>
@@ -115,10 +130,17 @@
                 case 'MemberPoints':
                     $("#MemberPoints").show();
                     $("#QRCode").hide();
+                    $("#GroupPurchase").hide();
                     break;
                 case 'QRCode':
                     $("#MemberPoints").hide();
                     $("#QRCode").show();
+                    $("#GroupPurchase").hide();
+                    break;
+                case 'GroupPurchase':
+                    $("#MemberPoints").hide();
+                    $("#QRCode").hide();
+                    $("#GroupPurchase").show();
                     break;
             }
             $("#divModal").addClass("md-show");

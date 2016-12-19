@@ -21,12 +21,18 @@
                 <img src="images/ShareIncentive.jpg" />
             </div>
         </div>
-        <div class="row">
-            <div class="col-xs-12">
+<%--        <div class="row">
+            <div class="col-xs-12" onclick="openModal(119);">
                 <img src="images/FreshJuiceBanner.gif" />
             </div>
+        </div>--%>
+         <div class="row">
+            <div class="col-xs-12">
+                <img src="images/FruitMilk.gif" />
+            </div>
         </div>
-        <div class="row">
+        <div runat="server" id="divFruitMilkList" class="row"></div>
+       <div class="row">
             <div class="col-xs-12">
                 <img src="images/FreshJuice.gif" />
             </div>
@@ -77,8 +83,11 @@
                     <span id="btnAsc" class="input-group-addon">+</span>
                 </span>
                 <div class="add-to-cart-button">
-                    <button id="btnAddToCart" class="btn btn-danger" type="button"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
+                    <button id="btnAddToCart" class="btn btn-danger" type="button"></button>
                 </div>
+            </div>
+            <div id="divLaunchGroupEvent" class="launch-group-event">
+                <button id="btnLaunchGroupEvent" class="btn btn-block btn-warning" type="button"></button>
             </div>
             <div id="btnClose" class="btn-close"><i class="fa fa-close fa-2x"></i></div>
             <div id="btnShare" class="btn-share" onclick="alert('点击右上角分享给好友或朋友圈，好友消费后有100积分(5元)奖励哦！');">分享有好礼<i class="fa fa-share-alt fa-2x"></i></div>
@@ -112,6 +121,11 @@
     <script>
         //存放分页获取的所有数据
         //var juiceList = [];
+
+        //加入购物车的按钮图标
+        var addToCartLabel = "<i class='fa fa-cart-plus fa-lg fa-fw'></i>";
+        //发起团购活动的按钮图标
+        var launchGroupEventLabel = "<i class='fa fa-group fa-lg fa-fw'></i>";
 
         requirejs(['jquery'], function ($) {
             $(function () {
@@ -190,13 +204,16 @@
                     }
                 });
 
+                //点击遮罩层时关闭弹出层
                 $(".md-overlay").on("click", closeModal);
 
+                //点击关闭按钮时关闭弹出层
                 $("#btnClose").on("click", function () {
                     closeModal();
                     event.stopPropagation();
                 });
 
+                //图片加载完成后，隐藏加载提示，显示图片文件
                 $("#imgDetailImg").on("load", function () {
                     $("#faLoading").hide();
                     $("#imgDetailImg").show();
@@ -205,13 +222,14 @@
             });
         });
 
-        //根据传入的商品ID，在全局数组中查找对应商品项，并设置modal窗口中的图片src和数量框
+        //点击商品的弹出层
         function openModal(prodID) {
             var mainImg, detailImg, jLen;
 
             if (juiceList && Array.isArray(juiceList)) {
                 jLen = juiceList.length;
 
+                //在全局数组中查找对应商品项，设置商品图片、数量、价格、团购、按钮事件、微信分享事件
                 for (var i = 0; i < jLen; i++) {
                     //查找用户选择的商品ID
                     if (juiceList[i]["ID"] == prodID && juiceList[i]["FruitImgList"] && Array.isArray(juiceList[i]["FruitImgList"])) {
@@ -225,12 +243,14 @@
                             }
                         }
 
+                        //如果没有详图，则显示默认图片
                         if (!detailImg) {
                             detailImg = webConfig.defaultImg;
                         }
 
                         //清空现有图片再重新加载，避免和上次图片一样时，微信不会触发img.onload事件
                         $("#imgDetailImg").attr("src", "").attr("src", "images/" + detailImg).hide();
+                        //显示图片加载提示
                         $("#faLoading").show();
 
                         //商品库存量
@@ -245,6 +265,16 @@
 
                         //解除上次注册的按钮单击事件函数，注册新的事件函数，并传递当前选中的商品
                         $("#btnAddToCart").off("click").on("click", juiceList[i], addToCart);
+
+                        //如果此商品支持团购，则显示团购按钮、设置按钮文字、按钮单击事件函数
+                        if (!!juiceList[i]["ActiveGroupPurchase"]) {
+                            $("#btnAddToCart").html(addToCartLabel + "&nbsp;单独购买");
+                            $("#btnLaunchGroupEvent").html(launchGroupEventLabel + "&nbsp;团购价：" + juiceList[i]["ActiveGroupPurchase"]["GroupPrice"] + "元/" + juiceList[i]["FruitUnit"] + " " + juiceList[i]["ActiveGroupPurchase"]["RequiredNumber"] + "人团").off("click").on("click", juiceList[i], launchGroupEvent);
+                            $("#divLaunchGroupEvent").show();
+                        } else {
+                            $("#btnAddToCart").html(addToCartLabel + "&nbsp;加入购物车");
+                            $("#divLaunchGroupEvent").hide();
+                        }
 
                         //显示模式窗口
                         $("#divModal").addClass("md-show");
@@ -305,7 +335,7 @@
                 }
 
                 //购物车里添加商品
-                var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, prod.FruitPrice, parseInt($("input#txtQty").val()), prod.InventoryQty);
+                var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, prod.FruitPrice, parseInt($("input#txtQty").val()), prod.InventoryQty, null, null);
                 if ($.cart.insertProdItem(prodItem)) {
                     closeModal();
                 }
@@ -314,7 +344,44 @@
                 alert("商品数据异常");
                 console.warn("var juiceList=" + juiceList);
             }
+        }
 
+        //新发起团购活动
+        function launchGroupEvent(event) {
+            var mainImg;
+            prod = event.data;
+
+            if (prod) {
+                //查找商品主图
+                for (var i = 0; i < prod.FruitImgList.length; i++) {
+                    if (prod.FruitImgList[i]["MainImg"]) {
+                        mainImg = prod.FruitImgList[i]["ImgName"];
+                        break;
+                    }
+                }
+
+                if (!mainImg) {
+                    mainImg = webConfig.defaultImg;
+                }
+
+                //根据商品里的团购信息构造JS团购对象
+                if (!!prod.ActiveGroupPurchase) {
+                    var groupPurchase = new $.cart.GroupPurchase(prod.ActiveGroupPurchase.ID, prod.ActiveGroupPurchase.Name, prod.ActiveGroupPurchase.Description, prod.ActiveGroupPurchase.StartDate, prod.ActiveGroupPurchase.EndDate, prod.ActiveGroupPurchase.RequiredNumber, prod.ActiveGroupPurchase.GroupPrice);
+                    //根据商品信息构造JS商品对象，商品价格为团购价
+                    var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, groupPurchase.groupPrice, parseInt($("input#txtQty").val()), prod.InventoryQty, groupPurchase, null);
+                    //把商品对象插入到购物车里
+                    if ($.cart.insertProdItem(prodItem)) {
+                        closeModal();
+                    }
+                } else {
+                    alert("商品团购信息异常");
+                    console.warn("prod=" + prod.ActiveGroupPurchase);
+                }
+            }
+            else {
+                alert("商品数据异常");
+                console.warn("var juiceList=" + juiceList);
+            }
         }
 
     </script>

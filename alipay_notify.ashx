@@ -288,6 +288,9 @@ public class alipay_notify : IHttpHandler
                                         //注册订单的支付宝支付状态变动事件处理函数，核销微信卡券
                                         po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
 
+                                        //注册订单的支付宝支付状态变动事件处理函数，检测订单中的商品团购活动是否成功
+                                        po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(GroupPurchaseEvent.GroupPurchaseEventSuccessHandler);
+
                                         //更新订单的支付宝支付状态
                                         ProductOrder.UpdateTradeState(po);
 

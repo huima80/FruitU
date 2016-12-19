@@ -39,6 +39,7 @@ public class Fruit : IComparable<Fruit>
     /// 产品图片
     /// </summary>
     public List<FruitImg> FruitImgList { get; set; }
+
     /// <summary>
     /// 产品描述
     /// </summary>
@@ -64,10 +65,21 @@ public class Fruit : IComparable<Fruit>
     /// </summary>
     public int Priority { get; set; }
 
+    /// <summary>
+    /// 商品包含的团购列表
+    /// </summary>
+    public List<GroupPurchase> GroupPurchaseList { get; set; }
+
+    /// <summary>
+    /// 当前有效的团购
+    /// </summary>
+    public GroupPurchase ActiveGroupPurchase { get; set; }
+
     public Fruit()
     {
         this.Category = new Category();
         this.FruitImgList = new List<FruitImg>();
+        this.GroupPurchaseList = new List<GroupPurchase>();
     }
 
     public Fruit(int id, string fruitName, Category category, decimal fruitPrice, string fruitUnit, List<FruitImg> fruitImgList, string fruitDesc, int inventoryQty, bool onSale, bool isSticky, int priority)
@@ -123,6 +135,30 @@ public class Fruit : IComparable<Fruit>
         {
             (ar.AsyncState as EventHandler).EndInvoke(ar);
         }
+    }
+
+    /// <summary>
+    /// 根据类别ID查询所有的商品
+    /// </summary>
+    /// <param name="categoryID"></param>
+    /// <returns></returns>
+    public static List<Fruit> FindFruitByCategoryID(int categoryID)
+    {
+        List<Fruit> fruitList;
+        int topSellingIDWeekly, topSellingIDMonthly;
+
+        try
+        {
+            fruitList = FindFruitByCategoryID(categoryID.ToString(), out topSellingIDWeekly, out topSellingIDMonthly);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("查询指定水果", ex.ToString());
+            throw ex;
+        }
+
+        return fruitList;
+
     }
 
     /// <summary>
@@ -185,6 +221,10 @@ public class Fruit : IComparable<Fruit>
                                 product.FruitDesc = sdrFruit["ProductDesc"].ToString();
                                 product.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
                                 product.Priority = int.Parse(sdrFruit["Priority"].ToString());
+
+                                //fruit包含的团购信息，使用已有的数据库链接对象，但不加载团购活动和活动成员，避免前端页面加载数据过多
+                                product.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, product.ID, false, false);
+                                product.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, product.ID, false, false);
 
                                 //fruit所属的category信息
                                 product.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
@@ -407,6 +447,10 @@ public class Fruit : IComparable<Fruit>
                                 fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
                                 fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
 
+                                //fruit包含的团购信息，使用已有的数据库链接对象，但不加载团购活动和活动成员，避免前端页面加载数据过多
+                                fruit.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, fruit.ID, false, false);
+                                fruit.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, fruit.ID, false, false);
+
                                 //fruit所属的category信息
                                 fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
                                 fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
@@ -461,8 +505,23 @@ public class Fruit : IComparable<Fruit>
 
     }
 
-
+    /// <summary>
+    /// 根据ID查询商品，默认加载其团购对象
+    /// </summary>
+    /// <param name="fruitID">商品ID</param>
+    /// <returns></returns>
     public static Fruit FindFruitByID(int fruitID)
+    {
+        return FindFruitByID(fruitID, true);
+    }
+
+    /// <summary>
+    /// 根据ID查询商品
+    /// </summary>
+    /// <param name="fruitID">商品ID</param>
+    /// <param name="isLoadGroupPurchase">是否加载此商品的团购信息，如果是团购对象里的方法调用，查询团购所属的商品对象，则此参数必须为false，否则会循环调用</param>
+    /// <returns></returns>
+    public static Fruit FindFruitByID(int fruitID, bool isLoadGroupPurchase)
     {
 
         Fruit fruit = null;
@@ -473,60 +532,7 @@ public class Fruit : IComparable<Fruit>
             {
                 conn.Open();
 
-                try
-                {
-                    using (SqlCommand cmdFruit = conn.CreateCommand())
-                    {
-                        SqlParameter paramID = cmdFruit.CreateParameter();
-                        paramID.ParameterName = "@Id";
-                        paramID.SqlDbType = System.Data.SqlDbType.Int;
-                        paramID.SqlValue = fruitID;
-                        cmdFruit.Parameters.Add(paramID);
-
-                        cmdFruit.CommandText = "select Product.*,Category.ParentID,Category.CategoryName from Product left join Category on Product.CategoryID = Category.Id where Product.Id = @Id";
-
-                        using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
-                        {
-                            while (sdrFruit.Read())
-                            {
-                                fruit = new Fruit();
-
-                                fruit.ID = int.Parse(sdrFruit["Id"].ToString());
-                                fruit.FruitName = sdrFruit["ProductName"].ToString();
-                                fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
-                                fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
-                                fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
-                                fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
-                                fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
-                                fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
-                                fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
-
-                                //fruit所属的category信息
-                                fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
-                                fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
-                                fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
-
-                                //fruit包含的图片信息
-                                fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
-
-
-                            }
-                            sdrFruit.Close();
-                        }
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == System.Data.ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
+                fruit = FindFruitByID(conn, fruitID, isLoadGroupPurchase);
             }
         }
         catch (Exception ex)
@@ -540,75 +546,67 @@ public class Fruit : IComparable<Fruit>
     }
 
     /// <summary>
-    /// 根据类别ID查询所有的商品
+    /// 根据ID查询商品
     /// </summary>
-    /// <param name="categoryID"></param>
+    /// <param name="conn"></param>
+    /// <param name="fruitID">商品ID</param>
+    /// <param name="isLoadGroupPurchase">是否加载此商品的团购信息，如果是团购对象里的方法调用，查询团购所属的商品对象，则此参数必须为false，否则会循环调用</param>
     /// <returns></returns>
-    public static List<Fruit> FindFruitByCategoryID(int categoryID)
+    public static Fruit FindFruitByID(SqlConnection conn, int fruitID, bool isLoadGroupPurchase)
     {
-        List<Fruit> fruitList = new List<Fruit>();
-        Fruit fruit;
+
+        Fruit fruit = null;
 
         try
         {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            using (SqlCommand cmdFruit = conn.CreateCommand())
             {
-                conn.Open();
+                SqlParameter paramID = cmdFruit.CreateParameter();
+                paramID.ParameterName = "@Id";
+                paramID.SqlDbType = System.Data.SqlDbType.Int;
+                paramID.SqlValue = fruitID;
+                cmdFruit.Parameters.Add(paramID);
 
-                try
+                cmdFruit.CommandText = "select Product.*,Category.ParentID,Category.CategoryName from Product left join Category on Product.CategoryID = Category.Id where Product.Id = @Id";
+
+                using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
                 {
-                    using (SqlCommand cmdFruit = conn.CreateCommand())
+                    while (sdrFruit.Read())
                     {
-                        SqlParameter paramCategoryID = cmdFruit.CreateParameter();
-                        paramCategoryID.ParameterName = "@CategoryID";
-                        paramCategoryID.SqlDbType = System.Data.SqlDbType.Int;
-                        paramCategoryID.SqlValue = categoryID;
-                        cmdFruit.Parameters.Add(paramCategoryID);
+                        fruit = new Fruit();
 
-                        cmdFruit.CommandText = "select Product.*,Category.ParentID,Category.CategoryName from Product left join Category on Product.CategoryID = Category.Id where Product.CategoryID = @CategoryID";
+                        fruit.ID = int.Parse(sdrFruit["Id"].ToString());
+                        fruit.FruitName = sdrFruit["ProductName"].ToString();
+                        fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
+                        fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
+                        fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
+                        fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
+                        fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
+                        fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
+                        fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
 
-                        using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
+                        //fruit所属的category信息
+                        fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
+                        fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
+                        fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
+
+                        //fruit包含的图片信息
+                        fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
+
+                        if (isLoadGroupPurchase)
                         {
-                            while (sdrFruit.Read())
-                            {
-                                fruit = new Fruit();
-
-                                fruit.ID = int.Parse(sdrFruit["Id"].ToString());
-                                fruit.FruitName = sdrFruit["ProductName"].ToString();
-                                fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
-                                fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
-                                fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
-                                fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
-                                fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
-                                fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
-                                fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
-
-                                //fruit所属的category信息
-                                fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
-                                fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
-                                fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
-
-                                //fruit包含的图片信息
-                                fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
-
-                                fruitList.Add(fruit);
-
-                            }
-                            sdrFruit.Close();
+                            fruit.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, fruit.ID, true, true);
+                            fruit.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, fruit.ID, true, true);
+                        }
+                        else
+                        {
+                            fruit.GroupPurchaseList = null;
+                            fruit.ActiveGroupPurchase = null;
                         }
                     }
+                    sdrFruit.Close();
                 }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == System.Data.ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
+
             }
         }
         catch (Exception ex)
@@ -617,20 +615,13 @@ public class Fruit : IComparable<Fruit>
             throw ex;
         }
 
-        return fruitList;
+        return fruit;
 
     }
 
-    /// <summary>
-    /// 根据商品名称进行模糊查询
-    /// </summary>
-    /// <param name="fruitName"></param>
-    /// <returns></returns>
-    public static List<Fruit> FindFruitByName(string fruitName)
+    public static List<FruitImg> FindFruitImgByProdID(int prodID)
     {
-
-        List<Fruit> fruitList = new List<Fruit>();
-        Fruit fruit;
+        List<FruitImg> fruitImgList;
 
         try
         {
@@ -638,70 +629,16 @@ public class Fruit : IComparable<Fruit>
             {
                 conn.Open();
 
-                try
-                {
-                    using (SqlCommand cmdFruit = conn.CreateCommand())
-                    {
-                        SqlParameter paramFruitName = cmdFruit.CreateParameter();
-                        paramFruitName.ParameterName = "@FruitName";
-                        paramFruitName.SqlDbType = System.Data.SqlDbType.NVarChar;
-                        paramFruitName.Size = 50;
-                        paramFruitName.SqlValue = fruitName;
-                        cmdFruit.Parameters.Add(paramFruitName);
-
-                        cmdFruit.CommandText = "select Product.*,Category.ParentID,Category.CategoryName from Product left join Category on Product.CategoryID = Category.Id where ProductName like '%' + @FruitName + '%'";
-
-                        using (SqlDataReader sdrFruit = cmdFruit.ExecuteReader())
-                        {
-                            while (sdrFruit.Read())
-                            {
-                                fruit = new Fruit();
-
-                                fruit.ID = int.Parse(sdrFruit["Id"].ToString());
-                                fruit.FruitName = sdrFruit["ProductName"].ToString();
-                                fruit.FruitPrice = decimal.Parse(sdrFruit["ProductPrice"].ToString());
-                                fruit.FruitUnit = sdrFruit["ProductUnit"].ToString();
-                                fruit.InventoryQty = int.Parse(sdrFruit["InventoryQty"].ToString());
-                                fruit.OnSale = bool.Parse(sdrFruit["ProductOnSale"].ToString());
-                                fruit.FruitDesc = sdrFruit["ProductDesc"].ToString();
-                                fruit.IsSticky = bool.Parse(sdrFruit["IsSticky"].ToString());
-                                fruit.Priority = int.Parse(sdrFruit["Priority"].ToString());
-
-                                //fruit所属的category信息
-                                fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
-                                fruit.Category.ParentID = int.Parse(sdrFruit["ParentID"].ToString());
-                                fruit.Category.CategoryName = sdrFruit["CategoryName"].ToString();
-
-                                //fruit包含的图片信息
-                                fruit.FruitImgList = FindFruitImgByProdID(conn, fruit.ID);
-
-                                fruitList.Add(fruit);
-
-                            }
-                            sdrFruit.Close();
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == System.Data.ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
+                fruitImgList = FindFruitImgByProdID(conn, prodID);
             }
         }
         catch (Exception ex)
         {
-            Log.Error("根据名称模糊查询商品", ex.ToString());
+            Log.Error("根据水果ID查询所有相关图片", ex.ToString());
             throw ex;
-        }
 
-        return fruitList;
+        }
+        return fruitImgList;
 
     }
 
@@ -763,43 +700,6 @@ public class Fruit : IComparable<Fruit>
 
     }
 
-    public static List<FruitImg> FindFruitImgByProdID(int prodID)
-    {
-        List<FruitImg> fruitImgList;
-
-        try
-        {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
-            {
-                conn.Open();
-
-                try
-                {
-                    fruitImgList = FindFruitImgByProdID(conn, prodID);
-
-                }
-                catch(Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == System.Data.ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("根据水果ID查询所有相关图片", ex.ToString());
-            throw ex;
-
-        }
-        return fruitImgList;
-
-    }
 
     public static Fruit AddFruit(Fruit fruit)
     {

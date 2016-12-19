@@ -154,7 +154,7 @@
                             throw new Error("参数错误：微信卡券类型");
                         }
 
-                        //初始化购物车里的使用会员积分点数，默认为0
+                        //初始化购物车里的使用会员积分点数，默认不使用积分
                         $.cart.updateUsedMemberPoints(0);
 
                         //初始化购物车里的微信卡券，默认不使用优惠券
@@ -205,7 +205,7 @@
                             throw new Error("参数错误：会员积分余额");
                         }
 
-                        //注册购物车的事件处理函数
+                        //注册购物车的事件处理函数，用户点击使用积分事件、点击使用微信卡券事件
                         $($.cart).on({
                             "onUsedMemberPointsUpdated onWxCardUpdated": refreshOrderPrice,
                             "onUsedMemberPointsUpdated": refreshMemberPointsDiscount,
@@ -264,6 +264,7 @@
                     //注册选择收货人信息单击事件处理函数，使用此JSSDK获取地址信息，微信会提示用户，影响体验，暂不用
                     //$("#divPanelHeading").on("click", wx, wxOpenAddress);
 
+                    //服务端生成的微信卡券JSAPI参数
                     if (typeof wxCardParam == "object" && wxCardParam.cardSign != undefined) {
                         $.extend(wxCardParam, {
                             success: getWxCardInfo,
@@ -295,10 +296,16 @@
 
         //展示购物车里的商品
         function showProdItems() {
-            var htmlItem = "";
+            var htmlItem = "", groupPurchaseLabel;
             //遍历购物车，显示所有的商品项
             $.cart.getProdItems().each(function () {
-                htmlItem += '<div class="row prod-item"><div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
+                if (!!this["groupPurchase"]) {
+                    //如果此商品项参加了团购，则显示团购标志
+                    groupPurchaseLabel = "<span class=\"label label-warning group-purchase-label\"><i class=\"fa fa-group\"></i> 团购</span>";
+                } else {
+                    groupPurchaseLabel = "";
+                }
+                htmlItem += '<div class="row prod-item">' + groupPurchaseLabel + '<div class="col-xs-4 prod-item-left"><span class="cart-prod-img"><img src="' + this["prodImg"] + '"/></span></div>'
                     + '<div class="col-xs-6 prod-item-middle"><div class="prod-name">' + this["prodName"] + '</div><div class="prod-desc">' + this["prodDesc"] + '</div></div>'
                     + '<div class="col-xs-2 prod-item-right"><div class="prod-price">￥' + this["price"] + '</div><div class="prod-qty">x' + this["qty"] + '</div></div></div>';
             });
@@ -332,7 +339,7 @@
                     alert("未达到优惠券使用条件");
                 }
                 if (data.isSupported != undefined && !data.isSupported) {
-                    alert("不支持的微信卡券类型");
+                    alert("只能使用微信代金券、折扣券");
                 }
             }
         }
@@ -362,7 +369,7 @@
             }
         }
 
-        //校验用户输入的积分数，并更新购物车里的会员积分，触发积分变动事件，回调刷新显示订单总价格
+        //积分文本框change事件处理函数：校验用户输入的积分数，并更新购物车里的会员积分，触发积分变动事件，回调刷新显示订单总价格
         function useMemberPoints() {
             try {
                 var $txtUsedMemberPoints = $("#txtUsedMemberPoints");
@@ -427,7 +434,7 @@
             });
         }
 
-        //获取微信用户地址，调用微信JS全局函数editAddress
+        //获取微信用户地址，调用微信JS内置函数editAddress
         function editAddress() {
             WeixinJSBridge.invoke(
                 'editAddress',
@@ -502,6 +509,20 @@
                      WeixinJSBridge.log(res.err_msg);
                      //alert(res.err_code + res.err_desc + res.err_msg);
                      if (res.err_msg.indexOf("ok") != -1) {
+                         //如果购物车里的订单项有团购，则提示用户到我的订单页面去分享团购链接
+                         var groupProds = "";
+                         $.cart.getProdItems().each(function () {
+                             if (this.groupPurchase) {
+                                 if (groupProds == "") {
+                                     groupProds = this.groupPurchase.name;
+                                 } else {
+                                     groupProds += "，" + this.groupPurchase.name;
+                                 }
+                             }
+                         });
+                         if (groupProds != "") {
+                             alert("您团购了“" + groupProds + "”，请在“我的订单”中分享给朋友、微信群、朋友圈，团购达到人数后即发货。");
+                         }
                          //订单提交成功后清空购物车
                          $.cart.clearProdItems();
                          //alert("付款成功！我们将为您送货上门。");
@@ -683,6 +704,20 @@
                         cache: false,
                         success: function (jPoID) {
                             if (jPoID["NewPOID"] != undefined) {
+                                //如果购物车里的订单项有团购，则提示用户到我的订单页面去分享团购链接
+                                var groupProds = "";
+                                $.cart.getProdItems().each(function () {
+                                    if (this.groupPurchase) {
+                                        if (groupProds == "") {
+                                            groupProds = this.groupPurchase.name;
+                                        } else {
+                                            groupProds += "，" + this.groupPurchase.name;
+                                        }
+                                    }
+                                });
+                                if (groupProds != "") {
+                                    alert("您团购了“{0}”，请分享您的团购链接给微信好友、群、朋友圈，团购达到人数后即发货。", groupProds);
+                                }
                                 $.cart.clearProdItems();
                                 //打开模式窗口，3秒后关闭
                                 openModal();
@@ -777,7 +812,7 @@
             location.href = ".";
         }
 
-        //拉取微信卡券列表
+        //使用微信JSSDK在客户端拉取微信卡券列表
         function wxChooseCard(event) {
             var wx = event.data;
             try {
@@ -797,7 +832,7 @@
             }
         }
 
-        //获取用户选中的微信卡券信息
+        //根据客户端用户选择的微信卡券，向服务端查询此卡券的详细信息，并更新购物车里的卡券信息，再触发事件更新界面
         function getWxCardInfo(res) {
             try {
                 if (res["errMsg"].indexOf("ok") != -1) {

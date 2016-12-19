@@ -10,94 +10,56 @@
 }
 
 .header {
-    background-color: lightgrey;
+    background-color: #f8f8f8;
     min-height: 100px;
     padding: 20px;
 }
 
-.user-portrait{
-    text-align:right;
+.user-portrait {
+    text-align: right;
 }
 
-.user-portrait img{
-    width: 64px;
-    height: 64px;
-    vertical-align: middle;
-    border-radius: 50%;
-}
+    .user-portrait img {
+        width: 64px;
+        height: 64px;
+        vertical-align: middle;
+        border-radius: 50%;
+    }
 
-.user-info{
-    font-size:12px;
-    text-align:left;
-    padding:10px;
+.user-info {
+    font-size: 12px;
+    text-align: left;
+    padding: 10px;
 }
 
 .nick-name {
-    font-size:16px;
-    font-weight:600;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.my-points{
-    font-size:10px;
+.my-points {
+    font-size: 10px;
 }
 
 .col-xs-6 {
     padding: 2px;
 }
 
-.info-block {
-    text-align: center;
-    min-height: 40px;
-    margin: 20px;
-    border-radius: 8px;
+.btn-block {
+    margin: 15px 0;
     padding: 10px;
     cursor: pointer;
-    background-color: white;
     font-size: 20px;
 }
 
-    .info-block i {
-        font-size: 50px;
-    }
-
-    .info-block .fa-truck {
-        color: green;
-    }
-
-    .info-block .fa-list {
-        color: darkblue;
-    }
-
-    .info-block .fa-money {
-        color: red;
-    }
-
-    .info-block .fa-comments {
-        color: #00CD00;
-    }
-
-    .info-block .fa-phone {
-        color: grey;
-    }
-
-    .info-block .fa-qq {
-        color: darkred;
-    }
-
-.myorders-block {
-    background-color: rgb(202,97,97);
-}
-
-.deliver-addr-block {
-    background-color: rgb(97,163,202);
-}
-
-.wx-qrcode-block {
+.btn-wx-qrcode {
+    color: white;
     background-color: #00CD00;
 }
 
-.memberpoints-block {
-    background-color: orange;
+.wx-card {
+    width: 20px;
+    height: 20px;
 }
 
 .member-points {
@@ -108,7 +70,12 @@
     color: blue;
 }
 
-.md-content #MemberPoints{
-    background-color:orange;
-    padding:4px
+.md-content .member-points-rule {
+    background-color: #d9534f;
+    padding: 4px;
+}
+
+.md-content .group-purchase-rule {
+    background-color: #f0ad4e;
+    padding: 4px;
 }

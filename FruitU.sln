@@ -1,12 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "FruitU", ".", "{B5C36AAC-1E7C-437A-AD4B-141D25DECA6C}"
 	ProjectSection(WebsiteProperties) = preProject
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
-		ProjectReferences = "{9fbed01c-986b-4d34-bbfd-548a853f166b}|AliPay.dll;{efe26ce7-4971-4b26-93b9-631317b13d78}|SMS.dll;"
+		ProjectReferences = "{9fbed01c-986b-4d34-bbfd-548a853f166b}|AliPay.dll;{efe26ce7-4971-4b26-93b9-631317b13d78}|SMS.dll;{9c11cae5-5188-4e71-825b-68fc3135728a}|AopSdk.dll;"
 		Debug.AspNetCompiler.VirtualPath = "/localhost_29171"
 		Debug.AspNetCompiler.PhysicalPath = "..\FruitU\"
 		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_29171\"
@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AliPay", "..\AliPay\AliPay.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMS", "..\SMS\SMS.csproj", "{EFE26CE7-4971-4B26-93B9-631317B13D78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AopSdk", "..\alipay-sdk-NET-20160827220129\AopSdk.csproj", "{9C11CAE5-5188-4E71-825B-68FC3135728A}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -55,6 +57,10 @@ Global
 		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFE26CE7-4971-4B26-93B9-631317B13D78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C11CAE5-5188-4E71-825B-68FC3135728A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C11CAE5-5188-4E71-825B-68FC3135728A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C11CAE5-5188-4E71-825B-68FC3135728A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C11CAE5-5188-4E71-825B-68FC3135728A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

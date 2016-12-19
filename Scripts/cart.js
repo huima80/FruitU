@@ -1,4 +1,8 @@
-﻿//购物车模块
+﻿//购物车模块，作为jQuery的子对象$.cart
+//使用storage存储订单和商品项数据
+//支持购物车数据的增删改，并触发响应的ing和ed事件，用于回调页面更新函数
+//在页面加载时使用服务端的参数来初始化购物车里的参数，如运费、微信卡券、积分、积分兑换比率
+//购物车最后要提交给服务端，使用JSON格式，并进行encode编码
 ; (function (root, factory) {
 
     // CommonJS
@@ -59,11 +63,9 @@
         this.prodItems = [];
 
         $.extend(this.params, options);
-
         if (this.params.isPersist) {
             _storage = window.localStorage;
-        }
-        else {
+        } else {
             _storage = window.sessionStorage;
         }
 
@@ -88,33 +90,90 @@
             this.discount = discount;
         };
 
+        //团购类
+        Cart.prototype.GroupPurchase = function (id, name, description, startDate, endDate, requiredNumber, groupPrice) {
+            try {
+                //团购ID
+                this.id = id;
+                //团购名
+                this.name = name;
+                //团购说明
+                this.description = description;
+                //团购开始日期
+                this.startDate = startDate;
+                //团购结束日期
+                this.endDate = endDate;
+                //团购需要人数
+                this.requiredNumber = requiredNumber;
+                //团购价
+                this.groupPrice = groupPrice;
+            } catch (error) {
+                alert(error.message);
+                return false;
+            }
+        };
+
         //购物车商品项类
-        Cart.prototype.ProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty, inventoryQty) {
-            //商品ID
-            this.prodID = prodID;
-            //商品名称
-            this.prodName = prodName;
-            //商品描述
-            this.prodDesc = prodDesc;
-            //商品图片
-            this.prodImg = prodImg;
-            //商品价格
-            this.price = price;
-            //商品购买数量
-            this.qty = qty;
-            //商品库存量
-            this.inventoryQty = inventoryQty;
+        Cart.prototype.ProdItem = function (prodID, prodName, prodDesc, prodImg, price, qty, inventoryQty, groupPurchase, groupPurchaseEventID) {
+            try {
+                //商品ID
+                this.prodID = prodID;
+                //商品名称
+                this.prodName = prodName;
+                //商品描述
+                this.prodDesc = prodDesc;
+                //商品图片
+                this.prodImg = prodImg;
+                //商品价格
+                this.price = price;
+                //商品购买数量
+                this.qty = qty;
+                //商品库存量
+                this.inventoryQty = inventoryQty;
+                //团购对象
+                if (groupPurchase == null || (groupPurchase instanceof Cart.prototype.GroupPurchase)) {
+                    this.groupPurchase = groupPurchase;
+                }
+                else {
+                    throw new TypeError("参数groupPurchase不是团购对象");
+                }
+                //团购活动ID
+                this.groupPurchaseEventID = groupPurchaseEventID;
+            } catch (error) {
+                alert(error.message);
+                return false;
+            }
         };
 
         //保存购物车信息到cookies
         Cart.prototype.save = function () {
-            _storage.setItem(this.params.cartName, JSON.stringify(this));
+            try {
+                if (!!_storage && (_storage == window.localStorage || _storage == window.sessionStorage)) {
+                    _storage.setItem(this.params.cartName, JSON.stringify(this));
+                } else {
+                    throw new Error("请先初始化购物车");
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
         };
 
         //从cookies加载购物车信息
         Cart.prototype.load = function () {
-            var cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
-            $.extend(true, this, cartInfo);
+            try {
+                if (!!_storage && (_storage == window.localStorage || _storage == window.sessionStorage)) {
+                    var cartInfo = JSON.parse(_storage.getItem(this.params.cartName));
+                    $.extend(true, this, cartInfo);
+                } else {
+                    throw new Error("请先初始化购物车");
+                }
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
         };
 
         //增加商品项
@@ -161,9 +220,17 @@
                             return false;
                         }
                         else {
-                            //如果购物车里已有此商品，且没有超出库存量，则数量累加，并更新库存量
+                            //如果购物车里已有此商品，且没有超出库存量，则数量累加
                             this.prodItems[i].qty = parseInt(this.prodItems[i].qty) + parseInt(prodItem.qty);
+                            //更新商品库存量，库存量变动的情况：后台改变了库存量
                             this.prodItems[i].inventoryQty = prodItem.inventoryQty;
+                            //更新商品单价，单价变动的情况：
+                            //1，后台改变了商品单价
+                            //2，用户选择了团购价
+                            this.prodItems[i].price = prodItem.price;
+                            //更新此商品项的团购情况
+                            this.prodItems[i].groupPurchase = prodItem.groupPurchase;
+                            this.prodItems[i].groupPurchaseEventID = prodItem.groupPurchaseEventID;
                             break;
                         }
                     }
@@ -576,7 +643,7 @@
             }
         };
 
-        //更新微信卡券
+        //把用户选择的微信卡券更新到购物车里
         Cart.prototype.updateWxCard = function (wxCard) {
             try {
                 if (!(wxCard instanceof this.WxCard)) {
@@ -605,11 +672,12 @@
                                 if (subTotal + freight >= wxCard.leastCost) {
                                     this.wxCard = wxCard;
                                     isMeetCondition = true;
+                                    isSupported = true;
                                 }
                                 else {
-                                    wxCard = new this.WxCard();
-                                    this.wxCard = wxCard;
+                                    this.wxCard = new this.WxCard();
                                     isMeetCondition = false;
+                                    isSupported = true;
                                 }
                             }
                             else {
@@ -617,29 +685,32 @@
                                 if (subTotal + freight > wxCard.reduceCost) {
                                     this.wxCard = wxCard;
                                     isMeetCondition = true;
+                                    isSupported = true;
                                 }
                                 else {
-                                    wxCard = new this.WxCard();
-                                    this.wxCard = wxCard;
+                                    this.wxCard = new this.WxCard();
                                     isMeetCondition = false;
+                                    isSupported = true;
                                 }
                             }
                             break;
                             //折扣券
                         case this.WxCardType.discount:
                             this.wxCard = wxCard;
+                            isMeetCondition = true;
+                            isSupported = true;
                             break;
                         default:
-                            wxCard = new this.WxCard();
-                            this.wxCard = wxCard;
+                            this.wxCard = new this.WxCard();
+                            isMeetCondition = undefined;
                             isSupported = false;
                             break;
                     }
                 }
                 this.save();
 
-                //触发使用微信卡券更新后事件，传递参数：微信卡券名称，订单总金额
-                $(this).trigger("onWxCardUpdated", { wxCard: wxCard, orderPrice: this.orderPrice(), isMeetCondition: isMeetCondition, isSupported: isSupported });
+                //触发使用微信卡券更新后事件，传递参数：微信卡券名称，订单总金额，是否满足卡券使用条件，是否支持的卡券
+                $(this).trigger("onWxCardUpdated", { wxCard: this.wxCard, orderPrice: this.orderPrice(), isMeetCondition: isMeetCondition, isSupported: isSupported });
             }
             catch (error) {
                 alert(error.message);
@@ -660,6 +731,7 @@
                 return undefined;
             }
         };
+
     }
 
     if (!$.cart) {

@@ -27,7 +27,7 @@ public partial class ManageOrder : System.Web.UI.Page
         {
             try
             {
-                string openID, agentOpenID, strWhere = string.Empty;
+                string openID, agentOpenID, groupEventID, strWhere = string.Empty;
 
                 if (Request.QueryString["OpenID"] != null)
                 {
@@ -41,6 +41,14 @@ public partial class ManageOrder : System.Web.UI.Page
                     UtilityHelper.AntiSQLInjection(Request.QueryString["AgentOpenID"]);
                     agentOpenID = Request.QueryString["AgentOpenID"];
                     strWhere = string.Format("AgentOpenID='{0}'", agentOpenID);
+                }
+
+                if (Request.QueryString["GroupEventID"] != null)
+                {
+                    UtilityHelper.AntiSQLInjection(Request.QueryString["GroupEventID"]);
+                    groupEventID = Request.QueryString["GroupEventID"];
+                    this.txtGroupEventID.Text = groupEventID;
+                    strWhere = string.Format("Id in (select PoID from OrderDetail where GroupEventID = {0})", groupEventID);
                 }
 
                 this.odsOrderList.TypeName = "ProductOrder";
@@ -453,6 +461,18 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.txtOrderID.Style.Clear();
             }
 
+            //查询条件：团购活动ID
+            if (!string.IsNullOrEmpty(this.txtGroupEventID.Text.Trim()))
+            {
+                UtilityHelper.AntiSQLInjection(this.txtGroupEventID.Text);
+                listWhere.Add(string.Format("Id in (select PoID from OrderDetail where GroupEventID = {0})", this.txtGroupEventID.Text.Trim()));
+                this.txtGroupEventID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+            }
+            else
+            {
+                this.txtGroupEventID.Style.Clear();
+            }
+
             //查询条件：订单商品详情
             if (!string.IsNullOrEmpty(this.txtOrderDetail.Text.Trim()))
             {
@@ -553,6 +573,9 @@ public partial class ManageOrder : System.Web.UI.Page
         this.txtOrderID.Text = string.Empty;
         this.txtOrderID.Style.Clear();
 
+        this.txtGroupEventID.Text = string.Empty;
+        this.txtGroupEventID.Style.Clear();
+
         this.txtOrderDetail.Text = string.Empty;
         this.txtOrderDetail.Style.Clear();
 
@@ -597,6 +620,8 @@ public partial class ManageOrder : System.Web.UI.Page
                 po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxTmplMsg.SendMsgOnOrderStateChanged);
                 //注册订单的支付状态变动事件处理函数，核销微信卡券
                 po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(WxCard.ConsumeCodeOnOrderStateChanged);
+                //注册订单的支付宝支付状态变动事件处理函数，检测订单中的商品团购活动是否成功
+                po.OrderStateChanged += new ProductOrder.OrderStateChangedEventHandler(GroupPurchaseEvent.GroupPurchaseEventSuccessHandler);
                 ProductOrder.UpdateTradeState(po);
                 gvOrderList.DataBind();
                 break;
@@ -660,5 +685,28 @@ public partial class ManageOrder : System.Web.UI.Page
                 break;
         }
 
+    }
+
+    protected void dlOrderDetail_ItemDataBound(object sender, DataListItemEventArgs e)
+    {
+        if (e.Item.ItemType == ListItemType.Item)
+        {
+            OrderDetail od = e.Item.DataItem as OrderDetail;
+            if (od != null && od.GroupPurchaseEvent != null)
+            {
+                bool isSuccessful = GroupPurchaseEvent.CheckGroupPurchaseEventSuccess(od.GroupPurchaseEvent);
+                HyperLink hlGroupPurchaseEventStatus = e.Item.FindControl("hlGroupPurchaseEventStatus") as HyperLink;
+                hlGroupPurchaseEventStatus.NavigateUrl = Request.Url.AbsolutePath + "?GroupEventID=" + od.GroupPurchaseEvent.ID;
+                hlGroupPurchaseEventStatus.ToolTip = "查看此团购活动的所有订单";
+                if (isSuccessful)
+                {
+                    hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购成功";
+                }
+                else
+                {
+                    hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购进行中";
+                }
+            }
+        }
     }
 }

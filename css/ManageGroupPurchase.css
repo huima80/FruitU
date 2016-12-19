@@ -1,0 +1,9 @@
+﻿.user-portrait {
+    line-height: 300%;
+    position: relative;
+}
+
+    .user-portrait img {
+        width: 64px;
+        height: 64px;
+    }

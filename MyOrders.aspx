@@ -16,7 +16,7 @@
                     <span class="icon-bar"></span>
                 </button>
                 <p class="navbar-text">
-                    <i class="fa fa-file-o"></i>&nbsp;订单数<span id="spanOrderSubmitted"></span>
+                    <i class="fa fa-file-text-o"></i>&nbsp;订单数<span id="spanOrderSubmitted"></span>
                     <i class="fa fa-credit-card"></i>&nbsp;未支付<span id="spanOrderPaid"></span>
                     <i class="fa fa-truck"></i>&nbsp;未发货<span id="spanOrderDelivered"></span>
                     <i class="fa fa-pencil-square-o"></i>&nbsp;未签收<span id="spanOrderAccepted"></span>
@@ -49,25 +49,48 @@
                     <span class="order-id">订单号：{{:OrderID}}</span>
                     <span class="order-date">下单时间：{{:OrderDate}}</span>
                 </div>
-                <ul>
+                  <hr />
+                {{if OrderMemo != null}}
+                    <blockquote>
+                        <i class="fa fa-info-circle"></i>&nbsp;{{:OrderMemo}}
+                    </blockquote>
+                {{/if}}
+              <ul>
                     {{for OrderDetailList}}
                 <li>
                     <img src="images/{{:FruitImgList[0].ImgName}}" class="prod-img" />
-                    <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span></li>
+                    <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span>
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.IsSuccessful}}
+                        <span class="label label-warning group-purchase-label"><i class="fa fa-group"></i>团购成功</span>
+                    {{/if}}
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupMemberCount < GroupPurchaseEvent.RequiredNumber}}
+                        <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-share-alt"></i>邀请拼团</span>
+                    {{/if}}
+                </li>
                     {{/for}}
                 </ul>
                 <div class="order-price-freight">
                     <div class="order-total">
                         合计：￥<span class="order-price">{{:OrderPrice}}</span>元
                     </div>
-                    <div class="freight">
-                        (含运费{{:Freight}}元{{if MemberPointsDiscount != 0}}，积分优惠{{:MemberPointsDiscount}}元{{/if}}{{if WxCardDiscount != 0}}，微信优惠券优惠{{:WxCardDiscount}}元{{/if}})
-                    </div>
+                    {{if Freight != 0 || MemberPointsDiscount != 0 || WxCardDiscount != 0}}
+                        <div class="freight">
+                            (
+                            {{if Freight != 0}}含运费{{:Freight}}元{{/if}}
+                            {{if MemberPointsDiscount != 0 && Freight != 0}}，积分优惠{{:MemberPointsDiscount}}元
+                            {{else MemberPointsDiscount != 0 && Freight == 0}}积分优惠{{:MemberPointsDiscount}}元
+                            {{/if}}
+                            {{if WxCardDiscount != 0 && (Freight != 0 || MemberPointsDiscount != 0)}}，微信优惠券优惠{{:WxCardDiscount}}元
+                            {{else WxCardDiscount != 0 && (Freight == 0 && MemberPointsDiscount == 0)}}微信优惠券优惠{{:WxCardDiscount}}元
+                            {{/if}}
+                        )
+                        </div>
+                    {{/if}}
                 </div>
                 {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14)}}
                 <div class="btn-pay">
-                    <button id="btnWxPay{{:ID}}" class="btn btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="wxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
-                    <button id="btnAliPay{{:ID}}" class="btn btn-alipay ladda-button" type="button" data-style="zoom-in" onclick="aliPay({{:ID}});">
+                    <button id="btnWxPay{{:ID}}" class="btn btn-sm btn-wxpay ladda-button" type="button" data-style="zoom-in" onclick="wxPay({{:ID}});"><i class="fa fa-wechat fa-fw"></i>微信支付</button>
+                    <button id="btnAliPay{{:ID}}" class="btn btn-sm btn-alipay ladda-button" type="button" data-style="zoom-in" onclick="aliPay({{:ID}});">
                         <img src="images/alipay.png" />
                         支付宝</button>
                 </div>
@@ -75,10 +98,10 @@
                 <hr />
                 <div class="order-state">
                     <span class="done">
-                        <i class="fa fa-file-o"></i>&nbsp;下单
+                        <i class="fa fa-file-text-o"></i>&nbsp;下单
                     </span>
                     {{if IsCancel==0 && (TradeState!=1 && TradeState!=8 && TradeState!=12 && TradeState!=14) && IsDelivered==0 && IsAccept==0}}
-                       <span id="CancelOrder{{:ID}}" class="label label-warning" onclick="cancelOrder({{:ID}});">取消订单{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
+                       <span id="CancelOrder{{:ID}}" class="label cancel-order" onclick="cancelOrder({{:ID}});">撤单{{else IsCancel==1}}<span class="done">(已撤单){{else TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14 || IsDelivered==1 || IsAccept==1}}<span>{{/if}}</span>
                            <span class="done">—</span>
                            {{if TradeState==1 || TradeState==8 || TradeState==12 || TradeState==14}}
                      <span class="done">{{else}}
@@ -131,7 +154,7 @@
 
                     $($.pager).on("onPageLoaded", function (event, data) {
                         //刷新订单各状态统计数
-                        if (data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
+                        if (!!data.originalDataPerPage && Array.isArray(data.originalDataPerPage)) {
                             $(data.originalDataPerPage).each(function () {
                                 if (this.TotalRows != "undefined") {
                                     $("#spanOrderSubmitted").text(this.TotalRows);

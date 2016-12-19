@@ -26,22 +26,12 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: red;
-    color: white;
-    padding: 4px;
-    font-size: 9px;
-    border-radius: 4px;
 }
 
 .sell-out {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    background-color: orange;
-    color: white;
-    padding: 4px;
-    font-size: 9px;
-    border-radius: 4px;
 }
 
 .prod-info {
@@ -52,4 +42,14 @@
 
 .add-to-cart-button{
     text-align:right;
+}
+
+.launch-group-event{
+    margin-top:10px !important;
+}
+.group-purchase-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-weight: normal;
 }

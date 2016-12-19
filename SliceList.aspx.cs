@@ -33,7 +33,7 @@ public partial class SliceList : System.Web.UI.Page
     private string RenderTmpl(List<Fruit> data, int topSellingIDWeekly)
     {
         StringBuilder sbFruitList = new StringBuilder();
-        string tmplFruit = "<div class=\"col-xs-{{:ColWidth}}\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{今日售罄}}</div>";
+        string tmplFruit = "<div class=\"col-xs-{{:ColWidth}}\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{今日售罄}}{{团}}</div>";
         string tmplSliceMenu = "<div class=\"col-xs-12\"><img src=\"images/SliceMenu.jpg\" /></div>";
         string resultStr;
 
@@ -50,7 +50,7 @@ public partial class SliceList : System.Web.UI.Page
             {
                 if (fruit.ID == 97 && fruit.InventoryQty == 0)
                 {
-                    resultStr = tmplFruit.Replace("{{:ColWidth}}", "12").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
+                    resultStr = tmplFruit.Replace("{{:ColWidth}}", "12").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"label label-danger sell-out\">今日售罄</span>");
                     resultStr += tmplSliceMenu;
                 }
                 else
@@ -61,7 +61,7 @@ public partial class SliceList : System.Web.UI.Page
                     }
                     else
                     {
-                        resultStr = tmplFruit.Replace("{{:ColWidth}}", "6").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"sell-out\">今日售罄</span>");
+                        resultStr = tmplFruit.Replace("{{:ColWidth}}", "6").Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"label label-danger sell-out\">今日售罄</span>");
                     }
                 }
             }
@@ -74,6 +74,15 @@ public partial class SliceList : System.Web.UI.Page
                     return;
                 }
             });
+
+            if (fruit.ActiveGroupPurchase != null)
+            {
+                resultStr = resultStr.Replace("{{团}}", "<span class=\"label label-warning group-purchase-label\"><i class=\"fa fa-group\"></i> 团购</span>");
+            }
+            else
+            {
+                resultStr = resultStr.Replace("{{团}}", string.Empty);
+            }
 
             sbFruitList.Append(resultStr);
         });
