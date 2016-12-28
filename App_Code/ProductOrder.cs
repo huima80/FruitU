@@ -1767,7 +1767,7 @@ public class ProductOrder : IComparable<ProductOrder>
                 {
                     using (SqlCommand cmdOrder = conn.CreateCommand())
                     {
-                        cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID)";
+                        cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID) order by Id";
 
                         SqlParameter paramEventID = cmdOrder.CreateParameter();
                         paramEventID.ParameterName = "@EventID";
@@ -2786,17 +2786,8 @@ public class ProductOrder : IComparable<ProductOrder>
                         if (od.GroupPurchaseEvent != null)
                         {
                             jOD["GroupPurchaseEvent"] = new JsonData();
-                            jOD["GroupPurchaseEvent"]["IsSuccessful"] = od.GroupPurchaseEvent.IsSuccessful;
                             jOD["GroupPurchaseEvent"]["EventID"] = od.GroupPurchaseEvent.ID;
-                            jOD["GroupPurchaseEvent"]["RequiredNumber"] = od.GroupPurchaseEvent.GroupPurchase.RequiredNumber;
-                            if (od.GroupPurchaseEvent.GroupPurchaseEventMembers != null)
-                            {
-                                jOD["GroupPurchaseEvent"]["GroupMemberCount"] = od.GroupPurchaseEvent.GroupPurchaseEventMembers.Count;
-                            }
-                            else
-                            {
-                                jOD["GroupPurchaseEvent"]["GroupMemberCount"] = 0;
-                            }
+                            jOD["GroupPurchaseEvent"]["GroupEventStatus"] = (int)od.GroupPurchaseEvent.GroupEventStatus;
                         }
 
                         jPO["OrderDetailList"].Add(jOD);

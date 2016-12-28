@@ -881,4 +881,5 @@ public partial class ManageProduct : System.Web.UI.Page
                 break;
         }
     }
+
 }

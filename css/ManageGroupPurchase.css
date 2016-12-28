@@ -1,9 +1,16 @@
 ﻿.user-portrait {
-    line-height: 300%;
-    position: relative;
+    width: 64px;
+    height: 64px;
 }
 
-    .user-portrait img {
-        width: 64px;
-        height: 64px;
-    }
+.view-po-related{
+    float:right;
+}
+
+.list-group{
+    display:none;
+}
+
+.group-price{
+    color:red;
+}

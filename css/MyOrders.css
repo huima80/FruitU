@@ -96,9 +96,10 @@ img.prod-img {
     text-align: right;
 }
 
-.freight {
+.freight-discount {
     font-size: smaller;
     color: orange;
+    text-align:right;
 }
 
 .order-total {
@@ -161,4 +162,13 @@ img.prod-img {
 
 .group-purchase-label {
     font-weight: normal;
+}
+
+.order-memo{
+    font-size:11px;
+    color:lightgrey;
+}
+
+marquee{
+    width:50%;
 }

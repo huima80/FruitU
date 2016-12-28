@@ -233,9 +233,11 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
         }
         else
         {
-            this.dvGroupPurchase.Visible = false;
             //更新后刷新团购列表
+            this.odsGroupPurchase.SelectParameters[0].DefaultValue = string.Empty;
+            this.dvGroupPurchase.DataBind();
             this.odsGroupPurchaseList.SelectParameters["strWhere"].DefaultValue = string.Empty;
+            this.gvGroupPurchaseList.SelectedIndex = -1;
             this.gvGroupPurchaseList.DataBind();
         }
 
@@ -280,7 +282,14 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
         if (e.Row.RowType == DataControlRowType.DataRow)
         {
             GroupPurchase groupPurchase = e.Row.DataItem as GroupPurchase;
-            LinkButton btnDel = (LinkButton)e.Row.Controls[0].Controls[0];
+            Button btnDel = e.Row.FindControl("btnDel") as Button;
+
+            //检测当前行是否有效的团购，并标记表格行底色
+            GroupPurchase activeGroupPurchase = GroupPurchase.FindActiveGroupPurchase(groupPurchase.Product.ID, false, false);
+            if (activeGroupPurchase != null && groupPurchase.ID == activeGroupPurchase.ID)
+            {
+                e.Row.CssClass = "success";
+            }
 
             //只有此团购下尚未建立团购活动，才能删除团购
             if (groupPurchase.GroupEvents.Count == 0)
@@ -289,7 +298,8 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
             }
             else
             {
-                e.Row.Controls[0].Controls.Remove(btnDel);
+                btnDel.ToolTip = "此团购下已有活动，不能删除。";
+                btnDel.Enabled = false;
             }
         }
     }
@@ -355,34 +365,41 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
         this.dvGroupPurchase.Visible = false;
     }
 
-    protected void dlGroupPurchaseEventMembers_ItemDataBound(object sender, DataListItemEventArgs e)
-    {
-        if (e.Item.ItemType == ListItemType.Item)
-        {
-            GroupPurchaseEventMember eventMember = e.Item.DataItem as GroupPurchaseEventMember;
-            if (eventMember != null)
-            {
-                List<ProductOrder> poWithGroupEvent = ProductOrder.FindOrderByGroupEventID(eventMember.GroupPurchaseEvent.ID);
-                poWithGroupEvent.ForEach(po =>
-                {
-                    if (po.PaymentTerm == PaymentTerm.WECHAT && po.TradeState == TradeState.SUCCESS
-                    || po.PaymentTerm == PaymentTerm.ALIPAY && (po.TradeState == TradeState.AP_TRADE_FINISHED || po.TradeState == TradeState.AP_TRADE_SUCCESS)
-                        || po.PaymentTerm == PaymentTerm.CASH && po.TradeState == TradeState.CASHPAID)
-                    {
-                        HtmlGenericControl spPaid = e.Item.FindControl("spPaid") as HtmlGenericControl;
-                        spPaid.InnerText = "已支付";
-                    }
-                });
-            }
-        }
-    }
-
     protected void dvGroupPurchase_ItemCommand(object sender, DetailsViewCommandEventArgs e)
     {
         if(e.CommandName == "Cancel")
         {
+            this.odsGroupPurchase.SelectParameters[0].DefaultValue = string.Empty;
+            this.dvGroupPurchase.DataBind();
             this.odsGroupPurchaseList.SelectParameters["strWhere"].DefaultValue = string.Empty;
+            this.gvGroupPurchaseList.SelectedIndex = -1;
             this.gvGroupPurchaseList.DataBind();
+        }
+    }
+
+    protected void rpGroupEvents_ItemDataBound(object sender, RepeaterItemEventArgs e)
+    {
+        if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+        {
+            GroupPurchaseEvent groupEvent = e.Item.DataItem as GroupPurchaseEvent;
+            if (groupEvent != null)
+            {
+                HtmlContainerControl liGroupItem = e.Item.Controls[1] as HtmlContainerControl;
+
+                //判断当前团购活动中的订单是否已全部支付成功，并标记页面颜色
+                switch (GroupPurchaseEvent.CheckGroupPurchaseEventSuccess(groupEvent))
+                {
+                    case GroupEventStatus.EVENT_SUCCESS:
+                        liGroupItem.Attributes["class"] += " list-group-item-success";
+                        break;
+                    case GroupEventStatus.EVENT_GOING:
+                        liGroupItem.Attributes["class"] += " list-group-item-info";
+                        break;
+                    case GroupEventStatus.EVENT_FAIL:
+                        liGroupItem.Attributes["class"] += " list-group-item-danger";
+                        break;
+                }
+            }
         }
     }
 }

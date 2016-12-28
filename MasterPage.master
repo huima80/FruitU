@@ -249,7 +249,6 @@
     <form id="form1" runat="server">
         <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" ClientIDMode="Static">
         </asp:ContentPlaceHolder>
-
         <footer class="footer">
             <nav>
                 <ul>

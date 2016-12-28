@@ -74,7 +74,7 @@
                 lodash: 'lodash.min',
                 html5shiv: 'http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min',
                 respond: 'http://apps.bdimg.com/libs/respond.js/1.4.2/respond',
-                jsrender: 'jsrender',
+                jsrender: 'jsrender-0.9.83.min',
                 flexslider: 'jquery.flexslider-min',
                 cart: 'cart',
                 pager: 'pager',

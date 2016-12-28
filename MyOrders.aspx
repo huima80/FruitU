@@ -50,31 +50,29 @@
                     <span class="order-date">下单时间：{{:OrderDate}}</span>
                 </div>
                   <hr />
-                {{if OrderMemo != null}}
-                    <blockquote>
-                        <i class="fa fa-info-circle"></i>&nbsp;{{:OrderMemo}}
-                    </blockquote>
-                {{/if}}
               <ul>
                     {{for OrderDetailList}}
                 <li>
                     <img src="images/{{:FruitImgList[0].ImgName}}" class="prod-img" />
                     <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span>
-                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.IsSuccessful}}
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 1}}
                         <span class="label label-warning group-purchase-label"><i class="fa fa-group"></i>团购成功</span>
                     {{/if}}
-                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupMemberCount < GroupPurchaseEvent.RequiredNumber}}
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 2}}
                         <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-share-alt"></i>邀请拼团</span>
                     {{/if}}
                 </li>
                     {{/for}}
                 </ul>
-                <div class="order-price-freight">
-                    <div class="order-total">
+                <div class="row order-price-freight">
+<%--                {{if OrderMemo != null}}
+                    <div class="col-xs-6 order-memo"><i class="fa fa-info-circle"></i><marquee>{{:OrderMemo}}</marquee></div>
+                {{/if}}--%>
+                    <div class="col-xs-12 order-total">
                         合计：￥<span class="order-price">{{:OrderPrice}}</span>元
                     </div>
                     {{if Freight != 0 || MemberPointsDiscount != 0 || WxCardDiscount != 0}}
-                        <div class="freight">
+                        <div class="freight-discount">
                             (
                             {{if Freight != 0}}含运费{{:Freight}}元{{/if}}
                             {{if MemberPointsDiscount != 0 && Freight != 0}}，积分优惠{{:MemberPointsDiscount}}元

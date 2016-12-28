@@ -105,8 +105,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:GridView ID="gvUserList" runat="server" AllowCustomPaging="True" AllowPaging="True" AutoGenerateColumns="False" CssClass="table table-striped table-hover table-responsive" DataKeyNames="ProviderUserKey" DataSourceID="odsUserList" OnRowDataBound="gvUserList_RowDataBound" PagerSettings-Mode="NumericFirstLast" PagerStyle-CssClass="pager">
+            <div class="col-lg-12 table-responsive">
+                <asp:GridView ID="gvUserList" runat="server" AllowCustomPaging="True" AllowPaging="True" AutoGenerateColumns="False" CssClass="table table-striped table-hover" DataKeyNames="ProviderUserKey" DataSourceID="odsUserList" OnRowDataBound="gvUserList_RowDataBound" PagerSettings-Mode="NumericFirstLast" PagerStyle-CssClass="pager">
                     <Columns>
                         <asp:TemplateField HeaderText="微信头像">
                             <ItemTemplate>

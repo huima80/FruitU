@@ -12,9 +12,15 @@
             </div>
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-lg-2">
+                    <div class="col-lg-8">
+                        <ul>
+                            <li>每个商品可以创建多个团购，但只有在有效期内最新的一个团购<span class="bg-success">（绿底色）</span>有效。</li>
+                            <li>用户可在每个团购下创建多个团购活动，并在团购有效期内拼团。</li>
+                            <li>团购活动拼团成功为<span class="bg-success">绿底色</span>，进行中为<span class="bg-info">蓝底色</span>，失败为<span class="bg-danger">粉红底色</span></li>
+                            <li>当拼团成功，或超过有效期拼团失败，将给管理员和用户发送微信消息</li>
+                        </ul>
                     </div>
-                    <div class="col-lg-10 text-right" id="divCriterias">
+                    <div class="col-lg-4 text-right" id="divCriterias">
                         <div class="form-group">
                             <label for="btnSearch" class="sr-only">按团购名称查询</label>
                             <asp:TextBox ID="txtGroupPurchaseName" runat="server" placeholder="请输入团购名称..." CssClass="form-control"></asp:TextBox>
@@ -26,48 +32,69 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:GridView ID="gvGroupPurchaseList" runat="server" AutoGenerateColumns="False" DataSourceID="odsGroupPurchaseList" AllowPaging="True" CssClass="table table-striped table-hover table-responsive" AllowCustomPaging="True" PagerStyle-CssClass="pager" OnRowDataBound="gvGroupPurchaseList_RowDataBound" DataKeyNames="ID" OnRowDeleted="gvGroupPurchaseList_RowDeleted" OnSelectedIndexChanged="gvGroupPurchaseList_SelectedIndexChanged">
+            <div class="col-lg-12 table-responsive">
+                <asp:GridView ID="gvGroupPurchaseList" runat="server" AutoGenerateColumns="False" DataSourceID="odsGroupPurchaseList" AllowPaging="True" CssClass="table" AllowCustomPaging="True" PagerStyle-CssClass="pager" OnRowDataBound="gvGroupPurchaseList_RowDataBound" DataKeyNames="ID" OnRowDeleted="gvGroupPurchaseList_RowDeleted" OnSelectedIndexChanged="gvGroupPurchaseList_SelectedIndexChanged">
                     <Columns>
-                        <asp:CommandField ShowDeleteButton="True" />
-                        <asp:TemplateField HeaderText="团购商品" SortExpression="Product">
+                        <asp:TemplateField ItemStyle-CssClass="col-xs-11">
+                            <HeaderTemplate>
+                                <div class="row">
+                                    <div class="col-xs-3">团购商品</div>
+                                    <div class="col-xs-5">团购信息</div>
+                                    <div class="col-xs-2">起止日期</div>
+                                    <div class="col-xs-2">团购活动</div>
+                                </div>
+                            </HeaderTemplate>
                             <ItemTemplate>
-                                <asp:Label ID="Label1" runat="server" Text='<%# "【"+Eval("Product.Category.CategoryName")+"】"+Eval("Product.FruitName") %>'></asp:Label>
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <asp:Label ID="Label2" runat="server" Text='<%# "【"+Eval("Product.Category.CategoryName")+"】"+Eval("Product.FruitName") %>'></asp:Label>
+                                    </div>
+                                    <div class="col-xs-5">
+                                        <div>
+                                            <asp:Label ID="Label9" runat="server" Text='<%# Eval("Name") %>'></asp:Label>
+                                        </div>
+                                        <div>
+                                            <asp:Label ID="Label1" runat="server" Text='<%# Eval("Description") %>'></asp:Label>
+                                        </div>
+                                        <div>
+                                            <asp:Label ID="Label4" CssClass="group-price" runat="server" Text='<%# Eval("RequiredNumber") +"人团 " + Eval("GroupPrice", "{0:c2}") + "元/"+Eval("Product.FruitUnit")%>'></asp:Label>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-2">
+                                        <p title="团购开始时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label12" runat="server" Text='<%# Eval("StartDate")%>'></asp:Label></p>
+                                        <p title="团购结束时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label13" runat="server" Text='<%# Eval("EndDate") %>'></asp:Label></p>
+                                    </div>
+                                    <div class="col-xs-2">
+                                        <button type="button" class="btn btn-warning" onclick="showGroupEvents()" <%# Eval("GroupEvents.Count").ToString() == "0" ? "disabled='disabled'" : "" %>>
+                                            团购活动
+                                                <span class="badge"><%# Eval("GroupEvents.Count") %></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <ul class="list-group">
+                                    <asp:Repeater ID="rpGroupEvents" runat="server" DataSource='<%# Eval("GroupEvents") %>' OnItemDataBound="rpGroupEvents_ItemDataBound">
+                                        <ItemTemplate>
+                                            <li class="list-group-item" runat="server" id="liGroupItem">
+                                                <asp:Repeater ID="rpGroupEventMembers" runat="server" DataSource='<%# Eval("GroupPurchaseEventMembers") %>'>
+                                                    <ItemTemplate>
+                                                        <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate") %>' />
+                                                    </ItemTemplate>
+                                                </asp:Repeater>
+                                                <asp:HyperLink ID="hlViewPORelated" runat="server" CssClass="view-po-related" NavigateUrl='<%# "ManageOrder.aspx?GroupEventID="+Eval("ID") %>' ToolTip="查看此团购活动的所有订单"><i class="fa fa-files-o fa-lg"></i></asp:HyperLink>
+                                            </li>
+                                        </ItemTemplate>
+                                    </asp:Repeater>
+                                </ul>
                             </ItemTemplate>
+                            <ItemStyle CssClass="col-xs-11"></ItemStyle>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="Name" HeaderText="团购名称" SortExpression="Name" />
-                        <asp:BoundField DataField="Description" HeaderText="团购描述" SortExpression="Description" />
-                        <asp:BoundField DataField="GroupPrice" HeaderText="团购价格" SortExpression="GroupPrice" DataFormatString="{0:c}" />
-                        <asp:TemplateField HeaderText="团购起止日期" SortExpression="StartDate">
+                        <asp:TemplateField ItemStyle-CssClass="col-xs-1" HeaderText="团购操作">
                             <ItemTemplate>
-                                <p title="团购开始时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="lblStartDate" runat="server" Text='<%# Eval("StartDate")%>'></asp:Label></p>
-                                <p title="团购结束时间"><i class="fa fa-clock-o"></i>&nbsp;<asp:Label ID="Label3" runat="server" Text='<%# Eval("EndDate") %>'></asp:Label></p>
+                                <asp:Button ID="btnDel" runat="server" CausesValidation="False" CommandName="Delete" Text="删除" CssClass="btn btn-sm btn-block btn-default" />
+                                <asp:Button ID="btnModify" runat="server" CausesValidation="False" CommandName="Select" Text="修改" CssClass="btn btn-sm btn-block btn-default" OnClientClick="jumpToGrid();" />
                             </ItemTemplate>
+                            <ItemStyle CssClass="col-xs-1"></ItemStyle>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="RequiredNumber" HeaderText="团购要求人数" SortExpression="RequiredNumber" />
-                        <asp:TemplateField HeaderText="建团数量" SortExpression="GroupEvents">
-                            <ItemTemplate>
-                                <asp:Label ID="Label2" runat="server" Text='<%# Eval("GroupEvents.Count") %>'></asp:Label>
-                                <asp:DataList ID="dlGroupEvents" runat="server" RepeatLayout="Flow" ShowFooter="False" DataSource='<%# Eval("GroupEvents") %>'>
-                                    <ItemTemplate>
-                                        <asp:DataList ID="dlGroupPurchaseEventMembers" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow" ShowFooter="False" DataSource='<%# Eval("GroupPurchaseEventMembers") %>' OnItemDataBound="dlGroupPurchaseEventMembers_ItemDataBound">
-                                            <ItemTemplate>
-                                                <p class="user-portrait">
-                                                    <asp:Image ID="imgEventMember" runat="server" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# "参团时间："+Eval("JoinDate") %>' /><span runat="server" id="spPaid" class="event-member-paid"></span>
-                                                </p>
-                                                <p>
-                                                    <asp:Label ID="lblNickName" runat="server" Text='<%# Eval("GroupMember.NickName") %>'></asp:Label>
-                                                </p>
-                                            </ItemTemplate>
-                                        </asp:DataList>
-                                        <asp:HyperLink ID="hlViewPORelated" runat="server" NavigateUrl='<%# "ManageOrder.aspx?GroupEventID="+Eval("ID") %>' ToolTip="查看此团购活动的所有订单"><i class="fa fa-files-o fa-lg"></i></asp:HyperLink>
-                                    </ItemTemplate>
-                                </asp:DataList>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:CommandField ButtonType="Button" ShowSelectButton="True">
-                            <ControlStyle CssClass="btn btn-default" />
-                        </asp:CommandField>
                     </Columns>
                     <PagerStyle CssClass="pager"></PagerStyle>
                     <SelectedRowStyle CssClass="danger" />
@@ -87,8 +114,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:DetailsView ID="dvGroupPurchase" CssClass="table table-responsive table-condensed" runat="server" AutoGenerateRows="False" DataSourceID="odsGroupPurchase" GridLines="Horizontal" OnItemInserted="dvGroupPurchase_ItemInserted" OnItemInserting="dvGroupPurchase_ItemInserting" OnItemUpdating="dvGroupPurchase_ItemUpdating" OnItemUpdated="dvGroupPurchase_ItemUpdated" OnItemCommand="dvGroupPurchase_ItemCommand">
+            <div class="col-lg-12 table-responsive">
+                <asp:DetailsView ID="dvGroupPurchase" CssClass="table table-condensed" runat="server" AutoGenerateRows="False" DataSourceID="odsGroupPurchase" GridLines="Horizontal" OnItemInserted="dvGroupPurchase_ItemInserted" OnItemInserting="dvGroupPurchase_ItemInserting" OnItemUpdating="dvGroupPurchase_ItemUpdating" OnItemUpdated="dvGroupPurchase_ItemUpdated" OnItemCommand="dvGroupPurchase_ItemCommand">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
                         <asp:BoundField DataField="ID" HeaderText="ID" SortExpression="ID" InsertVisible="False" ReadOnly="True" />
@@ -107,7 +134,7 @@
                         <asp:BoundField DataField="Description" HeaderText="团购描述" SortExpression="Description">
                             <ControlStyle CssClass="form-control" />
                         </asp:BoundField>
-                        <asp:TemplateField HeaderText="团购起始日期" SortExpression="StartDate">
+                        <asp:TemplateField HeaderText="团购起止日期" SortExpression="StartDate">
                             <EditItemTemplate>
                                 <asp:TextBox ID="txtStartDate" runat="server" size="10" Text='<%# Bind("StartDate") %>' placeholder="团购开始日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
                                 至
@@ -138,7 +165,7 @@
                         <asp:Parameter Name="id" Type="Int32" />
                     </SelectParameters>
                 </asp:ObjectDataSource>
-                <asp:Label ID="lblErrMsg" runat="server"></asp:Label>
+                <asp:Label ID="lblErrMsg" runat="server" EnableViewState="False" ForeColor="Red"></asp:Label>
             </div>
         </div>
     </div>
@@ -146,11 +173,9 @@
         requirejs(['jquery', 'jqueryui'], function ($) {
 
             $(function () {
-                theForm.onsubmit = jumpToGrid;
 
+                //http://api.jqueryui.com/datepicker/
                 requirejs(['datepickerCN'], function () {
-
-                    //http://api.jqueryui.com/datepicker/
                     $("#txtStartDate").datepicker({ dateFormat: 'yy-mm-dd' });
                     $("#txtEndDate").datepicker({ dateFormat: 'yy-mm-dd' });
 
@@ -175,10 +200,17 @@
 
         //点击新增商品或选择按钮时，页面跳到DetailView
         function jumpToGrid() {
-
-            if (event && event.currentTarget && (event.currentTarget.value == '选择')) {
+            if (event && event.currentTarget && (event.currentTarget.value == '修改')) {
                 var dvGroupPurchase = $("table[id*=dvGroupPurchase]").attr("id");
                 theForm.action += "#" + dvGroupPurchase;
+            }
+        }
+
+        //显示团购活动列表
+        function showGroupEvents() {
+            var rpGroupEvents = $(event.target).parents("div.row:first").next();
+            if (!!rpGroupEvents) {
+                rpGroupEvents.slideToggle();
             }
         }
 

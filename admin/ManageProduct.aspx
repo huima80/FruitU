@@ -55,8 +55,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:GridView ID="gvFruitList" runat="server" AutoGenerateColumns="False" DataSourceID="odsFruitList" DataKeyNames="ID" AllowPaging="True" OnSelectedIndexChanged="gvFruitList_SelectedIndexChanged" OnRowDataBound="gvFruitList_RowDataBound" OnRowDeleted="gvFruitList_RowDeleted" OnRowDeleting="gvFruitList_RowDeleting" CssClass="table table-striped table-hover table-responsive" AllowCustomPaging="True" PagerStyle-CssClass="pager" OnRowCommand="gvFruitList_RowCommand">
+            <div class="col-lg-12 table-responsive">
+                <asp:GridView ID="gvFruitList" runat="server" AutoGenerateColumns="False" DataSourceID="odsFruitList" DataKeyNames="ID" AllowPaging="True" OnSelectedIndexChanged="gvFruitList_SelectedIndexChanged" OnRowDataBound="gvFruitList_RowDataBound" OnRowDeleted="gvFruitList_RowDeleted" OnRowDeleting="gvFruitList_RowDeleting" CssClass="table table-striped table-hover" AllowCustomPaging="True" PagerStyle-CssClass="pager" OnRowCommand="gvFruitList_RowCommand">
                     <Columns>
                         <asp:CommandField ShowDeleteButton="True" />
                         <asp:TemplateField HeaderText="商品名称" SortExpression="FruitName">
@@ -64,8 +64,8 @@
                                 <asp:Label ID="Label1" runat="server" Text='<%# "【"+ Eval("Category.CategoryName")+"】"+Eval("FruitName") %>'></asp:Label>
                             </ItemTemplate>
                         </asp:TemplateField>
-                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ItemStyle-CssClass="col-lg-4" >
-<ItemStyle CssClass="col-lg-4"></ItemStyle>
+                        <asp:BoundField DataField="FruitDesc" HeaderText="商品描述" SortExpression="FruitDesc" ItemStyle-CssClass="col-lg-4">
+                            <ItemStyle CssClass="col-lg-4"></ItemStyle>
                         </asp:BoundField>
                         <asp:TemplateField HeaderText="商品价格" SortExpression="FruitPrice">
                             <ItemTemplate>
@@ -110,8 +110,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:DetailsView CssClass="table table-responsive table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged" OnDataBound="dvFruit_DataBound">
+            <div class="col-lg-12 table-responsive">
+                <asp:DetailsView CssClass="table table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged" OnDataBound="dvFruit_DataBound">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
                         <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID"></asp:BoundField>

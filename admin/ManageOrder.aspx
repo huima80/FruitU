@@ -107,8 +107,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
-                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover table-responsive" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowCommand="gvOrderList_RowCommand">
+            <div class="col-lg-12 table-responsive">
+                <asp:GridView ID="gvOrderList" runat="server" AutoGenerateColumns="False" DataSourceID="odsOrderList" AllowPaging="True" DataKeyNames="ID" OnRowDataBound="gvOrderList_RowDataBound" CssClass="table table-hover" PagerSettings-Mode="NumericFirstLast" AllowCustomPaging="True" OnRowCommand="gvOrderList_RowCommand">
                     <Columns>
                         <asp:TemplateField HeaderText="订单信息" SortExpression="OrderID">
                             <ItemTemplate>

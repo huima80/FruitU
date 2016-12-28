@@ -5,30 +5,33 @@
     <link href="Scripts/modal/component.css" rel="stylesheet" />
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    <div class="container text-center">
+    <div class="container text-center" id="divContainer" runat="server">
         <div class="row prod-item">
             <div class="col-xs-4 prod-item-left">
                 <asp:Image ID="imgProdImg" runat="server" CssClass="prod-img" />
             </div>
             <div class="col-xs-8 text-left prod-item-right">
-                <div class="prod-name">
-                    <asp:Label ID="lblProdName" runat="server" Text="" CssClass="group-purchase-name"></asp:Label>
+                <div class="group-name">
+                    <asp:Label ID="lblGroupName" runat="server" Text=""></asp:Label>
                 </div>
-                <div class="prod-desc">
-                    <asp:Label ID="lblProdDesc" runat="server" Text="" CssClass="group-purchase-desc"></asp:Label>
+                <div class="group-desc">
+                    <asp:Label ID="lblGroupDesc" runat="server" Text=""></asp:Label>
+                </div>
+                <div class="prod-price">
+                    零售价：￥<del><asp:Label ID="lblProdPrice" runat="server" Text=""></asp:Label></del>元/<asp:Label ID="lblProdPriceUnit" runat="server" Text=""></asp:Label>
                 </div>
                 <div>
-                    <asp:Label ID="lblRequiredNumber" runat="server" Text=""></asp:Label>人团：￥<asp:Label ID="lblProdPrice" CssClass="prod-price" runat="server" Text=""></asp:Label>元/<asp:Label ID="lblProdUnit" runat="server" Text=""></asp:Label>
+                    <asp:Label ID="lblRequiredNumber" runat="server" Text=""></asp:Label>人团：￥<asp:Label ID="lblGroupPrice" CssClass="group-price" runat="server" Text=""></asp:Label>元/<asp:Label ID="lblGroupPriceUnit" runat="server" Text=""></asp:Label>
                 </div>
-                <div class="event-period">
+                <div class="group-period">
                     开始时间：<asp:Label ID="lblEventStardDate" runat="server" Text=""></asp:Label><br />
                     结束时间：<asp:Label ID="lblEventEndDate" runat="server" Text=""></asp:Label>
                 </div>
             </div>
         </div>
+        <hr />
         <div class="row">
             <div class="col-xs-12" runat="server" id="divCountDown">
-                <hr />
                 <span id="spCountDown" class="count-down"></span>
             </div>
         </div>
@@ -36,7 +39,7 @@
         <div class="row">
             <div runat="server" class="col-xs-12 user-portrait" id="divGroupEventMemberHeadImg">
             </div>
-            <div class="col-xs-12">
+            <div class="col-xs-12" runat="server" id="divLeftNumber">
                 还差<asp:Label ID="lblLeftNumber" runat="server" Text=""></asp:Label>人，快来拼团吧~
             </div>
         </div>
@@ -46,8 +49,8 @@
         <div class="col-xs-12 share-group-event" runat="server" id="divShareGroupEvent">
             <button type="button" class="btn btn-warning" onclick="openModal()"><i class="fa fa-share-alt fa-lg fa-fw"></i>邀请拼团</button>
         </div>
-        <div class="row cart-footer">
-            <div class="col-xs-12 join-group-event" runat="server" id="divJoinGroupEvent">
+        <div class="row cart-footer" runat="server" id="divJoinGroupEvent">
+            <div class="col-xs-12 join-group-event">
                 <label class="sr-only" for="txtQty">购买数量</label>
                 <span class="input-group">
                     <span id="btnDesc" class="input-group-addon">-</span>
@@ -58,6 +61,7 @@
             </div>
         </div>
     </div>
+    <asp:Label ID="lblMsg" runat="server" Text="" class="alert alert-danger" role="alert" Visible="False"></asp:Label>
     <div class="md-wxshare" id="divModal">
         <div class="weixin-tip-arrow"><i class="fa fa-hand-o-up fa-3x"></i></div>
         <div class="weixin-tip-text">把团购分享给朋友、微信群、朋友圈吧！</div>
@@ -81,7 +85,7 @@
                     //设置微信分享JS参数
                     setWxShareParam();
 
-                    if (!!$("#spCountDown")) {
+                    if ($("#spCountDown").is(":visible")) {
                         //启动倒计时
                         startClock();
                     }
