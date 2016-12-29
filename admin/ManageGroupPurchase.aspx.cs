@@ -402,4 +402,32 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
             }
         }
     }
+
+    /// <summary>
+    /// 显示团购活动状态
+    /// </summary>
+    /// <param name="eventStatus"></param>
+    /// <returns></returns>
+    protected string ShowGroupEventStatus(GroupEventStatus eventStatus)
+    {
+        string eventStatusText;
+
+        switch (eventStatus)
+        {
+            case GroupEventStatus.EVENT_SUCCESS:
+                eventStatusText = "团购成功";
+                break;
+            case GroupEventStatus.EVENT_GOING:
+                eventStatusText = "团购进行中";
+                break;
+            case GroupEventStatus.EVENT_FAIL:
+                eventStatusText = "团购失败";
+                break;
+            default:
+                eventStatusText = string.Empty;
+                break;
+        }
+
+        return eventStatusText;
+    }
 }

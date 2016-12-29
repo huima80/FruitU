@@ -16,8 +16,8 @@
                         <ul>
                             <li>每个商品可以创建多个团购，但只有在有效期内最新的一个团购<span class="bg-success">（绿底色）</span>有效。</li>
                             <li>用户可在每个团购下创建多个团购活动，并在团购有效期内拼团。</li>
-                            <li>团购活动拼团成功为<span class="bg-success">绿底色</span>，进行中为<span class="bg-info">蓝底色</span>，失败为<span class="bg-danger">粉红底色</span></li>
-                            <li>当拼团成功，或超过有效期拼团失败，将给管理员和用户发送微信消息</li>
+                            <li>团购活动拼团成功为<span class="bg-success">绿底色</span>，进行中为<span class="bg-info">蓝底色</span>，失败为<span class="bg-danger">粉红底色</span>。</li>
+                            <li>当拼团成功，或超过有效期拼团失败，将给管理员和用户发送微信消息。</li>
                         </ul>
                     </div>
                     <div class="col-lg-4 text-right" id="divCriterias">
@@ -80,6 +80,8 @@
                                                         <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate") %>' />
                                                     </ItemTemplate>
                                                 </asp:Repeater>
+                                                <asp:Label ID="lblEventStatus" runat="server" CssClass="event-status" Text='<%# ShowGroupEventStatus((GroupEventStatus)Eval("GroupEventStatus")) %>'></asp:Label>
+                                                <asp:Label ID="lblLaunchDate" runat="server" CssClass="launch-date" Text='<%# "活动发起时间："+Eval("LaunchDate") %>'></asp:Label>
                                                 <asp:HyperLink ID="hlViewPORelated" runat="server" CssClass="view-po-related" NavigateUrl='<%# "ManageOrder.aspx?GroupEventID="+Eval("ID") %>' ToolTip="查看此团购活动的所有订单"><i class="fa fa-files-o fa-lg"></i></asp:HyperLink>
                                             </li>
                                         </ItemTemplate>

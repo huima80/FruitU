@@ -508,9 +508,9 @@ public class GroupPurchaseEvent
 
     /// <summary>
     /// 检查订单中所有相关团购活动的状态
-    /// 1，成功：在有效期内，团购活动达到规定人数，且活动相关订单都支付成功
-    /// 2，进行中：在有效期内，团购活动尚未达到规定人数，或者尚有订单没有支付成功
-    /// 3，失败：超过有效期，团购活动尚未达到规定人数，或者尚有订单没有支付成功
+    /// 1，成功：团购活动在有效期内达到规定人数，且活动相关订单都支付成功
+    /// 2，进行中：团购活动在有效期内尚未达到规定人数，或者尚有订单没有支付成功
+    /// 3，失败：团购活动超过有效期尚未达到规定人数，或者尚有订单没有支付成功
     /// </summary>
     /// <param name="groupEvent">团购活动</param>
     /// <returns></returns>
@@ -520,48 +520,61 @@ public class GroupPurchaseEvent
         DateTime nowTime = DateTime.Now;
         if (groupEvent != null)
         {
-            if (groupEvent.GroupPurchaseEventMembers != null && groupEvent.GroupPurchaseEventMembers.Count >= groupEvent.GroupPurchase.RequiredNumber)
+            if (groupEvent.LaunchDate >= groupEvent.GroupPurchase.StartDate && groupEvent.LaunchDate <= groupEvent.GroupPurchase.EndDate)
             {
-                //已支付的成员数量
-                int paidMemberCount = 0;
-                //查询团购活动关联的所有订单
-                List<ProductOrder> poList = ProductOrder.FindOrderByGroupEventID(groupEvent.ID);
-                //属于某个成员的订单
-                List<ProductOrder> poListOfOneMember;
-                groupEvent.GroupPurchaseEventMembers.ForEach(member =>
+                if (groupEvent.GroupPurchaseEventMembers != null && groupEvent.GroupPurchaseEventMembers.Count >= groupEvent.GroupPurchase.RequiredNumber)
                 {
-                    poListOfOneMember = poList.FindAll(po => po.Purchaser.OpenID == member.GroupMember.OpenID);
-                    bool existNotPaidPO;
-                    //检查当前成员是否有在活动有效期内未支付的订单
-                    existNotPaidPO = poListOfOneMember.Exists(poOfOneMember =>
+                    //已支付的成员数量
+                    int paidMemberCount = 0;
+                    //查询团购活动关联的所有订单
+                    List<ProductOrder> poList = ProductOrder.FindOrderByGroupEventID(groupEvent.ID);
+                    //属于某个成员的订单
+                    List<ProductOrder> poListOfOneMember;
+                    groupEvent.GroupPurchaseEventMembers.ForEach(member =>
                     {
-                        if (poOfOneMember.OrderDate >= groupEvent.GroupPurchase.StartDate && poOfOneMember.OrderDate <= groupEvent.GroupPurchase.EndDate
-                        && poOfOneMember.TradeState != TradeState.SUCCESS
-                        && poOfOneMember.TradeState != TradeState.CASHPAID
-                        && poOfOneMember.TradeState != TradeState.AP_TRADE_FINISHED
-                        && poOfOneMember.TradeState != TradeState.AP_TRADE_SUCCESS)
+                        poListOfOneMember = poList.FindAll(po => po.Purchaser.OpenID == member.GroupMember.OpenID);
+                        //检查当前成员是否有在活动有效期内未支付的订单
+                        bool existNotPaidPO = poListOfOneMember.Exists(poOfOneMember =>
+                            {
+                                if ((poOfOneMember.OrderDate >= groupEvent.GroupPurchase.StartDate && poOfOneMember.OrderDate <= groupEvent.GroupPurchase.EndDate)
+                                && poOfOneMember.TradeState != TradeState.SUCCESS
+                                && poOfOneMember.TradeState != TradeState.CASHPAID
+                                && poOfOneMember.TradeState != TradeState.AP_TRADE_FINISHED
+                                && poOfOneMember.TradeState != TradeState.AP_TRADE_SUCCESS)
+                                {
+                                    return true;
+                                }
+                                else
+                                {
+                                    return false;
+                                }
+                            });
+                        if (!existNotPaidPO)
                         {
-                            return true;
+                            paidMemberCount++;
+                        }
+                    });
+
+                    //如果已支付的成员数达到团购要求的成员数，则团购成功
+                    if (paidMemberCount >= groupEvent.GroupPurchase.RequiredNumber)
+                    {
+                        eventStatus = GroupEventStatus.EVENT_SUCCESS;
+                    }
+                    else
+                    {
+                        //如果已支付的成员数未达到要求人数，则根据当前时间是否在活动有效期内，决定团购是否进行中或失败
+                        if (nowTime >= groupEvent.GroupPurchase.StartDate && nowTime <= groupEvent.GroupPurchase.EndDate)
+                        {
+                            eventStatus = GroupEventStatus.EVENT_GOING;
                         }
                         else
                         {
-                            return false;
+                            eventStatus = GroupEventStatus.EVENT_FAIL;
                         }
-                    });
-                    if (!existNotPaidPO)
-                    {
-                        paidMemberCount++;
                     }
-                });
-
-                //如果已支付的成员数达到团购要求的成员数，则团购成功
-                if (paidMemberCount >= groupEvent.GroupPurchase.RequiredNumber)
-                {
-                    eventStatus = GroupEventStatus.EVENT_SUCCESS;
                 }
                 else
                 {
-                    //如果已支付的成员数未达到要求人数，则根据当前时间是否在活动有效期内，决定团购是否进行中或失败
                     if (nowTime >= groupEvent.GroupPurchase.StartDate && nowTime <= groupEvent.GroupPurchase.EndDate)
                     {
                         eventStatus = GroupEventStatus.EVENT_GOING;
@@ -574,19 +587,12 @@ public class GroupPurchaseEvent
             }
             else
             {
-                if (nowTime >= groupEvent.GroupPurchase.StartDate && nowTime <= groupEvent.GroupPurchase.EndDate)
-                {
-                    eventStatus = GroupEventStatus.EVENT_GOING;
-                }
-                else
-                {
-                    eventStatus = GroupEventStatus.EVENT_FAIL;
-                }
+                eventStatus = GroupEventStatus.EVENT_FAIL;
             }
         }
         else
         {
-            throw new Exception("团购活动为NULL");
+            throw new Exception("团购活动对象为NULL");
         }
 
         return eventStatus;
@@ -646,7 +652,16 @@ public class GroupPurchaseEvent
 /// </summary>
 public enum GroupEventStatus
 {
+    /// <summary>
+    /// 团购活动成功
+    /// </summary>
     EVENT_SUCCESS = 1,
+    /// <summary>
+    /// 团购活动进行中
+    /// </summary>
     EVENT_GOING = 2,
+    /// <summary>
+    /// 团购活动失败
+    /// </summary>
     EVENT_FAIL = 3
 }

@@ -3,14 +3,31 @@
     height: 64px;
 }
 
-.view-po-related{
-    float:right;
+.list-group {
+    display: none;
 }
 
-.list-group{
-    display:none;
+.group-price {
+    color: red;
 }
 
-.group-price{
-    color:red;
+.launch-date {
+    float: right;
+    position: absolute;
+    top: 2px;
+    right: 10px;
+}
+
+.event-status {
+    float: right;
+    position: absolute;
+    top: 20px;
+    right: 10px;
+}
+
+.view-po-related {
+    float: right;
+    position: absolute;
+    top: 40px;
+    right: 10px;
 }
