@@ -30,4 +30,9 @@ public partial class test : System.Web.UI.Page
         listHWSMS = hwSMS.SendSMS(this.txtBody.Text.Trim(), out returnCode, out description, null, this.txtTo.Text.Trim());
 
     }
+
+    protected void Button1_Click(object sender, EventArgs e)
+    {
+        GroupPurchaseEvent.CheckGroupEventFail();
+    }
 }

@@ -16,6 +16,12 @@
         //    Roles.CreateRole(Config.GuestRoleName);
         //}
 
+        //定时器，自动检查超过有效期的团购活动，并微信通知
+        System.Timers.Timer timer = new System.Timers.Timer(Config.CheckInvalidGroupEventInterval * 3600000);
+        timer.Elapsed += GroupPurchaseEvent.CheckGroupEventFailHandler;
+        timer.AutoReset = true;
+        timer.Enabled = true;
+
     }
 
     void Application_End(object sender, EventArgs e)

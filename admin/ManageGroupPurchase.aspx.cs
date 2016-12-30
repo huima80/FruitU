@@ -367,7 +367,7 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
 
     protected void dvGroupPurchase_ItemCommand(object sender, DetailsViewCommandEventArgs e)
     {
-        if(e.CommandName == "Cancel")
+        if (e.CommandName == "Cancel")
         {
             this.odsGroupPurchase.SelectParameters[0].DefaultValue = string.Empty;
             this.dvGroupPurchase.DataBind();
@@ -385,49 +385,26 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
             if (groupEvent != null)
             {
                 HtmlContainerControl liGroupItem = e.Item.Controls[1] as HtmlContainerControl;
+                Label lblEventStatus = liGroupItem.FindControl("lblEventStatus") as Label;
 
-                //判断当前团购活动中的订单是否已全部支付成功，并标记页面颜色
-                switch (GroupPurchaseEvent.CheckGroupPurchaseEventSuccess(groupEvent))
+                //判断当前团购活动状态，并标记页面颜色
+                switch (GroupPurchaseEvent.CheckGroupPurchaseEventStatus(groupEvent))
                 {
                     case GroupEventStatus.EVENT_SUCCESS:
                         liGroupItem.Attributes["class"] += " list-group-item-success";
+                        lblEventStatus.Text = "团购成功";
                         break;
                     case GroupEventStatus.EVENT_GOING:
                         liGroupItem.Attributes["class"] += " list-group-item-info";
+                        lblEventStatus.Text = "团购进行中";
                         break;
                     case GroupEventStatus.EVENT_FAIL:
                         liGroupItem.Attributes["class"] += " list-group-item-danger";
+                        lblEventStatus.Text = "团购失败";
                         break;
                 }
             }
         }
     }
 
-    /// <summary>
-    /// 显示团购活动状态
-    /// </summary>
-    /// <param name="eventStatus"></param>
-    /// <returns></returns>
-    protected string ShowGroupEventStatus(GroupEventStatus eventStatus)
-    {
-        string eventStatusText;
-
-        switch (eventStatus)
-        {
-            case GroupEventStatus.EVENT_SUCCESS:
-                eventStatusText = "团购成功";
-                break;
-            case GroupEventStatus.EVENT_GOING:
-                eventStatusText = "团购进行中";
-                break;
-            case GroupEventStatus.EVENT_FAIL:
-                eventStatusText = "团购失败";
-                break;
-            default:
-                eventStatusText = string.Empty;
-                break;
-        }
-
-        return eventStatusText;
-    }
 }

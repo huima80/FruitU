@@ -939,6 +939,11 @@ public class ProductOrder : IComparable<ProductOrder>
                             paramLaunchDate.SqlDbType = System.Data.SqlDbType.DateTime;
                             cmdAddGroupEvent.Parameters.Add(paramLaunchDate);
 
+                            SqlParameter paramIsNotify = cmdAddGroupEvent.CreateParameter();
+                            paramIsNotify.ParameterName = "@IsNotify";
+                            paramIsNotify.SqlDbType = System.Data.SqlDbType.Bit;
+                            cmdAddGroupEvent.Parameters.Add(paramIsNotify);
+
                             po.OrderDetailList.ForEach(od =>
                             {
                                 //如果当前订单项有新开的团购活动，则插入团购活动表
@@ -947,9 +952,10 @@ public class ProductOrder : IComparable<ProductOrder>
                                     paramGroupID.SqlValue = od.GroupPurchaseEvent.GroupPurchase.ID;
                                     paramOrganizer.SqlValue = od.GroupPurchaseEvent.Organizer.OpenID;
                                     paramLaunchDate.SqlValue = od.GroupPurchaseEvent.LaunchDate;
+                                    paramIsNotify.SqlValue = od.GroupPurchaseEvent.IsNotify;
 
                                     //插入团购活动表
-                                    cmdAddGroupEvent.CommandText = "INSERT INTO [dbo].[GroupPurchaseEvent] ([GroupID], [Organizer], [LaunchDate]) VALUES (@GroupID,@Organizer,@LaunchDate);select SCOPE_IDENTITY() as 'NewGroupEventID'";
+                                    cmdAddGroupEvent.CommandText = "INSERT INTO [dbo].[GroupPurchaseEvent] ([GroupID], [Organizer], [LaunchDate], [IsNotify]) VALUES (@GroupID,@Organizer,@LaunchDate,@IsNotify);select SCOPE_IDENTITY() as 'NewGroupEventID'";
 
                                     var newGroupEventID = cmdAddGroupEvent.ExecuteScalar();
 

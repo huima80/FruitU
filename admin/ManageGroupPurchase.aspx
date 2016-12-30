@@ -80,7 +80,7 @@
                                                         <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate") %>' />
                                                     </ItemTemplate>
                                                 </asp:Repeater>
-                                                <asp:Label ID="lblEventStatus" runat="server" CssClass="event-status" Text='<%# ShowGroupEventStatus((GroupEventStatus)Eval("GroupEventStatus")) %>'></asp:Label>
+                                                <asp:Label ID="lblEventStatus" runat="server" CssClass="event-status"></asp:Label>
                                                 <asp:Label ID="lblLaunchDate" runat="server" CssClass="launch-date" Text='<%# "活动发起时间："+Eval("LaunchDate") %>'></asp:Label>
                                                 <asp:HyperLink ID="hlViewPORelated" runat="server" CssClass="view-po-related" NavigateUrl='<%# "ManageOrder.aspx?GroupEventID="+Eval("ID") %>' ToolTip="查看此团购活动的所有订单"><i class="fa fa-files-o fa-lg"></i></asp:HyperLink>
                                             </li>

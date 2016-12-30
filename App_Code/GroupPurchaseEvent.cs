@@ -29,6 +29,11 @@ public class GroupPurchaseEvent
     public DateTime LaunchDate { get; set; }
 
     /// <summary>
+    /// 是否通知用户
+    /// </summary>
+    public bool IsNotify { get; set; }
+
+    /// <summary>
     /// 团购活动参与者列表
     /// </summary>
     public List<GroupPurchaseEventMember> GroupPurchaseEventMembers { get; set; }
@@ -40,7 +45,7 @@ public class GroupPurchaseEvent
     {
         get
         {
-            return CheckGroupPurchaseEventSuccess(this);
+            return CheckGroupPurchaseEventStatus(this);
         }
     }
 
@@ -49,25 +54,7 @@ public class GroupPurchaseEvent
     /// </summary>
     public class GroupPurchaseEventEventArgs : EventArgs
     {
-        /// <summary>
-        /// 团购活动成功标志
-        /// </summary>
-        public bool isGroupEventSuccess { get; set; }
 
-        /// <summary>
-        /// 团购活动所属的订单商品项
-        /// </summary>
-        public OrderDetail orderDetail { get; set; }
-
-        /// <summary>
-        /// 参加团购活动的日期
-        /// </summary>
-        public DateTime joinGroupEventDate { get; set; }
-
-        public GroupPurchaseEventEventArgs(bool isGroupEventSuccess)
-        {
-            this.isGroupEventSuccess = isGroupEventSuccess;
-        }
     }
 
     /// <summary>
@@ -78,13 +65,11 @@ public class GroupPurchaseEvent
     /// <summary>
     /// 同步触发团购活动成功事件
     /// </summary>
-    protected void OnGroupPurchaseEventSuccess(OrderDetail orderDetail, DateTime joinGroupEventDate)
+    protected void OnGroupPurchaseEventSuccess()
     {
         if (GroupPurchaseEventSuccess != null)
         {
-            GroupPurchaseEventEventArgs gpe = new GroupPurchaseEventEventArgs(true);
-            gpe.orderDetail = orderDetail;
-            gpe.joinGroupEventDate = joinGroupEventDate;
+            GroupPurchaseEventEventArgs gpe = new GroupPurchaseEventEventArgs();
             this.GroupPurchaseEventSuccess(this, gpe);
         }
     }
@@ -101,7 +86,7 @@ public class GroupPurchaseEvent
     {
         if (GroupPurchaseEventFail != null)
         {
-            GroupPurchaseEventEventArgs gpe = new GroupPurchaseEventEventArgs(false);
+            GroupPurchaseEventEventArgs gpe = new GroupPurchaseEventEventArgs();
             this.GroupPurchaseEventFail(this, gpe);
         }
     }
@@ -110,6 +95,95 @@ public class GroupPurchaseEvent
     {
         GroupPurchaseEventMembers = new List<GroupPurchaseEventMember>();
     }
+
+    /// <summary>
+    /// 查询未通知用户的团购活动，默认加载活动成员
+    /// </summary>
+    /// <returns></returns>
+    public static List<GroupPurchaseEvent> FindGroupPurchaseEventForNotify()
+    {
+        return FindGroupPurchaseEventForNotify(true);
+    }
+
+    /// <summary>
+    /// 查询未通知用户的团购活动
+    /// </summary>
+    /// <param name="isLoadGroupEventMember">是否加载活动成员</param>
+    /// <returns></returns>
+    public static List<GroupPurchaseEvent> FindGroupPurchaseEventForNotify(bool isLoadGroupEventMember)
+    {
+        List<GroupPurchaseEvent> groupEventList = null;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                groupEventList = FindGroupPurchaseEventForNotify(conn, isLoadGroupEventMember);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("查询全部团购活动", ex.ToString());
+            throw ex;
+        }
+
+        return groupEventList;
+
+    }
+
+    /// <summary>
+    /// 查询未通知用户的团购活动
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <param name="isLoadGroupEventMember"></param>
+    /// <returns></returns>
+    public static List<GroupPurchaseEvent> FindGroupPurchaseEventForNotify(SqlConnection conn, bool isLoadGroupEventMember)
+    {
+        List<GroupPurchaseEvent> groupEventList = new List<GroupPurchaseEvent>();
+        GroupPurchaseEvent groupEvent;
+
+        try
+        {
+            using (SqlCommand cmdGroup = conn.CreateCommand())
+            {
+                cmdGroup.CommandText = "select * from GroupPurchaseEvent where IsNotify = 0";
+
+                using (SqlDataReader sdr = cmdGroup.ExecuteReader())
+                {
+                    while (sdr.Read())
+                    {
+                        groupEvent = new GroupPurchaseEvent();
+                        groupEvent.ID = int.Parse(sdr["Id"].ToString());
+                        groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
+                        groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
+                        groupEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(conn, int.Parse(sdr["GroupID"].ToString()), false, false);
+                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
+                        if (isLoadGroupEventMember)
+                        {
+                            groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
+                        }
+                        else
+                        {
+                            groupEvent.GroupPurchaseEventMembers = null;
+                        }
+
+                        groupEventList.Add(groupEvent);
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("查询所有团购活动", ex.ToString());
+            throw ex;
+        }
+
+        return groupEventList;
+    }
+
 
     /// <summary>
     /// 根据ID查询指定的团购活动，默认加载其团购活动成员
@@ -174,6 +248,7 @@ public class GroupPurchaseEvent
                         groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
                         groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
                         groupEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(conn, int.Parse(sdr["GroupID"].ToString()), false, false);
+                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
                             groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
@@ -262,6 +337,7 @@ public class GroupPurchaseEvent
                         groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
                         groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
                         groupEvent.GroupPurchase = groupPurchase;
+                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
                             groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
@@ -349,6 +425,7 @@ public class GroupPurchaseEvent
                         groupEvent.ID = int.Parse(sdr["Id"].ToString());
                         groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(sdr["Organizer"].ToString());
                         groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
+                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
                             groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
@@ -411,6 +488,12 @@ public class GroupPurchaseEvent
                         paramLaunchDate.SqlValue = groupEvent.LaunchDate;
                         cmdAddGroupEvent.Parameters.Add(paramLaunchDate);
 
+                        SqlParameter paramIsNotify = cmdAddGroupEvent.CreateParameter();
+                        paramIsNotify.ParameterName = "@IsNotify";
+                        paramIsNotify.SqlDbType = System.Data.SqlDbType.Bit;
+                        paramIsNotify.SqlValue = groupEvent.LaunchDate;
+                        cmdAddGroupEvent.Parameters.Add(paramIsNotify);
+
                         foreach (SqlParameter param in cmdAddGroupEvent.Parameters)
                         {
                             if (param.Value == null)
@@ -420,7 +503,7 @@ public class GroupPurchaseEvent
                         }
 
                         //插入订单表
-                        cmdAddGroupEvent.CommandText = "INSERT INTO [dbo].[GroupPurchaseEvent] ([GroupID], [Organizer], [LaunchDate]) VALUES (@GroupID,@Organizer,@LaunchDate);select SCOPE_IDENTITY() as 'NewGroupEventID'";
+                        cmdAddGroupEvent.CommandText = "INSERT INTO [dbo].[GroupPurchaseEvent] ([GroupID], [Organizer], [LaunchDate], [IsNotify]) VALUES (@GroupID,@Organizer,@LaunchDate,@IsNotify);select SCOPE_IDENTITY() as 'NewGroupEventID'";
 
                         Log.Debug("插入团购活动表", cmdAddGroupEvent.CommandText);
 
@@ -507,14 +590,59 @@ public class GroupPurchaseEvent
     }
 
     /// <summary>
+    /// 更新团购活动的通知状态
+    /// </summary>
+    /// <param name="groupEvent"></param>
+    public static void UpdateGroupPurchaseEventNotify(GroupPurchaseEvent groupEvent)
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                using (SqlCommand cmdUpdateGroupEvent = conn.CreateCommand())
+                {
+                    SqlParameter paramID = cmdUpdateGroupEvent.CreateParameter();
+                    paramID.ParameterName = "@ID";
+                    paramID.SqlDbType = System.Data.SqlDbType.Int;
+                    paramID.SqlValue = groupEvent.ID;
+                    cmdUpdateGroupEvent.Parameters.Add(paramID);
+
+                    SqlParameter paramIsNotify = cmdUpdateGroupEvent.CreateParameter();
+                    paramIsNotify.ParameterName = "@IsNotify";
+                    paramIsNotify.SqlDbType = System.Data.SqlDbType.Bit;
+                    paramIsNotify.SqlValue = groupEvent.IsNotify;
+                    cmdUpdateGroupEvent.Parameters.Add(paramIsNotify);
+
+                    //更新团购活动表
+                    cmdUpdateGroupEvent.CommandText = "Update GroupPurchaseEvent set IsNotify = @IsNotify where Id = @ID";
+
+                    Log.Debug("更新团购活动表", cmdUpdateGroupEvent.CommandText);
+
+                    if (cmdUpdateGroupEvent.ExecuteNonQuery() != 1)
+                    {
+                        throw new Exception("更新团购活动表");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("GroupPurchaseEvent:UpdateGroupPurchaseEventNotify", ex.ToString());
+            throw ex;
+        }
+    }
+
+    /// <summary>
     /// 检查订单中所有相关团购活动的状态
     /// 1，成功：团购活动在有效期内达到规定人数，且活动相关订单都支付成功
-    /// 2，进行中：团购活动在有效期内尚未达到规定人数，或者尚有订单没有支付成功
-    /// 3，失败：团购活动超过有效期尚未达到规定人数，或者尚有订单没有支付成功
+    /// 2，进行中：团购活动在有效期内，已支付的成员数尚未达到规定人数
+    /// 3，失败：团购活动超过有效期，已支付的成员数尚未达到规定人数
     /// </summary>
     /// <param name="groupEvent">团购活动</param>
     /// <returns></returns>
-    public static GroupEventStatus CheckGroupPurchaseEventSuccess(GroupPurchaseEvent groupEvent)
+    public static GroupEventStatus CheckGroupPurchaseEventStatus(GroupPurchaseEvent groupEvent)
     {
         GroupEventStatus eventStatus;
         DateTime nowTime = DateTime.Now;
@@ -621,14 +749,18 @@ public class GroupPurchaseEvent
             {
                 po.OrderDetailList.ForEach(od =>
                 {
-                    if (od.GroupPurchaseEvent != null)
+                    if (od.GroupPurchaseEvent != null && !od.GroupPurchaseEvent.IsNotify)
                     {
-                        //如果拼团活动成功，则触发拼团成功事件，通知管理员和所有拼团用户
-                        GroupEventStatus eventStatus = CheckGroupPurchaseEventSuccess(od.GroupPurchaseEvent);
+                        //如果拼团成功，则触发拼团成功事件，通知管理员和所有拼团用户
+                        GroupEventStatus eventStatus = CheckGroupPurchaseEventStatus(od.GroupPurchaseEvent);
                         if (eventStatus == GroupEventStatus.EVENT_SUCCESS)
                         {
                             od.GroupPurchaseEvent.GroupPurchaseEventSuccess += WxTmplMsg.GroupPurchaseEventNotify;
-                            od.GroupPurchaseEvent.OnGroupPurchaseEventSuccess(od, po.OrderDate);
+                            od.GroupPurchaseEvent.OnGroupPurchaseEventSuccess();
+
+                            //设置此团购活动通知标记为true
+                            od.GroupPurchaseEvent.IsNotify = true;
+                            UpdateGroupPurchaseEventNotify(od.GroupPurchaseEvent);
                         }
                     }
                 });
@@ -644,6 +776,38 @@ public class GroupPurchaseEvent
 
     }
 
+    public static void CheckGroupEventFailHandler(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        CheckGroupEventFail();
+    }
+
+    /// <summary>
+    /// 查找过期的团购活动，并通知管理员和用户
+    /// </summary>
+    public static void CheckGroupEventFail()
+    {
+        List<GroupPurchaseEvent> groupEventList;
+        groupEventList = FindGroupPurchaseEventForNotify();
+        groupEventList.ForEach(groupEvent =>
+        {
+            switch (groupEvent.GroupEventStatus)
+            {
+                case GroupEventStatus.EVENT_FAIL:
+                    //拼团失败，提醒用户查收退款
+                    groupEvent.GroupPurchaseEventFail += WxTmplMsg.GroupPurchaseEventNotify;
+                    groupEvent.OnGroupPurchaseEventFail();
+                    break;
+                case GroupEventStatus.EVENT_GOING:
+                    //团购进行中，提醒用户邀请拼团
+                    break;
+            }
+
+            //设置此团购活动通知标记为true
+            groupEvent.IsNotify = true;
+            UpdateGroupPurchaseEventNotify(groupEvent);
+
+        });
+    }
 
 }
 

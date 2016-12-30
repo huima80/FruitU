@@ -157,6 +157,7 @@ public class PlaceOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                                                 groupPurchaseEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(groupPurchaseID, false, false);
                                                 groupPurchaseEvent.Organizer = wxUser;
                                                 groupPurchaseEvent.LaunchDate = DateTime.Now;
+                                                groupPurchaseEvent.IsNotify = false;
 
                                                 //构造团购活动成员对象并加入团购活动对象
                                                 GroupPurchaseEventMember groupMember = new GroupPurchaseEventMember();

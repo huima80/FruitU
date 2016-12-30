@@ -697,7 +697,7 @@ public partial class ManageOrder : System.Web.UI.Page
                 HyperLink hlGroupPurchaseEventStatus = e.Item.FindControl("hlGroupPurchaseEventStatus") as HyperLink;
                 hlGroupPurchaseEventStatus.NavigateUrl = Request.Url.AbsolutePath + "?GroupEventID=" + od.GroupPurchaseEvent.ID;
                 hlGroupPurchaseEventStatus.ToolTip = "查看此团购活动的所有订单";
-                switch (GroupPurchaseEvent.CheckGroupPurchaseEventSuccess(od.GroupPurchaseEvent))
+                switch (GroupPurchaseEvent.CheckGroupPurchaseEventStatus(od.GroupPurchaseEvent))
                 {
                     case GroupEventStatus.EVENT_SUCCESS:
                         hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购成功";

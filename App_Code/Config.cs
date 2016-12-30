@@ -149,6 +149,11 @@ public static class Config
     /// </summary>
     public const int ProductInventoryWarn = 10;
 
+    /// <summary>
+    /// 定时检查过期的团购活动（小时）
+    /// </summary>
+    public const int CheckInvalidGroupEventInterval = 24;
+
     /////////////////////////// QQ互联平台：http://connect.qq.com
     /// <summary>
     /// QQ互联APP ID
