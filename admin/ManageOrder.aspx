@@ -177,7 +177,7 @@
                                 <asp:Button ID="btnDeliver" runat="server" Text="发货" CssClass="" data-style="zoom-in" CommandName="Deliver" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发货吗？');" />
                                 <asp:Button ID="btnAccept" runat="server" Text="签收" CssClass="" data-style="zoom-in" CommandName="Accept" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认签收吗？');" />
                                 <asp:Button ID="btnCalMemberPoints" runat="server" Text="发放积分" CssClass="" data-style="zoom-in" CommandName="CalMemberPoints" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发放积分吗？');" />
-                                <button id="btnPrintPreview" class="<%#BTN_DOING %>" type="button" data-style="zoom-in" onclick='printPreview(<%# Eval("ID") %>);'><i class="fa fa-print"></i>&nbsp;打印</button>
+                                <button id="btnPrintPreview" class="<%#BTN_DOING_CSS %>" type="button" data-style="zoom-in" onclick='printPreview(<%# Eval("ID") %>);'><i class="fa fa-print"></i>&nbsp;打印</button>
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>

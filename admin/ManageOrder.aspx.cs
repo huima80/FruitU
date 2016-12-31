@@ -15,11 +15,11 @@ public partial class ManageOrder : System.Web.UI.Page
     /// </summary>
     protected static readonly System.Drawing.Color CRITERIA_BG_COLOR = System.Drawing.Color.Pink;
 
-    protected const string BTN_DONE = "btn btn-sm btn-block btn-success ladda-button";
-    protected const string BTN_DOING = "btn btn-sm btn-block btn-danger ladda-button";
+    protected const string BTN_DONE_CSS = "btn btn-sm btn-block btn-success ladda-button";
+    protected const string BTN_DOING_CSS = "btn btn-sm btn-block btn-danger ladda-button";
 
-    protected const string BTN_CASH_DONE = "btn btn-xs btn-success ladda-button";
-    protected const string BTN_CASH_DOING = "btn btn-xs btn-danger ladda-button";
+    protected const string BTN_CASH_DONE_CSS = "btn btn-xs btn-success ladda-button";
+    protected const string BTN_CASH_DOING_CSS = "btn btn-xs btn-danger ladda-button";
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -284,12 +284,12 @@ public partial class ManageOrder : System.Web.UI.Page
                     {
                         case TradeState.CASHPAID:
                             btnPayCash.Enabled = false;
-                            btnPayCash.CssClass = BTN_CASH_DONE;
+                            btnPayCash.CssClass = BTN_CASH_DONE_CSS;
                             pPayCashDate.Visible = po.PayCashDate.HasValue;
                             break;
                         case TradeState.CASHNOTPAID:
                             btnPayCash.Enabled = true;
-                            btnPayCash.CssClass = BTN_CASH_DOING;
+                            btnPayCash.CssClass = BTN_CASH_DOING_CSS;
                             pPayCashDate.Visible = false;
                             break;
                     }
@@ -303,31 +303,31 @@ public partial class ManageOrder : System.Web.UI.Page
             if (po.IsDelivered)
             {
                 btnDeliver.Enabled = false;
-                btnDeliver.CssClass = BTN_DONE;
+                btnDeliver.CssClass = BTN_DONE_CSS;
                 btnDeliver.ToolTip = po.DeliverDate.HasValue ? "发货时间：" + po.DeliverDate.ToString() : string.Empty;
             }
             else
             {
-                btnDeliver.CssClass = BTN_DOING;
+                btnDeliver.CssClass = BTN_DOING_CSS;
             }
             if (po.IsAccept)
             {
                 btnAccept.Enabled = false;
-                btnAccept.CssClass = BTN_DONE;
+                btnAccept.CssClass = BTN_DONE_CSS;
                 btnAccept.ToolTip = po.AcceptDate.HasValue ? "签收时间：" + po.AcceptDate.ToString() : string.Empty;
             }
             else
             {
-                btnAccept.CssClass = BTN_DOING;
+                btnAccept.CssClass = BTN_DOING_CSS;
             }
             if (po.IsCalMemberPoints)
             {
                 btnCalMemberPoints.Enabled = false;
-                btnCalMemberPoints.CssClass = BTN_DONE;
+                btnCalMemberPoints.CssClass = BTN_DONE_CSS;
             }
             else
             {
-                btnCalMemberPoints.CssClass = BTN_DOING;
+                btnCalMemberPoints.CssClass = BTN_DOING_CSS;
             }
 
             //如果已撤单则屏蔽发货、签收按钮、发放积分按钮，显示撤单时间

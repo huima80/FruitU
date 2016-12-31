@@ -425,6 +425,7 @@ public class GroupPurchaseEvent
                         groupEvent.ID = int.Parse(sdr["Id"].ToString());
                         groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(sdr["Organizer"].ToString());
                         groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
+                        groupEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(conn, int.Parse(sdr["GroupID"].ToString()), false, false);
                         groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {

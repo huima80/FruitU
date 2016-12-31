@@ -75,6 +75,7 @@
                                     <asp:Repeater ID="rpGroupEvents" runat="server" DataSource='<%# Eval("GroupEvents") %>' OnItemDataBound="rpGroupEvents_ItemDataBound">
                                         <ItemTemplate>
                                             <li class="list-group-item" runat="server" id="liGroupItem">
+                                                <asp:Label ID="lblEventID" runat="server" Text='<%# "#"+Eval("ID") %>' CssClass="badge"></asp:Label>
                                                 <asp:Repeater ID="rpGroupEventMembers" runat="server" DataSource='<%# Eval("GroupPurchaseEventMembers") %>'>
                                                     <ItemTemplate>
                                                         <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate") %>' />

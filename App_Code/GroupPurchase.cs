@@ -604,13 +604,7 @@ public class GroupPurchase
                 paramProductID.SqlValue = productID;
                 cmdGroup.Parameters.Add(paramProductID);
 
-                SqlParameter paramNowDate = cmdGroup.CreateParameter();
-                paramNowDate.ParameterName = "@NowDate";
-                paramNowDate.SqlDbType = System.Data.SqlDbType.DateTime;
-                paramNowDate.SqlValue = DateTime.Now;
-                cmdGroup.Parameters.Add(paramNowDate);
-
-                cmdGroup.CommandText = "select top 1 * from GroupPurchase where ProductID = @ProductID and (@NowDate >= StartDate and @NowDate <= EndDate) order by Id desc";
+                cmdGroup.CommandText = "select top 1 * from GroupPurchase where ProductID = @ProductID and (GetDate() >= StartDate and GetDate() <= EndDate) order by Id desc";
 
                 using (SqlDataReader sdr = cmdGroup.ExecuteReader())
                 {

@@ -75,6 +75,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
             List<WxCard> wxCard = WxCard.GetCardList(wxUser.OpenID);
             jWxCard = JsonMapper.ToJson(wxCard);
 
+
             //注册JS变量openID，用于用户分享页面时带上自己的OpenID
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
             //注册JS变量wxCard，用于微信卡券

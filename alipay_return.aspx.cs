@@ -110,11 +110,11 @@ public partial class alipay_return : System.Web.UI.Page
                                         {
                                             case "TRADE_SUCCESS":
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-success";
-                                                this.divAliPayMsg.InnerText = "支付宝支付成功，请返回微信";
+                                                this.divAliPayMsg.InnerText = "支付宝支付成功，请返回FruitU";
                                                 break;
                                             case "TRADE_FINISHED":
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-success";
-                                                this.divAliPayMsg.InnerText = "支付宝支付结束，请返回微信";
+                                                this.divAliPayMsg.InnerText = "支付宝支付结束，请返回FruitU";
                                                 break;
                                             case "WAIT_BUYER_PAY":
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-warning";
@@ -122,11 +122,11 @@ public partial class alipay_return : System.Web.UI.Page
                                                 break;
                                             case "TRADE_CLOSED":
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-info";
-                                                this.divAliPayMsg.InnerText = "支付宝交易已关闭，请返回微信";
+                                                this.divAliPayMsg.InnerText = "支付宝交易已关闭，请返回FruitU";
                                                 break;
                                             case "TRADE_PENDING":
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-info";
-                                                this.divAliPayMsg.InnerText = "等待卖家收款，请返回微信";
+                                                this.divAliPayMsg.InnerText = "等待卖家收款，请返回FruitU";
                                                 break;
                                             default:
                                                 this.divAliPayMsg.Attributes["class"] = "alert alert-danger";
@@ -169,7 +169,7 @@ public partial class alipay_return : System.Web.UI.Page
         {
             Log.Error(this.GetType().ToString(), string.Format("支付宝通知出错 :{0}\n请求方IP：{1}", ex.Message + ex.StackTrace, Request.UserHostAddress));
             this.divAliPayMsg.Attributes["class"] = "alert alert-danger";
-            this.divAliPayMsg.InnerHtml = string.Format("提示：{0}<br>请返回微信查看订单", ex.Message);
+            this.divAliPayMsg.InnerHtml = string.Format("提示：{0}<br>请返回FruitU查看订单", ex.Message);
         }
     }
 

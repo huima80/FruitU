@@ -44,7 +44,7 @@
             </div>
         </div>
         <hr />
-        <div runat="server" class="row" id="divGroupEventMember">
+        <div runat="server" class="row text-left" id="divGroupEventMember">
         </div>
         <div class="col-xs-12 share-group-event" runat="server" id="divShareGroupEvent">
             <button type="button" class="btn btn-warning" onclick="openModal()"><i class="fa fa-share-alt fa-lg fa-fw"></i>邀请拼团</button>

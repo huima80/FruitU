@@ -12,10 +12,10 @@ public partial class admin_MasterPage : System.Web.UI.MasterPage
     {
         base.OnInit(e);
 
-        //if (!HttpContext.Current.User.Identity.IsAuthenticated || !Roles.IsUserInRole(Config.AdminRoleName))
-        //{
-        //    FormsAuthentication.RedirectToLoginPage();
-        //}
+        if (!HttpContext.Current.User.Identity.IsAuthenticated || !Roles.IsUserInRole(Config.AdminRoleName))
+        {
+            FormsAuthentication.RedirectToLoginPage();
+        }
     }
 
     protected void Page_Load(object sender, EventArgs e)

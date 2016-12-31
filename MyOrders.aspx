@@ -49,14 +49,14 @@
                     <span class="order-id">订单号：{{:OrderID}}</span>
                     <span class="order-date">下单时间：{{:OrderDate}}</span>
                 </div>
-                  <hr />
-              <ul>
+                <hr />
+                <ul>
                     {{for OrderDetailList}}
                 <li>
                     <img src="images/{{:FruitImgList[0].ImgName}}" class="prod-img" />
                     <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span>
                     {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 1}}
-                        <span class="label label-warning group-purchase-label"><i class="fa fa-group"></i>团购成功</span>
+                        <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-group"></i>团购成功</span>
                     {{/if}}
                     {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 2}}
                         <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-share-alt"></i>邀请拼团</span>
@@ -65,7 +65,7 @@
                     {{/for}}
                 </ul>
                 <div class="row order-price-freight">
-<%--                {{if OrderMemo != null}}
+                    <%--                {{if OrderMemo != null}}
                     <div class="col-xs-6 order-memo"><i class="fa fa-info-circle"></i><marquee>{{:OrderMemo}}</marquee></div>
                 {{/if}}--%>
                     <div class="col-xs-12 order-total">

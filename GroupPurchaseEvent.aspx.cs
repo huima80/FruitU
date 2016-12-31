@@ -43,7 +43,22 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                         this.lblEventStardDate.Text = groupEvent.GroupPurchase.StartDate.ToString();
                         this.lblEventEndDate.Text = groupEvent.GroupPurchase.EndDate.ToString();
                         //此团购活动还缺的人数
-                        int leftNumber = groupEvent.GroupPurchaseEventMembers != null ? (groupEvent.GroupPurchase.RequiredNumber - groupEvent.GroupPurchaseEventMembers.Count) : groupEvent.GroupPurchase.RequiredNumber;
+                        int leftNumber;
+                        if (groupEvent.GroupPurchaseEventMembers != null)
+                        {
+                            if (groupEvent.GroupPurchase.RequiredNumber >= groupEvent.GroupPurchaseEventMembers.Count)
+                            {
+                                leftNumber = groupEvent.GroupPurchase.RequiredNumber - groupEvent.GroupPurchaseEventMembers.Count;
+                            }
+                            else
+                            {
+                                leftNumber = 0;
+                            }
+                        }
+                        else
+                        {
+                            leftNumber = groupEvent.GroupPurchase.RequiredNumber;
+                        }
                         if (leftNumber > 0)
                         {
                             this.lblLeftNumber.Text = leftNumber.ToString();
@@ -60,8 +75,8 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             //团购活动的成员
                             groupEvent.GroupPurchaseEventMembers.ForEach(member =>
                             {
-                            //是否团长
-                            if (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID)
+                                //是否团长
+                                if (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID)
                                 {
                                     strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
                                     strEventMemberList += string.Format("<div class='col-xs-12 user-portrait'><img src='{0}'/> 【{1}】 {2} 开团</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString());
@@ -136,7 +151,7 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                 throw new Exception("请指定团购ID");
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             this.lblMsg.Text = ex.Message;
             this.lblMsg.Visible = true;

@@ -31,3 +31,7 @@
     top: 40px;
     right: 10px;
 }
+
+.list-group-item .badge{
+    float:left;
+}

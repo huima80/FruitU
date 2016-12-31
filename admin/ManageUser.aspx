@@ -115,19 +115,20 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="微信昵称" SortExpression="NickName" ItemStyle-CssClass="col-lg-2">
                             <ItemTemplate>
-                                <p><asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label></p>
-                                <p><asp:Label ID="lblMemberPoints" runat="server" Text='<%# "会员积分："+Eval("MemberPoints") %>'></asp:Label></p>
+                                <p>
+                                    <asp:Label ID="lblNickName" runat="server" Text='<%# ((bool)Eval("Sex")?"<i class=\"fa fa-mars\" style=\"color:blue;\"></i>&nbsp;":"<i class=\"fa fa-venus\" style=\"color:deeppink;\"></i>&nbsp;")+ Eval("NickName").ToString()+(!string.IsNullOrEmpty(Eval("Privilege").ToString())?string.Format("<br/>【{0}】",Eval("Privilege").ToString()):string.Empty) %>' ToolTip='<%# "微信OpenID:"+Eval("OpenID") %>'></asp:Label></p>
+                                <p>
+                                    <asp:Label ID="lblMemberPoints" runat="server" Text='<%# "会员积分："+Eval("MemberPoints") %>'></asp:Label></p>
                             </ItemTemplate>
 
-<ItemStyle CssClass="col-lg-2"></ItemStyle>
+                            <ItemStyle CssClass="col-lg-2"></ItemStyle>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="地区" SortExpression="Country">
                             <ItemTemplate>
-                                <p title='<%# Eval("ClientIP") %>'>
-                                    <asp:Label ID="Label1" runat="server" Text='<%# Eval("Country") %>'></asp:Label>
-                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("Province") %>'></asp:Label>
-                                    <asp:Label ID="Label4" runat="server" Text='<%# Eval("City") %>'></asp:Label>
-                                </p>
+                                <asp:Label ID="Label1" runat="server" Text='<%# Eval("Country") %>'></asp:Label>
+                                <asp:Label ID="Label3" runat="server" Text='<%# Eval("Province") %>'></asp:Label>
+                                <asp:Label ID="Label4" runat="server" Text='<%# Eval("City") %>'></asp:Label>
+                                <a href='http://www.ip138.com/ips138.asp?ip=<%# Eval("ClientIP") %>' title="查看IP地址详情" target="_blank"><i class="fa fa-search"></i></a>
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="注册时间/活跃时间" SortExpression="CreationDate">

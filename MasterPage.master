@@ -137,6 +137,25 @@
                         $("#spWxCardMenu").hide();
                     }
 
+                    //异步查询用户的团购活动情况
+                    $.ajax({
+                        url: "CheckGroupPurchaseEvent.ashx",
+                        type: "GET",
+                        dataType: "json",
+                        cache: false,
+                        success: function (jGroupEvent) {
+                            if (jGroupEvent["eventGoingCount"] > 0) {
+                                $("#spGroupPurchaseEventHints").addClass("group-event-hint").show();
+                            }
+                            else {
+                                $("#spGroupPurchaseEventHints").hide();
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                        }
+                    });
+
                     requirejs(['jweixin110'], function (wx) {
                         if (typeof wxJsApiParam == "undefined") {
                             throw new Error("微信JSSDK参数错误");
