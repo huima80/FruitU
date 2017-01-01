@@ -16,6 +16,11 @@ public class OrderDetail : Fruit
     public int ProductID { get; set; }
 
     /// <summary>
+    /// 订单明细所属的订单对象
+    /// </summary>
+    public ProductOrder ProductOrder { get; set; }
+
+    /// <summary>
     /// 订单商品名称
     /// </summary>
     public string OrderProductName { get; set; }

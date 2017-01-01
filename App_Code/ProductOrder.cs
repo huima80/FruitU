@@ -1399,13 +1399,12 @@ public class ProductOrder : IComparable<ProductOrder>
                                     po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
                                 }
 
-                                //此订单的商品详情
+                                //此订单的商品明细详情
                                 po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
 
                                 poPerPage.Add(po);
 
                             }
-                            sdrOrder.Close();
                         }
 
                         if (!int.TryParse(paramTotalRows.SqlValue.ToString(), out totalRows))
@@ -1522,65 +1521,31 @@ public class ProductOrder : IComparable<ProductOrder>
     }
 
     /// <summary>
-    /// 根据订单ID查询订单
+    /// 根据ID查询订单，默认加载订单明细项
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="id">订单ID</param>
     /// <returns></returns>
     public ProductOrder FindOrderByID(int id)
+    {
+        this.FindOrderByID(id, true);
+        return this;
+    }
+
+    /// <summary>
+    /// 根据ID查询订单，指定是否加载订单明细项
+    /// </summary>
+    /// <param name="id">订单ID</param>
+    /// <param name="isLoadOrderDetail">是否加载订单明细项</param>
+    /// <returns></returns>
+    public ProductOrder FindOrderByID(int id, bool isLoadOrderDetail)
     {
         try
         {
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
-
-                try
-                {
-                    using (SqlCommand cmdOrder = conn.CreateCommand())
-                    {
-                        cmdOrder.CommandText = "select * from ProductOrder where Id=@Id";
-
-                        Log.Debug("ProductOrder::根据订单ID查询订单", cmdOrder.CommandText);
-
-                        SqlParameter paramID = cmdOrder.CreateParameter();
-                        paramID.ParameterName = "@Id";
-                        paramID.SqlDbType = System.Data.SqlDbType.Int;
-                        paramID.SqlValue = id;
-                        cmdOrder.Parameters.Add(paramID);
-
-                        using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
-                        {
-                            while (sdrOrder.Read())
-                            {
-                                SDR2PO(this, sdrOrder);
-
-                                this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
-                                if (sdrOrder["AgentOpenID"] != null)
-                                {
-                                    this.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
-                                }
-
-                                this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
-
-                            }
-                            sdrOrder.Close();
-                        }
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
+                this.FindOrderByID(conn, id, isLoadOrderDetail);
             }
-
         }
         catch (Exception ex)
         {
@@ -1589,7 +1554,60 @@ public class ProductOrder : IComparable<ProductOrder>
         }
 
         return this;
+    }
 
+    /// <summary>
+    /// 根据订单ID查询订单
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <param name="id"></param>
+    /// <param name="isLoadOrderDetail"></param>
+    /// <returns></returns>
+    public ProductOrder FindOrderByID(SqlConnection conn, int id, bool isLoadOrderDetail)
+    {
+        try
+        {
+            using (SqlCommand cmdOrder = conn.CreateCommand())
+            {
+                cmdOrder.CommandText = "select * from ProductOrder where Id=@Id";
+
+                SqlParameter paramID = cmdOrder.CreateParameter();
+                paramID.ParameterName = "@Id";
+                paramID.SqlDbType = System.Data.SqlDbType.Int;
+                paramID.SqlValue = id;
+                cmdOrder.Parameters.Add(paramID);
+
+                using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
+                {
+                    while (sdrOrder.Read())
+                    {
+                        SDR2PO(this, sdrOrder);
+
+                        this.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                        if (sdrOrder["AgentOpenID"] != null)
+                        {
+                            this.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                        }
+
+                        if (isLoadOrderDetail)
+                        {
+                            this.OrderDetailList = FindOrderDetailByPoID(conn, this.ID);
+                        }
+                        else
+                        {
+                            this.OrderDetailList = null;
+                        }
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+
+        return this;
     }
 
     /// <summary>
@@ -1753,75 +1771,72 @@ public class ProductOrder : IComparable<ProductOrder>
         return poList;
     }
 
+    public static List<ProductOrder> FindOrderByGroupEventID(int eventID)
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+                return FindOrderByGroupEventID(conn, eventID);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("ProductOrder", ex.ToString());
+            throw ex;
+        }
+    }
+
     /// <summary>
     /// 根据团购活动ID，查询所有相关的订单
     /// </summary>
+    /// <param name="conn"></param>
     /// <param name="eventID">团购活动ID</param>
     /// <returns></returns>
-    public static List<ProductOrder> FindOrderByGroupEventID(int eventID)
+    public static List<ProductOrder> FindOrderByGroupEventID(SqlConnection conn, int eventID)
     {
         List<ProductOrder> poList = new List<ProductOrder>();
         ProductOrder po;
 
         try
         {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            using (SqlCommand cmdOrder = conn.CreateCommand())
             {
-                conn.Open();
+                cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID) order by Id";
 
-                try
+                SqlParameter paramEventID = cmdOrder.CreateParameter();
+                paramEventID.ParameterName = "@EventID";
+                paramEventID.SqlDbType = System.Data.SqlDbType.Int;
+                paramEventID.SqlValue = eventID;
+                cmdOrder.Parameters.Add(paramEventID);
+
+                using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
                 {
-                    using (SqlCommand cmdOrder = conn.CreateCommand())
+                    while (sdrOrder.Read())
                     {
-                        cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID) order by Id";
+                        po = new ProductOrder();
 
-                        SqlParameter paramEventID = cmdOrder.CreateParameter();
-                        paramEventID.ParameterName = "@EventID";
-                        paramEventID.SqlDbType = System.Data.SqlDbType.Int;
-                        paramEventID.SqlValue = eventID;
-                        cmdOrder.Parameters.Add(paramEventID);
+                        SDR2PO(po, sdrOrder);
 
-                        using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
+                        po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                        if (sdrOrder["AgentOpenID"] != null)
                         {
-                            while (sdrOrder.Read())
-                            {
-                                po = new ProductOrder();
-
-                                SDR2PO(po, sdrOrder);
-
-                                po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
-                                if (sdrOrder["AgentOpenID"] != null)
-                                {
-                                    po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
-                                }
-
-                                po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID);
-
-                                poList.Add(po);
-
-                            }
-                            sdrOrder.Close();
+                            po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
                         }
 
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
+                        po.OrderDetailList = FindOrderDetailByPoID(conn, po.ID, false);
 
+                        poList.Add(po);
+
+                    }
+                    sdrOrder.Close();
+                }
+
+            }
         }
         catch (Exception ex)
         {
-            Log.Error("ProductOrder", ex.ToString());
             throw ex;
         }
 
@@ -1829,6 +1844,16 @@ public class ProductOrder : IComparable<ProductOrder>
 
     }
 
+    /// <summary>
+    /// 根据订单ID查询订单明细，默认加载订单明细项包含的团购活动
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <param name="poID"></param>
+    /// <returns></returns>
+    public static List<OrderDetail> FindOrderDetailByPoID(SqlConnection conn, int poID)
+    {
+        return FindOrderDetailByPoID(conn, poID, true);
+    }
 
     /// <summary>
     /// 根据订单ID查询订单明细
@@ -1836,15 +1861,20 @@ public class ProductOrder : IComparable<ProductOrder>
     /// 此时对应的业务场景为此订单项对应的商品已下架。
     /// </summary>
     /// <param name="conn"></param>
-    /// <param name="poID"></param>
+    /// <param name="poID">订单ID</param>
+    /// <param name="isLoadGroupEvent">是否加载订单明细项包含的团购活动</param>
     /// <returns></returns>
-    public static List<OrderDetail> FindOrderDetailByPoID(SqlConnection conn, int poID)
+    public static List<OrderDetail> FindOrderDetailByPoID(SqlConnection conn, int poID, bool isLoadGroupEvent)
     {
         List<OrderDetail> odList = new List<OrderDetail>();
         OrderDetail od;
 
         try
         {
+            //查询指定的订单对象，用于订单明细项所属的订单对象
+            ProductOrder po = new ProductOrder();
+            po.FindOrderByID(poID, false);
+            
             using (SqlCommand cmdOrderDetail = conn.CreateCommand())
             {
                 cmdOrderDetail.CommandText = "select OrderDetail.*, Product.* from OrderDetail left join Product on OrderDetail.ProductID = Product.Id where PoID=@PoID";
@@ -1877,15 +1907,24 @@ public class ProductOrder : IComparable<ProductOrder>
                         od.PurchaseQty = int.Parse(sdrOrderDetail["PurchaseQty"].ToString());
                         od.PurchaseUnit = sdrOrderDetail["PurchaseUnit"].ToString();
                         od.FruitImgList = Fruit.FindFruitImgByProdID(conn, od.ProductID);
-                        if (sdrOrderDetail["GroupEventID"] != DBNull.Value)
+                        if (isLoadGroupEvent)
                         {
-                            //加载此订单商品项对应的团购活动，包括团购成员
-                            od.GroupPurchaseEvent = GroupPurchaseEvent.FindGroupPurchaseEventByID(conn, int.Parse(sdrOrderDetail["GroupEventID"].ToString()), true);
+                            if (sdrOrderDetail["GroupEventID"] != DBNull.Value)
+                            {
+                                //加载此订单商品项对应的团购活动，包括团购活动成员
+                                od.GroupPurchaseEvent = GroupPurchaseEvent.FindGroupPurchaseEventByID(conn, int.Parse(sdrOrderDetail["GroupEventID"].ToString()), true);
+                            }
+                            else
+                            {
+                                od.GroupPurchaseEvent = null;
+                            }
                         }
                         else
                         {
                             od.GroupPurchaseEvent = null;
                         }
+                        //订单明细项所属的订单对象
+                        od.ProductOrder = po;
 
                         odList.Add(od);
                     }
@@ -2793,7 +2832,7 @@ public class ProductOrder : IComparable<ProductOrder>
                         {
                             jOD["GroupPurchaseEvent"] = new JsonData();
                             jOD["GroupPurchaseEvent"]["EventID"] = od.GroupPurchaseEvent.ID;
-                            jOD["GroupPurchaseEvent"]["GroupEventStatus"] = (int)od.GroupPurchaseEvent.GroupEventStatus;
+                            jOD["GroupPurchaseEvent"]["GroupEventStatusForUser"] = (int)GroupPurchaseEvent.CheckGroupPurchaseEventStatus(od.GroupPurchaseEvent, od.ProductOrder.Purchaser);
                         }
 
                         jPO["OrderDetailList"].Add(jOD);

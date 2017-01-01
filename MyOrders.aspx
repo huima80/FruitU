@@ -16,10 +16,14 @@
                     <span class="icon-bar"></span>
                 </button>
                 <p class="navbar-text">
-                    <i class="fa fa-file-text-o"></i>&nbsp;订单数<span id="spanOrderSubmitted"></span>
-                    <i class="fa fa-credit-card"></i>&nbsp;未支付<span id="spanOrderPaid"></span>
-                    <i class="fa fa-truck"></i>&nbsp;未发货<span id="spanOrderDelivered"></span>
-                    <i class="fa fa-pencil-square-o"></i>&nbsp;未签收<span id="spanOrderAccepted"></span>
+                    <i class="fa fa-file-text-o text-success"></i>&nbsp;订单数:<span id="spanOrderSubmitted"></span>
+                    <i class="fa fa-credit-card"></i>&nbsp;未支付:<span id="spanOrderPaid"></span>
+                    <i class="fa fa-truck"></i>&nbsp;未发货:<span id="spanOrderDelivered"></span>
+                    <i class="fa fa-pencil-square-o"></i>&nbsp;未签收:<span id="spanOrderAccepted"></span>
+                    <br />
+                    <i class="fa fa-group text-success"></i>&nbsp;团购成功:<span id="spEventSuccessCount"></span>
+                    <i class="fa fa-group text-info"></i>&nbsp;团购进行中:<span id="spEventGoingCount"></span>
+                    <i class="fa fa-group text-danger"></i>&nbsp;团购失败:<span id="spEventFailCount"></span>
                 </p>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -55,11 +59,14 @@
                 <li>
                     <img src="images/{{:FruitImgList[0].ImgName}}" class="prod-img" />
                     <span class="order-product-name">{{:OrderProductName}}</span>  <span class="purchase-price">￥{{:PurchasePrice}}</span><span class="purchase-unit">元/{{:PurchaseUnit}}</span> <span class="purchase-qty">x {{:PurchaseQty}}</span>
-                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 1}}
-                        <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-group"></i>团购成功</span>
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatusForUser == 1 }}
+                        <span class="label label-success group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-group"></i>&nbsp;团购成功</span>
                     {{/if}}
-                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatus == 2}}
-                        <span class="label label-warning group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-share-alt"></i>邀请拼团</span>
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatusForUser == 2}}
+                        <span class="label label-info group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-share-alt"></i>&nbsp;邀请拼团</span>
+                    {{/if}}
+                    {{if GroupPurchaseEvent != null && GroupPurchaseEvent.GroupEventStatusForUser == 3}}
+                        <span class="label label-danger group-purchase-label" onclick="location.href='GroupPurchaseEvent.aspx?EventID={{:GroupPurchaseEvent.EventID}}';"><i class="fa fa-group"></i>&nbsp;拼团失败</span>
                     {{/if}}
                 </li>
                     {{/for}}

@@ -134,7 +134,7 @@
                                             <asp:Label ID="PurchasePriceLabel" runat="server" Text='<%# Eval("PurchasePrice", "{0:C}") %>' CssClass="purchase-price" />
                                             元/<asp:Label ID="PurchaseUnitLabel" runat="server" Text='<%# Eval("PurchaseUnit") %>' />
                                             <asp:Label ID="PurchaseQtyLabel" runat="server" Text='<%# "x "+Eval("PurchaseQty") %>' CssClass="purchase-qty" />
-                                            <asp:HyperLink ID="hlGroupPurchaseEventStatus" runat="server" CssClass="label label-warning"></asp:HyperLink>
+                                            <asp:HyperLink ID="hlGroupPurchaseEventStatus" runat="server"></asp:HyperLink>
                                         </li>
                                     </ItemTemplate>
                                 </asp:DataList>

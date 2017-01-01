@@ -339,6 +339,17 @@ public partial class admin_ManageGroupPurchase : System.Web.UI.Page
                 this.txtGroupPurchaseName.Style.Clear();
             }
 
+            //查询条件：团购活动ID
+            if (!string.IsNullOrEmpty(this.txtGroupEventID.Text.Trim()))
+            {
+                UtilityHelper.AntiSQLInjection(this.txtGroupEventID.Text);
+                listWhere.Add(string.Format("Id in (select GroupID from GroupPurchaseEvent where Id = {0})", this.txtGroupEventID.Text.Trim()));
+                this.txtGroupEventID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+            }
+            else
+            {
+                this.txtGroupEventID.Style.Clear();
+            }
 
             strWhere = string.Join<string>(" and ", listWhere);
 

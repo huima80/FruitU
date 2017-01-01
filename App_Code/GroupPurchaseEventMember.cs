@@ -27,6 +27,11 @@ public class GroupPurchaseEventMember
     /// </summary>
     public DateTime JoinDate { get; set; }
 
+    /// <summary>
+    /// 团购成员在此团购活动下的所有订单是否都已支付
+    /// </summary>
+    public bool IsPaid { get; set; }
+
     public GroupPurchaseEventMember()
     {
         //
@@ -70,6 +75,10 @@ public class GroupPurchaseEventMember
             //查询此团购活动成员所属的团购活动
             GroupPurchaseEvent groupEvent = GroupPurchaseEvent.FindGroupPurchaseEventByID(conn, groupEventID, false);
 
+            //查询团购活动关联的所有订单
+            List<ProductOrder> poList = ProductOrder.FindOrderByGroupEventID(conn, groupEventID);
+            List<ProductOrder> poListOfOneMember;
+
             using (SqlCommand cmdGroupID = conn.CreateCommand())
             {
                 SqlParameter paramID = cmdGroupID.CreateParameter();
@@ -78,7 +87,7 @@ public class GroupPurchaseEventMember
                 paramID.SqlValue = groupEventID;
                 cmdGroupID.Parameters.Add(paramID);
 
-                cmdGroupID.CommandText = "select * from GroupPurchaseEventMember where GroupEventID = @GroupEventID";
+                cmdGroupID.CommandText = "select * from GroupPurchaseEventMember where GroupEventID = @GroupEventID order by Id";
 
                 using (SqlDataReader sdr = cmdGroupID.ExecuteReader())
                 {
@@ -91,6 +100,26 @@ public class GroupPurchaseEventMember
                         eventMember.GroupMember = WeChatUserDAO.FindUserByOpenID(conn, sdr["GroupMember"].ToString(), false);
                         eventMember.JoinDate = DateTime.Parse(sdr["JoinDate"].ToString());
                         eventMember.GroupPurchaseEvent = groupEvent;
+
+                        //在团购活动订单中，找出属于当前成员的订单
+                        poListOfOneMember = poList.FindAll(po => po.Purchaser.OpenID == eventMember.GroupMember.OpenID);
+                        //检查当前成员是否有未支付的订单
+                        bool existNotPaidPO = poListOfOneMember.Exists(poOfOneMember =>
+                        {
+                            if (poOfOneMember.TradeState != TradeState.SUCCESS
+                            && poOfOneMember.TradeState != TradeState.CASHPAID
+                            && poOfOneMember.TradeState != TradeState.AP_TRADE_FINISHED
+                            && poOfOneMember.TradeState != TradeState.AP_TRADE_SUCCESS)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        });
+                        //设置当前成员的支付标记
+                        eventMember.IsPaid = !existNotPaidPO ? true : false;
 
                         groupEventMemberList.Add(eventMember);
                     }

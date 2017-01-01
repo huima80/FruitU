@@ -68,6 +68,7 @@ img.prod-img {
 .user-portrait {
     line-height: 300%;
     position: relative;
+    font-size: 12px;
 }
 
     .user-portrait img {

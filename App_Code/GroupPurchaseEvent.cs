@@ -326,7 +326,7 @@ public class GroupPurchaseEvent
                 paramID.SqlValue = groupID;
                 cmdGroup.Parameters.Add(paramID);
 
-                cmdGroup.CommandText = "select * from GroupPurchaseEvent where GroupID = @GroupID";
+                cmdGroup.CommandText = "select * from GroupPurchaseEvent where GroupID = @GroupID order by Id desc";
 
                 using (SqlDataReader sdr = cmdGroup.ExecuteReader())
                 {
@@ -636,14 +636,15 @@ public class GroupPurchaseEvent
     }
 
     /// <summary>
-    /// 检查订单中所有相关团购活动的状态
+    /// 检查指定团购活动的状态
     /// 1，成功：团购活动在有效期内达到规定人数，且活动相关订单都支付成功
     /// 2，进行中：团购活动在有效期内，已支付的成员数尚未达到规定人数
     /// 3，失败：团购活动超过有效期，已支付的成员数尚未达到规定人数
     /// </summary>
     /// <param name="groupEvent">团购活动</param>
+    /// <param name="wxUser">可选，当指定团购活动中的用户时，要进一步判断此用户是否支付成功，其支付顺序是否在要求人数内，再决定对此用户来说团购活动是否成功</param>
     /// <returns></returns>
-    public static GroupEventStatus CheckGroupPurchaseEventStatus(GroupPurchaseEvent groupEvent)
+    public static GroupEventStatus CheckGroupPurchaseEventStatus(GroupPurchaseEvent groupEvent, WeChatUser wxUser = null)
     {
         GroupEventStatus eventStatus;
         DateTime nowTime = DateTime.Now;
@@ -653,41 +654,40 @@ public class GroupPurchaseEvent
             {
                 if (groupEvent.GroupPurchaseEventMembers != null && groupEvent.GroupPurchaseEventMembers.Count >= groupEvent.GroupPurchase.RequiredNumber)
                 {
-                    //已支付的成员数量
-                    int paidMemberCount = 0;
-                    //查询团购活动关联的所有订单
-                    List<ProductOrder> poList = ProductOrder.FindOrderByGroupEventID(groupEvent.ID);
-                    //属于某个成员的订单
-                    List<ProductOrder> poListOfOneMember;
-                    groupEvent.GroupPurchaseEventMembers.ForEach(member =>
+                    //已支付的团购成员
+                    List<GroupPurchaseEventMember> membersPaid = groupEvent.GroupPurchaseEventMembers.FindAll(member => member.IsPaid);
+
+                    //如果已支付的成员数达到团购要求的成员数，则团购成功
+                    if (membersPaid.Count >= groupEvent.GroupPurchase.RequiredNumber)
                     {
-                        poListOfOneMember = poList.FindAll(po => po.Purchaser.OpenID == member.GroupMember.OpenID);
-                        //检查当前成员是否有在活动有效期内未支付的订单
-                        bool existNotPaidPO = poListOfOneMember.Exists(poOfOneMember =>
+                        //如果没有指定用户，则对于管理员来说，此团购活动成功
+                        if (wxUser == null)
+                        {
+                            eventStatus = GroupEventStatus.EVENT_SUCCESS;
+                        }
+                        else
+                        {
+                            //如果指定的用户支付成功
+                            if (membersPaid.Exists(member => member.GroupMember.OpenID == wxUser.OpenID))
                             {
-                                if ((poOfOneMember.OrderDate >= groupEvent.GroupPurchase.StartDate && poOfOneMember.OrderDate <= groupEvent.GroupPurchase.EndDate)
-                                && poOfOneMember.TradeState != TradeState.SUCCESS
-                                && poOfOneMember.TradeState != TradeState.CASHPAID
-                                && poOfOneMember.TradeState != TradeState.AP_TRADE_FINISHED
-                                && poOfOneMember.TradeState != TradeState.AP_TRADE_SUCCESS)
+                                //再判断此用户是第几个支付成功的，按先后顺序，如果此用户在要求人数以内支付成功，则此团购活动成功，否则团购活动失败
+                                int theMemberPaidIndex = membersPaid.FindIndex(member => member.GroupMember.OpenID == wxUser.OpenID);
+                                if (theMemberPaidIndex + 1 <= groupEvent.GroupPurchase.RequiredNumber)
                                 {
-                                    return true;
+                                    eventStatus = GroupEventStatus.EVENT_SUCCESS;
                                 }
                                 else
                                 {
-                                    return false;
+                                    //如果指定的用户虽然支付成功，但按先后顺序，已超过了要求人数，则对于此用户来说，此团购活动失败
+                                    eventStatus = GroupEventStatus.EVENT_FAIL;
                                 }
-                            });
-                        if (!existNotPaidPO)
-                        {
-                            paidMemberCount++;
+                            }
+                            else
+                            {
+                                //如果指定的用户未支付成功，由于此团购已支付人数已达到要求，则对于此用户来说，此团购活动失败
+                                eventStatus = GroupEventStatus.EVENT_FAIL;
+                            }
                         }
-                    });
-
-                    //如果已支付的成员数达到团购要求的成员数，则团购成功
-                    if (paidMemberCount >= groupEvent.GroupPurchase.RequiredNumber)
-                    {
-                        eventStatus = GroupEventStatus.EVENT_SUCCESS;
                     }
                     else
                     {

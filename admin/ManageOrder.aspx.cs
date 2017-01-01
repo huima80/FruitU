@@ -697,15 +697,19 @@ public partial class ManageOrder : System.Web.UI.Page
                 HyperLink hlGroupPurchaseEventStatus = e.Item.FindControl("hlGroupPurchaseEventStatus") as HyperLink;
                 hlGroupPurchaseEventStatus.NavigateUrl = Request.Url.AbsolutePath + "?GroupEventID=" + od.GroupPurchaseEvent.ID;
                 hlGroupPurchaseEventStatus.ToolTip = "查看此团购活动的所有订单";
-                switch (GroupPurchaseEvent.CheckGroupPurchaseEventStatus(od.GroupPurchaseEvent))
+                //查询此用户的当前订单项对应的团购活动状态，需要判断活动中已支付人数是否符合要求、此用户是否支付
+                switch (GroupPurchaseEvent.CheckGroupPurchaseEventStatus(od.GroupPurchaseEvent, od.ProductOrder.Purchaser))
                 {
                     case GroupEventStatus.EVENT_SUCCESS:
+                        hlGroupPurchaseEventStatus.CssClass = "label label-success";
                         hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购成功";
                         break;
                     case GroupEventStatus.EVENT_GOING:
+                        hlGroupPurchaseEventStatus.CssClass = "label label-info";
                         hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购进行中";
                         break;
                     case GroupEventStatus.EVENT_FAIL:
+                        hlGroupPurchaseEventStatus.CssClass = "label label-danger";
                         hlGroupPurchaseEventStatus.Text = "<i class=\"fa fa-group fa-fw\"></i>团购失败";
                         break;
                 }

@@ -12,7 +12,7 @@
             </div>
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-lg-8">
+                    <div class="col-lg-7">
                         <ul>
                             <li>每个商品可以创建多个团购，但只有在有效期内最新的一个团购<span class="bg-success">（绿底色）</span>有效。</li>
                             <li>用户可在每个团购下创建多个团购活动，并在团购有效期内拼团。</li>
@@ -20,11 +20,16 @@
                             <li>当拼团成功，或超过有效期拼团失败，将给管理员和用户发送微信消息。</li>
                         </ul>
                     </div>
-                    <div class="col-lg-4 text-right" id="divCriterias">
+                    <div class="col-lg-5 text-right" id="divCriterias">
                         <div class="form-group">
-                            <label for="btnSearch" class="sr-only">按团购名称查询</label>
+                            <label for="txtGroupPurchaseName" class="sr-only">按团购名称查询</label>
                             <asp:TextBox ID="txtGroupPurchaseName" runat="server" placeholder="请输入团购名称..." CssClass="form-control"></asp:TextBox>
                         </div>
+                        <div class="form-group">
+                            <label for="txtGroupEventID" class="sr-only">按团购活动ID查询</label>
+                            <asp:TextBox ID="txtGroupEventID" runat="server" placeholder="请输入团购活动ID..." CssClass="form-control"></asp:TextBox>
+                        </div>
+                        <br />
                         <asp:Button ID="btnSearch" runat="server" CssClass="btn btn-info" Text="查询" OnClientClick="return verifyCriteria();" OnClick="btnSearch_Click" />
                         <asp:Button ID="btnShowAll" runat="server" Text="全部团购" CssClass="btn btn-warning" OnClick="btnShowAll_Click" />
                     </div>
@@ -51,7 +56,7 @@
                                     </div>
                                     <div class="col-xs-5">
                                         <div>
-                                            <asp:Label ID="Label9" runat="server" Text='<%# Eval("Name") %>'></asp:Label>
+                                            <asp:Label ID="Label9" runat="server" Text='<%# Eval("Name") %>' CssClass="group-event-name"></asp:Label>
                                         </div>
                                         <div>
                                             <asp:Label ID="Label1" runat="server" Text='<%# Eval("Description") %>'></asp:Label>
@@ -214,6 +219,33 @@
             var rpGroupEvents = $(event.target).parents("div.row:first").next();
             if (!!rpGroupEvents) {
                 rpGroupEvents.slideToggle();
+            }
+        }
+
+        //校验是否输入了查询条件
+        function verifyCriteria() {
+            var hasCriteria = false;
+
+            $("#divCriterias select").each(function () {
+                if (this.selectedIndex != 0) {
+                    hasCriteria = true;
+                    return;
+                }
+            });
+
+            $("#divCriterias input:text").each(function () {
+                if (this.value.trim() != "") {
+                    hasCriteria = true;
+                    return;
+                }
+            });
+
+            if (!hasCriteria) {
+                alert("请先选择查询条件。");
+                return false;
+            }
+            else {
+                return true;
             }
         }
 

@@ -99,7 +99,7 @@ img.prod-img {
 .freight-discount {
     font-size: smaller;
     color: orange;
-    text-align:right;
+    text-align: right;
 }
 
 .order-total {
@@ -144,7 +144,7 @@ img.prod-img {
 .cancel-order {
     background-color: lightgrey;
     color: white;
-    font-weight:normal;
+    font-weight: normal;
 }
 
 .form-control, #btnSearch {
@@ -152,7 +152,7 @@ img.prod-img {
 }
 
 .navbar-text {
-    margin-left: 4px;
+    margin: 10px 0px 10px 4px;
     font-size: 11px;
 }
 
@@ -164,11 +164,11 @@ img.prod-img {
     font-weight: normal;
 }
 
-.order-memo{
-    font-size:11px;
-    color:lightgrey;
+.order-memo {
+    font-size: 11px;
+    color: lightgrey;
 }
 
-marquee{
-    width:50%;
+marquee {
+    width: 50%;
 }

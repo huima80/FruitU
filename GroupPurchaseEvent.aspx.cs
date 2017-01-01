@@ -42,13 +42,17 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                         this.lblGroupPriceUnit.Text = groupEvent.GroupPurchase.Product.FruitUnit;
                         this.lblEventStardDate.Text = groupEvent.GroupPurchase.StartDate.ToString();
                         this.lblEventEndDate.Text = groupEvent.GroupPurchase.EndDate.ToString();
+
+                        //查询此团购活动中已支付的成员
+                        List<GroupPurchaseEventMember> paidEventMembers = groupEvent.GroupPurchaseEventMembers.FindAll(member => member.IsPaid);
+
                         //此团购活动还缺的人数
                         int leftNumber;
                         if (groupEvent.GroupPurchaseEventMembers != null)
                         {
-                            if (groupEvent.GroupPurchase.RequiredNumber >= groupEvent.GroupPurchaseEventMembers.Count)
+                            if (groupEvent.GroupPurchase.RequiredNumber > paidEventMembers.Count)
                             {
-                                leftNumber = groupEvent.GroupPurchase.RequiredNumber - groupEvent.GroupPurchaseEventMembers.Count;
+                                leftNumber = groupEvent.GroupPurchase.RequiredNumber - paidEventMembers.Count;
                             }
                             else
                             {
@@ -75,17 +79,12 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             //团购活动的成员
                             groupEvent.GroupPurchaseEventMembers.ForEach(member =>
                             {
-                                //是否团长
-                                if (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID)
+                                //用户已支付才显示头像，并在成员列表中标记其是否支付
+                                if (member.IsPaid)
                                 {
                                     strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
-                                    strEventMemberList += string.Format("<div class='col-xs-12 user-portrait'><img src='{0}'/> 【{1}】 {2} 开团</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString());
                                 }
-                                else
-                                {
-                                    strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
-                                    strEventMemberList += string.Format("<div class='col-xs-12 user-portrait'><img src='{0}'/> 【{1}】 {2} 参团</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString());
-                                }
+                                strEventMemberList += string.Format("<div class='col-xs-12 user-portrait {3}'><img src='{0}'/> 【{1}】 {2} {4}{5}</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString(), !member.IsPaid ? "text-muted" : string.Empty, (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID) ? "开团" : "参团", !member.IsPaid ? "（未支付）" : string.Empty);
                             });
                             //尚缺的团购活动成员头像
                             for (int i = 0; i < leftNumber; i++)
@@ -100,26 +99,35 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             this.divGroupEventMember.InnerHtml = strEventMemberList;
                         }
 
-                        //显示团购倒计时和参团按钮
-                        if (DateTime.Now >= groupEvent.GroupPurchase.StartDate && DateTime.Now <= groupEvent.GroupPurchase.EndDate)
+                        DateTime nowTime = DateTime.Now;
+                        if (nowTime >= groupEvent.GroupPurchase.StartDate && nowTime <= groupEvent.GroupPurchase.EndDate)
                         {
-                            this.divShareGroupEvent.Visible = true;
-                            this.divJoinGroupEvent.Visible = true;
-                        }
-                        else
-                        {
-                            if (DateTime.Now < groupEvent.GroupPurchase.StartDate)
+                            //如果已支付成员数未达到要求人数，则允许新用户加入团购活动，否则不允许加入
+                            if (paidEventMembers.Count < groupEvent.GroupPurchase.RequiredNumber)
                             {
-                                this.divCountDown.InnerHtml = "团购活动即将开始，敬请期待！";
+                                this.divShareGroupEvent.Visible = true;
+                                this.divJoinGroupEvent.Visible = true;
                             }
                             else
                             {
-                                this.divCountDown.InnerHtml = "团购活动已经结束，欢迎下次参加！";
+                                this.divShareGroupEvent.Visible = false;
+                                this.divJoinGroupEvent.Visible = false;
+                                this.divCountDown.InnerHtml = "团购已经结束，欢迎下次参加！";
                             }
-
-                            this.divLeftNumber.Visible = false;
+                        }
+                        else
+                        {
                             this.divShareGroupEvent.Visible = false;
                             this.divJoinGroupEvent.Visible = false;
+
+                            if (nowTime < groupEvent.GroupPurchase.StartDate)
+                            {
+                                this.divCountDown.InnerHtml = "团购还未开始，敬请期待！";
+                            }
+                            else
+                            {
+                                this.divCountDown.InnerHtml = "团购已经结束，欢迎下次参加！";
+                            }
                         }
 
                         //把团购活动对象序列化为JSON对象，格式化其中的日期属性

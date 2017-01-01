@@ -7,6 +7,11 @@
     display: none;
 }
 
+.group-event-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
 .group-price {
     color: red;
 }
@@ -32,6 +37,8 @@
     right: 10px;
 }
 
-.list-group-item .badge{
-    float:left;
+.list-group-item .badge {
+    float: left;
+    margin: 5px;
+    background-color: #f0ad4e;
 }

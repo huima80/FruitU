@@ -119,12 +119,6 @@ hr {
     top: -10px;
     z-index: 999;
     padding: 4px;
-    width: 25px;
-    height: 25px;
-    font-size: 12px;
-    font-weight: bold;
-    color: red;
-    border-radius: 50%;
 }
 
 .group-event-hint {

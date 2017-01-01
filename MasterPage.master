@@ -144,11 +144,19 @@
                         dataType: "json",
                         cache: false,
                         success: function (jGroupEvent) {
+                            //在菜单栏里显示团购标记
                             if (jGroupEvent["eventGoingCount"] > 0) {
                                 $("#spGroupPurchaseEventHints").addClass("group-event-hint").show();
                             }
                             else {
                                 $("#spGroupPurchaseEventHints").hide();
+                            }
+
+                            //如果是我的订单页面，则显示全部团购活动情况
+                            if (location.href.toLowerCase().indexOf("myorders") != -1) {
+                                $("#spEventSuccessCount").text(jGroupEvent["eventSuccessCount"]);
+                                $("#spEventGoingCount").text(jGroupEvent["eventGoingCount"]);
+                                $("#spEventFailCount").text(jGroupEvent["eventFailCount"]);
                             }
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
