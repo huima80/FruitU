@@ -162,7 +162,7 @@ public class GroupPurchaseEvent
                         groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
-                            groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
+                            groupEvent.GroupPurchaseEventMembers = groupEvent.FindGroupPurchaseEventMembers(conn);
                         }
                         else
                         {
@@ -251,7 +251,7 @@ public class GroupPurchaseEvent
                         groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
-                            groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
+                            groupEvent.GroupPurchaseEventMembers = groupEvent.FindGroupPurchaseEventMembers(conn);
                         }
                         else
                         {
@@ -271,110 +271,20 @@ public class GroupPurchaseEvent
         return groupEvent;
     }
 
-    /// <summary>
-    /// 查询指定团购下的所有活动，默认加载其团购活动成员
-    /// </summary>
-    /// <param name="groupID"></param>
-    /// <returns></returns>
-    public static List<GroupPurchaseEvent> FindGroupPurchaseEventByGroupID(int groupID)
-    {
-        return FindGroupPurchaseEventByGroupID(groupID, true);
-    }
-
-    /// <summary>
-    /// 查询指定团购下的所有活动
-    /// </summary>
-    /// <param name="groupID">团购ID</param>
-    /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
-    /// <returns></returns>
-    public static List<GroupPurchaseEvent> FindGroupPurchaseEventByGroupID(int groupID, bool isLoadGroupEventMember)
-    {
-        List<GroupPurchaseEvent> groupEventList;
-
-        try
-        {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
-            {
-                conn.Open();
-
-                groupEventList = FindGroupPurchaseEventByGroupID(conn, groupID, isLoadGroupEventMember);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("查询指定团购下的所有活动", ex.ToString());
-            throw ex;
-        }
-
-        return groupEventList;
-    }
-
-    public static List<GroupPurchaseEvent> FindGroupPurchaseEventByGroupID(SqlConnection conn, int groupID, bool isLoadGroupEventMember)
-    {
-        List<GroupPurchaseEvent> groupEventList = new List<GroupPurchaseEvent>();
-        GroupPurchaseEvent groupEvent;
-
-        try
-        {
-            GroupPurchase groupPurchase = GroupPurchase.FindGroupPurchaseByID(conn, groupID, false, false);
-
-            using (SqlCommand cmdGroup = conn.CreateCommand())
-            {
-                SqlParameter paramID = cmdGroup.CreateParameter();
-                paramID.ParameterName = "@GroupID";
-                paramID.SqlDbType = System.Data.SqlDbType.Int;
-                paramID.SqlValue = groupID;
-                cmdGroup.Parameters.Add(paramID);
-
-                cmdGroup.CommandText = "select * from GroupPurchaseEvent where GroupID = @GroupID order by Id desc";
-
-                using (SqlDataReader sdr = cmdGroup.ExecuteReader())
-                {
-                    while (sdr.Read())
-                    {
-                        groupEvent = new GroupPurchaseEvent();
-                        groupEvent.ID = int.Parse(sdr["Id"].ToString());
-                        groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
-                        groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
-                        groupEvent.GroupPurchase = groupPurchase;
-                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
-                        if (isLoadGroupEventMember)
-                        {
-                            groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
-                        }
-                        else
-                        {
-                            groupEvent.GroupPurchaseEventMembers = null;
-                        }
-
-                        groupEventList.Add(groupEvent);
-                    }
-                }
-
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("查询指定团购下的所有活动", ex.ToString());
-            throw ex;
-        }
-
-        return groupEventList;
-    }
-
-    /// <summary>
-    /// 查询指定用户参加的所有团购活动，默认加载其所有团购活动成员
-    /// </summary>
-    /// <param name="openID"></param>
-    /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(string openID)
     {
         return FindGroupPurchaseEventByOpenID(openID, true);
     }
 
+    /// <summary>
+    /// 根据ID查询指定的团购活动
+    /// </summary>
+    /// <param name="id">团购活动ID</param>
+    /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
+    /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(string openID, bool isLoadGroupEventMember)
     {
-        List<GroupPurchaseEvent> groupEventList;
+        List<GroupPurchaseEvent> groupEventList = null;
 
         try
         {
@@ -387,35 +297,29 @@ public class GroupPurchaseEvent
         }
         catch (Exception ex)
         {
-            Log.Error("查询指定用户参加的所有团购活动", ex.ToString());
+            Log.Error("根据ID查询指定团购活动", ex.ToString());
             throw ex;
         }
 
         return groupEventList;
     }
 
-    /// <summary>
-    /// 查询指定用户参加的所有团购活动
-    /// </summary>
-    /// <param name="openID"></param>
-    /// <param name="isLoadGroupEventMember"></param>
-    /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(SqlConnection conn, string openID, bool isLoadGroupEventMember)
     {
         List<GroupPurchaseEvent> groupEventList = new List<GroupPurchaseEvent>();
-        GroupPurchaseEvent groupEvent;
+        GroupPurchaseEvent groupEvent = null;
 
         try
         {
             using (SqlCommand cmdGroup = conn.CreateCommand())
             {
                 SqlParameter paramID = cmdGroup.CreateParameter();
-                paramID.ParameterName = "@OpenID";
+                paramID.ParameterName = "@GroupMember";
                 paramID.SqlDbType = System.Data.SqlDbType.NVarChar;
                 paramID.SqlValue = openID;
                 cmdGroup.Parameters.Add(paramID);
 
-                cmdGroup.CommandText = "select * from GroupPurchaseEvent where Id in (select GroupEventID from GroupPurchaseEventMember where GroupMember = @OpenID)";
+                cmdGroup.CommandText = "select * from GroupPurchaseEvent where Id in (select GroupEventID from GroupPurchaseEventMember where GroupMember = @GroupMember)";
 
                 using (SqlDataReader sdr = cmdGroup.ExecuteReader())
                 {
@@ -423,13 +327,13 @@ public class GroupPurchaseEvent
                     {
                         groupEvent = new GroupPurchaseEvent();
                         groupEvent.ID = int.Parse(sdr["Id"].ToString());
-                        groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(sdr["Organizer"].ToString());
+                        groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
                         groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
                         groupEvent.GroupPurchase = GroupPurchase.FindGroupPurchaseByID(conn, int.Parse(sdr["GroupID"].ToString()), false, false);
                         groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
                         if (isLoadGroupEventMember)
                         {
-                            groupEvent.GroupPurchaseEventMembers = GroupPurchaseEventMember.FindGroupPurchaseEventMembers(conn, groupEvent.ID);
+                            groupEvent.GroupPurchaseEventMembers = groupEvent.FindGroupPurchaseEventMembers(conn);
                         }
                         else
                         {
@@ -444,11 +348,150 @@ public class GroupPurchaseEvent
         }
         catch (Exception ex)
         {
-            Log.Error("查询指定用户参加的所有团购活动", ex.ToString());
+            Log.Error("根据ID查询指定团购活动", ex.ToString());
             throw ex;
         }
 
         return groupEventList;
+    }
+
+    public List<GroupPurchaseEventMember> FindGroupPurchaseEventMembers(SqlConnection conn)
+    {
+        List<GroupPurchaseEventMember> groupEventMemberList = new List<GroupPurchaseEventMember>();
+
+        try
+        {
+            //查询团购活动关联的所有订单，用于检测此用户是否全部支付成功
+            List<ProductOrder> poList = this.FindOrderByGroupEventID(conn);
+
+            using (SqlCommand cmdGroupID = conn.CreateCommand())
+            {
+                SqlParameter paramID = cmdGroupID.CreateParameter();
+                paramID.ParameterName = "@GroupEventID";
+                paramID.SqlDbType = System.Data.SqlDbType.Int;
+                paramID.SqlValue = this.ID;
+                cmdGroupID.Parameters.Add(paramID);
+
+                cmdGroupID.CommandText = "select * from GroupPurchaseEventMember where GroupEventID = @GroupEventID order by Id";
+
+                using (SqlDataReader sdr = cmdGroupID.ExecuteReader())
+                {
+                    GroupPurchaseEventMember eventMember;
+
+                    while (sdr.Read())
+                    {
+                        eventMember = new GroupPurchaseEventMember();
+                        eventMember.ID = int.Parse(sdr["Id"].ToString());
+                        eventMember.GroupMember = WeChatUserDAO.FindUserByOpenID(conn, sdr["GroupMember"].ToString(), false);
+                        eventMember.JoinDate = DateTime.Parse(sdr["JoinDate"].ToString());
+                        eventMember.GroupPurchaseEvent = this;
+
+                        //检查当前成员是否有未支付的订单，必须全部订单支付成功才认为此用户参加的团购活动支付成功
+                        bool existNotPaidPO = poList.Exists(po =>
+                        {
+                            if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
+                            && po.TradeState != TradeState.SUCCESS
+                            && po.TradeState != TradeState.CASHPAID
+                            && po.TradeState != TradeState.AP_TRADE_FINISHED
+                            && po.TradeState != TradeState.AP_TRADE_SUCCESS)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        });
+                        //设置当前成员的支付标记
+                        eventMember.IsPaid = !existNotPaidPO ? true : false;
+
+                        groupEventMemberList.Add(eventMember);
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("查询指定团购活动中的所有用户", ex.ToString());
+            throw ex;
+        }
+
+        return groupEventMemberList;
+    }
+
+    public List<ProductOrder> FindOrderByGroupEventID()
+    {
+        List<ProductOrder> poList;
+
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
+            {
+                conn.Open();
+
+                poList = FindOrderByGroupEventID(conn);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("根据ID查询指定团购活动", ex.ToString());
+            throw ex;
+        }
+
+        return poList;
+
+    }
+
+    /// <summary>
+    /// 查询指定团购活动ID包含的所有订单，用于检测活动成员是否全部支付成功。不需要加载订单明细，以及订单明细项对应的团购活动
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <returns></returns>
+    public List<ProductOrder> FindOrderByGroupEventID(SqlConnection conn)
+    {
+        List<ProductOrder> poList = new List<ProductOrder>();
+        ProductOrder po;
+
+        try
+        {
+            using (SqlCommand cmdOrder = conn.CreateCommand())
+            {
+                cmdOrder.CommandText = "select * from ProductOrder where Id in (select ProductOrder.Id from ProductOrder left join OrderDetail on ProductOrder.Id = OrderDetail.PoID where OrderDetail.GroupEventID=@EventID) order by Id";
+
+                SqlParameter paramEventID = cmdOrder.CreateParameter();
+                paramEventID.ParameterName = "@EventID";
+                paramEventID.SqlDbType = System.Data.SqlDbType.Int;
+                paramEventID.SqlValue = this.ID;
+                cmdOrder.Parameters.Add(paramEventID);
+
+                using (SqlDataReader sdrOrder = cmdOrder.ExecuteReader())
+                {
+                    while (sdrOrder.Read())
+                    {
+                        po = new ProductOrder();
+
+                        ProductOrder.SDR2PO(po, sdrOrder);
+
+                        po.Purchaser = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["OpenID"].ToString(), false);
+                        if (sdrOrder["AgentOpenID"] != DBNull.Value)
+                        {
+                            po.Agent = WeChatUserDAO.FindUserByOpenID(conn, sdrOrder["AgentOpenID"].ToString(), false);
+                        }
+
+                        poList.Add(po);
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+
+        return poList;
+
     }
 
     /// <summary>
@@ -657,7 +700,7 @@ public class GroupPurchaseEvent
                     //已支付的团购成员
                     List<GroupPurchaseEventMember> membersPaid = groupEvent.GroupPurchaseEventMembers.FindAll(member => member.IsPaid);
 
-                    //如果已支付的成员数达到团购要求的成员数，则团购成功
+                    //如果已支付的成员数达到团购要求的成员数
                     if (membersPaid.Count >= groupEvent.GroupPurchase.RequiredNumber)
                     {
                         //如果没有指定用户，则对于管理员来说，此团购活动成功

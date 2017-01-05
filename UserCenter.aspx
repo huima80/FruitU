@@ -21,7 +21,8 @@
         <div class="row text-center">
             <div id="divWxCard" class="col-xs-12">
                 <div class="btn btn-block btn-info">
-                    <img src="images/wxcard1.png" class="wx-card" />&nbsp;&nbsp;微信卡券<span id="spWxCardCount"></span></div>
+                    <img src="images/wxcard1.png" class="wx-card" />&nbsp;&nbsp;微信卡券<span id="spWxCardCount"></span>
+                </div>
             </div>
         </div>
         <div class="row text-center">
@@ -97,8 +98,8 @@
                 //注册选择收货人信息单击事件处理函数
                 //$("#divWxAddress").on("click", wx, wxOpenAddress);
 
-                if (typeof cardParam == "object" && cardParam.cardSign != "undefined") {
-                    $.extend(cardParam, {
+                if (typeof wxCardParam == "object" && wxCardParam.cardSign != "undefined") {
+                    $.extend(wxCardParam, {
                         complete: function () {
                             alert("微信优惠券可在下单时使用");
                         }
@@ -106,16 +107,11 @@
 
                     //注册选择微信卡券点击事件处理函数
                     $("#divWxCard").on("click", function () {
-                        wx.chooseCard(cardParam);
+                        wx.chooseCard(wxCardParam);
                     });
                 }
                 else {
                     console.warn("微信卡券参数错误");
-                }
-
-                //显示微信卡券数量
-                if (typeof wxCard != undefined && wxCard.length > 0) {
-                    $("#spWxCardCount").text("(" + wxCard.length + ")");
                 }
 
                 //点击遮罩层关闭模式窗口

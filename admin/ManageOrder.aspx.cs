@@ -48,6 +48,7 @@ public partial class ManageOrder : System.Web.UI.Page
                     UtilityHelper.AntiSQLInjection(Request.QueryString["GroupEventID"]);
                     groupEventID = Request.QueryString["GroupEventID"];
                     this.txtGroupEventID.Text = groupEventID;
+                    this.txtGroupEventID.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
                     strWhere = string.Format("Id in (select PoID from OrderDetail where GroupEventID = {0})", groupEventID);
                 }
 

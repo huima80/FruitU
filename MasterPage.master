@@ -129,41 +129,7 @@
                         });
                     });
 
-                    //显示用户的微信卡券
-                    if (typeof wxCard != undefined && wxCard.length > 0) {
-                        $("#spWxCardMenu").addClass("wxcard-hint").show();
-                    }
-                    else {
-                        $("#spWxCardMenu").hide();
-                    }
-
-                    //异步查询用户的团购活动情况
-                    $.ajax({
-                        url: "CheckGroupPurchaseEvent.ashx",
-                        type: "GET",
-                        dataType: "json",
-                        cache: false,
-                        success: function (jGroupEvent) {
-                            //在菜单栏里显示团购标记
-                            if (jGroupEvent["eventGoingCount"] > 0) {
-                                $("#spGroupPurchaseEventHints").addClass("group-event-hint").show();
-                            }
-                            else {
-                                $("#spGroupPurchaseEventHints").hide();
-                            }
-
-                            //如果是我的订单页面，则显示全部团购活动情况
-                            if (location.href.toLowerCase().indexOf("myorders") != -1) {
-                                $("#spEventSuccessCount").text(jGroupEvent["eventSuccessCount"]);
-                                $("#spEventGoingCount").text(jGroupEvent["eventGoingCount"]);
-                                $("#spEventFailCount").text(jGroupEvent["eventFailCount"]);
-                            }
-                        },
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            alert(errorThrown + ":" + textStatus);
-                        }
-                    });
-
+                    //加载微信JSSDK参数
                     requirejs(['jweixin110'], function (wx) {
                         if (typeof wxJsApiParam == "undefined") {
                             throw new Error("微信JSSDK参数错误");
@@ -241,6 +207,58 @@
                             wx.onMenuShareQZone(wxShareInfo);
                         });
                     });
+
+                    //异步查询用户的团购活动情况
+                    $.ajax({
+                        url: "CheckGroupPurchaseEvent.ashx",
+                        type: "GET",
+                        dataType: "json",
+                        cache: false,
+                        success: function (jGroupEvent) {
+                            //在菜单栏里显示团购标记
+                            if (jGroupEvent["eventGoingCount"] > 0) {
+                                $("#spGroupPurchaseEventHints").addClass("group-event-hint").show();
+                            }
+                            else {
+                                $("#spGroupPurchaseEventHints").hide();
+                            }
+
+                            //如果是我的订单页面，则显示全部团购活动情况
+                            if (location.href.toLowerCase().indexOf("myorders") != -1) {
+                                $("#spEventSuccessCount").text(jGroupEvent["eventSuccessCount"]);
+                                $("#spEventGoingCount").text(jGroupEvent["eventGoingCount"]);
+                                $("#spEventFailCount").text(jGroupEvent["eventFailCount"]);
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                        }
+                    });
+
+                    //异步查询用户的微信卡券
+                    $.ajax({
+                        url: "CheckWxCard.ashx",
+                        type: "GET",
+                        dataType: "json",
+                        cache: false,
+                        success: function (jWxCard) {
+                            //在菜单栏里显示微信卡券标记
+                            if (typeof jWxCard != undefined && jWxCard.length > 0) {
+                                $("#spWxCardMenu").addClass("wxcard-hint").show();
+                                //如果是用户中心页面，则显示微信卡券数量
+                                if (location.href.toLowerCase().indexOf("usercenter") != -1) {
+                                    $("#spWxCardCount").text("(" + jWxCard.length + ")");
+                                }
+                            }
+                            else {
+                                $("#spWxCardMenu").hide();
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(errorThrown + ":" + textStatus);
+                        }
+                    });
+
                 }
                 catch (error) {
                     alert(error.message);

@@ -33,6 +33,7 @@ public class PrintOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
                             JsonSerializerSettings jSetting = new JsonSerializerSettings();
                             jSetting.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
                             jSetting.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                            jSetting.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                             return jSetting;
                         });
                         po.OrderID = po.OrderID.Substring(18);

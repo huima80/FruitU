@@ -26,7 +26,11 @@
 
     //初始化网站配置
     WebConfig.prototype.init = function () {
-        document.title = this.siteTitle + ' -- ' + document.title;
+        if (document.title == "") {
+            document.title = this.siteTitle;
+        } else {
+            document.title = this.siteTitle + ' -- ' + document.title;
+        }
     };
 
     //客户端浏览器信息

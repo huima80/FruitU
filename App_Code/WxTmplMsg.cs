@@ -186,9 +186,6 @@ public static class WxTmplMsg
                         return false;
                     }
 
-                    //通知管理员
-                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
-
                     string paymentTerm = string.Empty;
                     switch (po.PaymentTerm)
                     {
@@ -206,7 +203,7 @@ public static class WxTmplMsg
                     //构造模板消息
                     jTmplMsg["touser"] = string.Empty;
                     jTmplMsg["template_id"] = TMPL_ORDER_SUCCESS;
-                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
+                    jTmplMsg["url"] = string.Empty;
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
@@ -242,6 +239,8 @@ public static class WxTmplMsg
                     jTmplMsg["data"] = jTmplMsgData;
 
                     //发送模板消息，通知管理员
+                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
                     jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
                     //发送模板消息，通知用户
@@ -257,25 +256,23 @@ public static class WxTmplMsg
                         return false;
                     }
 
-                    //只有收款成功才发送模板消息
+                    //只有支付成功才发送模板消息
                     if ((po.PaymentTerm == PaymentTerm.WECHAT && po.TradeState == TradeState.SUCCESS)
                         || (po.PaymentTerm == PaymentTerm.ALIPAY && (po.TradeState == TradeState.AP_TRADE_SUCCESS || po.TradeState == TradeState.AP_TRADE_FINISHED))
                         || (po.PaymentTerm == PaymentTerm.CASH && po.TradeState == TradeState.CASHPAID))
                     {
-                        //通知管理员
-                        listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
 
                         //构造模板消息
                         jTmplMsg["touser"] = string.Empty;
                         jTmplMsg["template_id"] = TMPL_PAY_SUCCESS;
-                        jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
+                        jTmplMsg["url"] = string.Empty;
                         jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                         switch (po.PaymentTerm)
                         {
                             case PaymentTerm.WECHAT:
                                 jTmplMsgDataValue = new JsonData();
-                                jTmplMsgDataValue["value"] = "【微信】支付成功";
+                                jTmplMsgDataValue["value"] = "支付方式：微信支付";
                                 jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                                 jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -292,7 +289,7 @@ public static class WxTmplMsg
                                 break;
                             case PaymentTerm.ALIPAY:
                                 jTmplMsgDataValue = new JsonData();
-                                jTmplMsgDataValue["value"] = "【支付宝】支付成功";
+                                jTmplMsgDataValue["value"] = "支付方式：支付宝";
                                 jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                                 jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -309,7 +306,7 @@ public static class WxTmplMsg
                                 break;
                             case PaymentTerm.CASH:
                                 jTmplMsgDataValue = new JsonData();
-                                jTmplMsgDataValue["value"] = "【货到付款】收款成功";
+                                jTmplMsgDataValue["value"] = "支付方式：货到付款";
                                 jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
                                 jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -339,6 +336,8 @@ public static class WxTmplMsg
                         jTmplMsg["data"] = jTmplMsgData;
 
                         //发送模板消息，通知管理员
+                        listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+                        jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
                         jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
                         //发送模板消息，通知用户
@@ -355,9 +354,6 @@ public static class WxTmplMsg
                     {
                         return false;
                     }
-
-                    //发货消息只通知用户本人
-                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
 
                     string tradeState = string.Empty;
                     switch (po.PaymentTerm)
@@ -425,7 +421,8 @@ public static class WxTmplMsg
 
                     jTmplMsg["data"] = jTmplMsgData;
 
-                    //发送模板消息
+                    //发货消息只通知用户本人
+                    listReceiver = new List<string>(new string[] { po.Purchaser.OpenID });
                     jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
                     break;
@@ -444,12 +441,9 @@ public static class WxTmplMsg
                         return false;
                     }
 
-                    //通知管理员
-                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
-
                     jTmplMsg["touser"] = string.Empty;
                     jTmplMsg["template_id"] = TMPL_CANCEL;
-                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
+                    jTmplMsg["url"] = string.Empty;
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
@@ -475,6 +469,8 @@ public static class WxTmplMsg
                     jTmplMsg["data"] = jTmplMsgData;
 
                     //发送模板消息，通知管理员
+                    listReceiver = new List<string>(Config.WxTmplMsgReceiver.ToArray());
+                    jTmplMsg["url"] = @"http://mahui.me/admin/ManageOrder.aspx";
                     jRet = SendTmplMsg(listReceiver, jTmplMsg);
 
                     //发送模板消息，通知用户
@@ -589,7 +585,7 @@ public static class WxTmplMsg
 
             jTmplMsg["touser"] = string.Empty;
             jTmplMsg["template_id"] = TMPL_MEMBER_POINTS_NOTIFY;
-            jTmplMsg["url"] = @"http://mahui.me/Index.aspx";
+            jTmplMsg["url"] = @"http://mahui.me/UserCenter.aspx";
             jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
             jTmplMsgDataValue = new JsonData();
@@ -642,7 +638,7 @@ public static class WxTmplMsg
 
                     jTmplMsg["touser"] = string.Empty;
                     jTmplMsg["template_id"] = TMPL_MEMBER_POINTS_NOTIFY;
-                    jTmplMsg["url"] = @"http://mahui.me/Index.aspx";
+                    jTmplMsg["url"] = @"http://mahui.me/UserCenter.aspx";
                     jTmplMsg["topcolor"] = MSG_HEAD_COLOR;
 
                     jTmplMsgDataValue = new JsonData();
@@ -730,6 +726,22 @@ public static class WxTmplMsg
                     jTmplMsgDataValue["value"] = string.Format("团购活动“{0}#{1}”已成功，请尽快发货", groupEvent.GroupPurchase.Name, groupEvent.ID);
                     jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                     jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = groupEvent.GroupPurchase.Name;
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("团购价：{0}元", groupEvent.GroupPurchase.GroupPrice.ToString("C"));
+                    jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                    jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("团购有效期：{0}~{1}", groupEvent.GroupPurchase.StartDate, groupEvent.GroupPurchase.EndDate);
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
                     break;
                 case GroupEventStatus.EVENT_FAIL:
                     jTmplMsg["template_id"] = TMPL_GROUP_PURCHASE_EVENT_FAIL;
@@ -737,23 +749,24 @@ public static class WxTmplMsg
                     jTmplMsgDataValue["value"] = string.Format("团购活动“{0}#{1}”已失效，请尽快退款", groupEvent.GroupPurchase.Name, groupEvent.ID);
                     jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                     jTmplMsgData["first"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("团购价：{0}元", groupEvent.GroupPurchase.GroupPrice.ToString("C"));
+                    jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
+                    jTmplMsgData["keyword1"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = groupEvent.GroupPurchase.Name;
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword2"] = jTmplMsgDataValue;
+
+                    jTmplMsgDataValue = new JsonData();
+                    jTmplMsgDataValue["value"] = string.Format("团购有效期：{0}~{1}", groupEvent.GroupPurchase.StartDate, groupEvent.GroupPurchase.EndDate);
+                    jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                    jTmplMsgData["keyword3"] = jTmplMsgDataValue;
+
                     break;
             }
-
-            jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "";
-            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-            jTmplMsgData["keyword1"] = jTmplMsgDataValue;
-
-            jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "";
-            jTmplMsgDataValue["color"] = MSG_HEAD_COLOR;
-            jTmplMsgData["keyword2"] = jTmplMsgDataValue;
-
-            jTmplMsgDataValue = new JsonData();
-            jTmplMsgDataValue["value"] = "";
-            jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-            jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
             jTmplMsgDataValue = new JsonData();
             jTmplMsgDataValue["value"] = "";
@@ -766,7 +779,7 @@ public static class WxTmplMsg
             jRet = SendTmplMsg(adminReceivers, jTmplMsg);
 
             //查询此团购活动中的所有订单，并根据每个订单是否支付，来确定此用户的团购活动状态
-            List<ProductOrder> poList = ProductOrder.FindOrderByGroupEventID(groupEvent.ID);
+            List<ProductOrder> poList = groupEvent.FindOrderByGroupEventID();
             poList.ForEach(po =>
             {
                 jTmplMsg["touser"] = string.Empty;
@@ -798,11 +811,16 @@ public static class WxTmplMsg
                         jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                         jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
+                        jTmplMsgDataValue = new JsonData();
+                        jTmplMsgDataValue["value"] = string.Format("订单号：{0}\n点击详情查看团购活动", po.OrderID.Substring(18));
+                        jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                        jTmplMsgData["remark"] = jTmplMsgDataValue;
+
                         break;
                     case GroupEventStatus.EVENT_FAIL:
                         jTmplMsg["template_id"] = TMPL_GROUP_PURCHASE_EVENT_FAIL;
                         jTmplMsgDataValue = new JsonData();
-                        jTmplMsgDataValue["value"] = string.Format("您的拼团“{0}#{1}”在有效期内没有达到规定人数，我们将尽快退款给您。", groupEvent.GroupPurchase.Name, groupEvent.ID);
+                        jTmplMsgDataValue["value"] = string.Format("您的拼团“{0}#{1}”失败，我们将尽快退款给您。", groupEvent.GroupPurchase.Name, groupEvent.ID);
                         jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                         jTmplMsgData["first"] = jTmplMsgDataValue;
 
@@ -821,13 +839,14 @@ public static class WxTmplMsg
                         jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
                         jTmplMsgData["keyword3"] = jTmplMsgDataValue;
 
+                        jTmplMsgDataValue = new JsonData();
+                        jTmplMsgDataValue["value"] = "点击详情查看团购活动";
+                        jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
+                        jTmplMsgData["remark"] = jTmplMsgDataValue;
+
                         break;
                 }
 
-                jTmplMsgDataValue = new JsonData();
-                jTmplMsgDataValue["value"] = "点击详情查看团购活动";
-                jTmplMsgDataValue["color"] = MSG_BODY_COLOR;
-                jTmplMsgData["remark"] = jTmplMsgDataValue;
 
                 jTmplMsg["data"] = jTmplMsgData;
 

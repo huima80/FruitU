@@ -71,9 +71,25 @@ public class Fruit : IComparable<Fruit>
     public List<GroupPurchase> GroupPurchaseList { get; set; }
 
     /// <summary>
-    /// 当前有效的团购
+    /// 当前有效的团购，在有效期内最新的一个团购
     /// </summary>
-    public GroupPurchase ActiveGroupPurchase { get; set; }
+    public GroupPurchase ActiveGroupPurchase
+    {
+        get
+        {
+            if (GroupPurchaseList != null)
+            {
+                DateTime nowTime = DateTime.Now;
+                GroupPurchaseList.Sort();
+                GroupPurchase activeGroupPurchase = GroupPurchaseList.Find(groupPurchase => nowTime >= groupPurchase.StartDate && nowTime <= groupPurchase.EndDate);
+                return activeGroupPurchase;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
 
     public Fruit()
     {
@@ -224,7 +240,6 @@ public class Fruit : IComparable<Fruit>
 
                                 //fruit包含的团购信息，使用已有的数据库链接对象，但不加载团购活动和活动成员，避免前端页面加载数据过多
                                 product.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, product.ID, false, false);
-                                product.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, product.ID, false, false);
 
                                 //fruit所属的category信息
                                 product.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
@@ -449,7 +464,6 @@ public class Fruit : IComparable<Fruit>
 
                                 //fruit包含的团购信息，使用已有的数据库链接对象，但不加载团购活动和活动成员，避免前端页面加载数据过多
                                 fruit.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, fruit.ID, false, false);
-                                fruit.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, fruit.ID, false, false);
 
                                 //fruit所属的category信息
                                 fruit.Category.ID = int.Parse(sdrFruit["CategoryID"].ToString());
@@ -596,12 +610,10 @@ public class Fruit : IComparable<Fruit>
                         if (isLoadGroupPurchase)
                         {
                             fruit.GroupPurchaseList = GroupPurchase.FindGroupPurchaseByProductID(conn, fruit.ID, true, true);
-                            fruit.ActiveGroupPurchase = GroupPurchase.FindActiveGroupPurchase(conn, fruit.ID, true, true);
                         }
                         else
                         {
                             fruit.GroupPurchaseList = null;
-                            fruit.ActiveGroupPurchase = null;
                         }
                     }
                     sdrFruit.Close();
@@ -682,7 +694,6 @@ public class Fruit : IComparable<Fruit>
                         fruitImgList.Add(fruitImg);
 
                     }
-                    sdrFruitImg.Close();
                 }
             }
 

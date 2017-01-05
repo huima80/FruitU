@@ -79,11 +79,7 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             //团购活动的成员
                             groupEvent.GroupPurchaseEventMembers.ForEach(member =>
                             {
-                                //用户已支付才显示头像，并在成员列表中标记其是否支付
-                                if (member.IsPaid)
-                                {
-                                    strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
-                                }
+                                strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
                                 strEventMemberList += string.Format("<div class='col-xs-12 user-portrait {3}'><img src='{0}'/> 【{1}】 {2} {4}{5}</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString(), !member.IsPaid ? "text-muted" : string.Empty, (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID) ? "开团" : "参团", !member.IsPaid ? "（未支付）" : string.Empty);
                             });
                             //尚缺的团购活动成员头像
@@ -136,6 +132,7 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             JsonSerializerSettings jSetting = new JsonSerializerSettings();
                             jSetting.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
                             jSetting.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                            jSetting.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                             return jSetting;
                         });
                         string strGroupEvent = JsonConvert.SerializeObject(groupEvent);

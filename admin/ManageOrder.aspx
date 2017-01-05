@@ -207,9 +207,9 @@
                 <div class="col-lg-10">
                     <p class="text-left">订单号：<span>{{:OrderID}}</span></p>
                     <p class="text-left">下单时间：<span>{{:OrderDate}}</span></p>
-                    <p class="text-left">收货人：<span>{{:DeliverName}}</span>(<span>{{:DeliverPhone}}</span>)</p>
-                    <p class="text-left">地址：<span>{{:DeliverAddress}}</span></p>
-                    <p class="text-left">订单备注：<span>{{:OrderMemo}}</span></p>
+                    <p class="text-left">收货人：<span>{{>DeliverName}}</span>(<span>{{>DeliverPhone}}</span>)</p>
+                    <p class="text-left">地址：<span>{{>DeliverAddress}}</span></p>
+                    <p class="text-left">订单备注：<span>{{>OrderMemo}}</span></p>
                     <p class="text-center">
                         <table class="table table-condensed">
                             <tr>

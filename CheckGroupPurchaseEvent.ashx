@@ -21,11 +21,12 @@ public class CheckGroupPurchaseEvent : IHttpHandler, System.Web.SessionState.IRe
                 throw new Exception("请登录");
             }
 
-            //查询用户在进行中的团购活动信息
+            //查询此用户参加的所有团购活动
             List<GroupPurchaseEvent> groupEventList = GroupPurchaseEvent.FindGroupPurchaseEventByOpenID(wxUser.OpenID);
             groupEventList.ForEach(groupEvent =>
             {
-                switch (groupEvent.GroupEventStatus)
+                //判断每个团购活动的状态，即已支付人数是否符合要求、此用户是否支付
+                switch (GroupPurchaseEvent.CheckGroupPurchaseEventStatus(groupEvent, wxUser))
                 {
                     case GroupEventStatus.EVENT_SUCCESS:
                         eventSuccessCount++;

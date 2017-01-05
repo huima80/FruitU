@@ -10,7 +10,7 @@ using System.Data;
 /// <summary>
 /// 团购类
 /// </summary>
-public class GroupPurchase
+public class GroupPurchase : IComparable<GroupPurchase>
 {
     public int ID { get; set; }
 
@@ -222,7 +222,7 @@ public class GroupPurchase
                                 groupPurchase.Product = Fruit.FindFruitByID(conn, int.Parse(sdrGroup["ProductID"].ToString()), false);
                                 if (isLoadGroupEvents)
                                 {
-                                    groupPurchase.GroupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(conn, groupPurchase.ID, isLoadGroupEventMember);
+                                    groupPurchase.GroupEvents = groupPurchase.FindGroupPurchaseEventByGroupID(conn, isLoadGroupEventMember);
                                 }
                                 else
                                 {
@@ -335,7 +335,7 @@ public class GroupPurchase
                         groupPurchase.Product = Fruit.FindFruitByID(conn, int.Parse(sdr["ProductID"].ToString()), false);
                         if (isLoadGroupEvent)
                         {
-                            groupPurchase.GroupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(conn, groupPurchase.ID, isLoadGroupEventMember);
+                            groupPurchase.GroupEvents = groupPurchase.FindGroupPurchaseEventByGroupID(conn, isLoadGroupEventMember);
                         }
                         else
                         {
@@ -356,128 +356,28 @@ public class GroupPurchase
         return groupPurchase;
     }
 
-
-    /// <summary>
-    /// 根据团购名称查询，默认加载团购活动
-    /// </summary>
-    /// <param name="name">团购名称</param>
-    /// <returns></returns>
-    public static List<GroupPurchase> FindGroupPurchaseByName(string name)
-    {
-        return FindGroupPurchaseByName(name, true, true);
-    }
-
-    public static List<GroupPurchase> FindGroupPurchaseByName(string name, bool isLoadGroupEvent, bool isLoadGroupEventMember)
-    {
-        List<GroupPurchase> groupPurchaseList;
-
-        try
-        {
-            using (SqlConnection conn = new SqlConnection(Config.ConnStr))
-            {
-                conn.Open();
-
-                groupPurchaseList = FindGroupPurchaseByName(conn, name, isLoadGroupEvent, isLoadGroupEventMember);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("查询指定团购", ex.ToString());
-            throw ex;
-        }
-
-        return groupPurchaseList;
-    }
-
-    /// <summary>
-    /// 根据团购名称查询
-    /// </summary>
-    /// <param name="name">团购名称</param>
-    /// <param name="isLoadGroupEvent">是否加载团购活动</param>
-    /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
-    /// <returns></returns>
-    public static List<GroupPurchase> FindGroupPurchaseByName(SqlConnection conn, string name, bool isLoadGroupEvent, bool isLoadGroupEventMember)
-    {
-        List<GroupPurchase> groupPurchaseList = new List<GroupPurchase>();
-
-        try
-        {
-            using (SqlCommand cmdGroup = conn.CreateCommand())
-            {
-                SqlParameter paramName = cmdGroup.CreateParameter();
-                paramName.ParameterName = "@Name";
-                paramName.SqlDbType = System.Data.SqlDbType.NVarChar;
-                paramName.SqlValue = name;
-                cmdGroup.Parameters.Add(paramName);
-
-                cmdGroup.CommandText = "select * from GroupPurchase where Name like '%' + @Name + '%'";
-
-                using (SqlDataReader sdr = cmdGroup.ExecuteReader())
-                {
-                    GroupPurchase groupPurchase;
-
-                    while (sdr.Read())
-                    {
-                        groupPurchase = new GroupPurchase();
-
-                        groupPurchase.ID = int.Parse(sdr["Id"].ToString());
-                        groupPurchase.Name = sdr["Name"].ToString();
-                        groupPurchase.StartDate = DateTime.Parse(sdr["StartDate"].ToString());
-                        groupPurchase.EndDate = DateTime.Parse(sdr["EndDate"].ToString());
-                        groupPurchase.RequiredNumber = int.Parse(sdr["RequiredNumber"].ToString());
-                        groupPurchase.Description = sdr["Description"].ToString();
-                        groupPurchase.GroupPrice = decimal.Parse(sdr["GroupPrice"].ToString());
-                        groupPurchase.Product = Fruit.FindFruitByID(conn, int.Parse(sdr["ProductID"].ToString()), false);
-                        if (isLoadGroupEvent)
-                        {
-                            groupPurchase.GroupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(conn, groupPurchase.ID, isLoadGroupEventMember);
-                        }
-                        else
-                        {
-                            groupPurchase.GroupEvents = null;
-                        }
-
-                        groupPurchaseList.Add(groupPurchase);
-                    }
-                }
-
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("查询指定团购", ex.ToString());
-            throw ex;
-        }
-
-        return groupPurchaseList;
-    }
-
-    /// <summary>
-    /// 加载指定商品所属的所有团购，默认加载团购活动和活动成员
-    /// </summary>
-    /// <param name="productID">商品ID</param>
-    /// <returns></returns>
-    public static List<GroupPurchase> FindGroupPurchaseByProductID(int productID)
+    public List<GroupPurchase> FindGroupPurchaseByProductID(int productID)
     {
         return FindGroupPurchaseByProductID(productID, true, true);
     }
 
     /// <summary>
-    /// 加载指定商品所属的所有团购，并指定是否加载团购活动，是否加载团购活动成员
+    /// 根据ID查询团购信息，指定是否加载团购活动和成员
     /// </summary>
-    /// <param name="productID">商品ID</param>
+    /// <param name="id"></param>
     /// <param name="isLoadGroupEvent">是否加载团购活动</param>
     /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
     /// <returns></returns>
-    public static List<GroupPurchase> FindGroupPurchaseByProductID(int productID, bool isLoadGroupEvent, bool isLoadGroupEventMember)
+    public List<GroupPurchase> FindGroupPurchaseByProductID(int productID, bool isLoadGroupEvent, bool isLoadGroupEventMember)
     {
-        List<GroupPurchase> groupPurchaseList;
+        List<GroupPurchase> groupPurchaseList = null;
 
         try
         {
             using (SqlConnection conn = new SqlConnection(Config.ConnStr))
             {
                 conn.Open();
+
                 groupPurchaseList = FindGroupPurchaseByProductID(conn, productID, isLoadGroupEvent, isLoadGroupEventMember);
             }
         }
@@ -493,26 +393,22 @@ public class GroupPurchase
     public static List<GroupPurchase> FindGroupPurchaseByProductID(SqlConnection conn, int productID, bool isLoadGroupEvent, bool isLoadGroupEventMember)
     {
         List<GroupPurchase> groupPurchaseList = new List<GroupPurchase>();
+        GroupPurchase groupPurchase = null;
 
         try
         {
-            //根据商品ID，找到对应商品对象，作为所有团购对象的父对象，必须指定不加载团购对象，否则会发送循环调用
-            Fruit product = Fruit.FindFruitByID(conn, productID, false);
-
             using (SqlCommand cmdGroup = conn.CreateCommand())
             {
-                SqlParameter paramProductID = cmdGroup.CreateParameter();
-                paramProductID.ParameterName = "@ProductID";
-                paramProductID.SqlDbType = System.Data.SqlDbType.Int;
-                paramProductID.SqlValue = productID;
-                cmdGroup.Parameters.Add(paramProductID);
+                SqlParameter paramID = cmdGroup.CreateParameter();
+                paramID.ParameterName = "@ProductID";
+                paramID.SqlDbType = System.Data.SqlDbType.Int;
+                paramID.SqlValue = productID;
+                cmdGroup.Parameters.Add(paramID);
 
                 cmdGroup.CommandText = "select * from GroupPurchase where ProductID = @ProductID";
 
                 using (SqlDataReader sdr = cmdGroup.ExecuteReader())
                 {
-                    GroupPurchase groupPurchase;
-
                     while (sdr.Read())
                     {
                         groupPurchase = new GroupPurchase();
@@ -524,10 +420,10 @@ public class GroupPurchase
                         groupPurchase.RequiredNumber = int.Parse(sdr["RequiredNumber"].ToString());
                         groupPurchase.Description = sdr["Description"].ToString();
                         groupPurchase.GroupPrice = decimal.Parse(sdr["GroupPrice"].ToString());
-                        groupPurchase.Product = product;
+                        groupPurchase.Product = Fruit.FindFruitByID(conn, int.Parse(sdr["ProductID"].ToString()), false);
                         if (isLoadGroupEvent)
                         {
-                            groupPurchase.GroupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(conn, groupPurchase.ID, isLoadGroupEventMember);
+                            groupPurchase.GroupEvents = groupPurchase.FindGroupPurchaseEventByGroupID(conn, isLoadGroupEventMember);
                         }
                         else
                         {
@@ -536,19 +432,69 @@ public class GroupPurchase
 
                         groupPurchaseList.Add(groupPurchase);
                     }
-
                 }
 
             }
         }
         catch (Exception ex)
         {
+            Log.Error("查询指定团购", ex.ToString());
             throw ex;
         }
 
         return groupPurchaseList;
     }
 
+    public List<GroupPurchaseEvent> FindGroupPurchaseEventByGroupID(SqlConnection conn, bool isLoadGroupEventMember)
+    {
+        List<GroupPurchaseEvent> groupEventList = new List<GroupPurchaseEvent>();
+        GroupPurchaseEvent groupEvent;
+
+        try
+        {
+            using (SqlCommand cmdGroup = conn.CreateCommand())
+            {
+                SqlParameter paramID = cmdGroup.CreateParameter();
+                paramID.ParameterName = "@GroupID";
+                paramID.SqlDbType = System.Data.SqlDbType.Int;
+                paramID.SqlValue = this.ID;
+                cmdGroup.Parameters.Add(paramID);
+
+                cmdGroup.CommandText = "select * from GroupPurchaseEvent where GroupID = @GroupID order by Id desc";
+
+                using (SqlDataReader sdr = cmdGroup.ExecuteReader())
+                {
+                    while (sdr.Read())
+                    {
+                        groupEvent = new GroupPurchaseEvent();
+                        groupEvent.ID = int.Parse(sdr["Id"].ToString());
+                        groupEvent.Organizer = WeChatUserDAO.FindUserByOpenID(conn, sdr["Organizer"].ToString(), false);
+                        groupEvent.LaunchDate = DateTime.Parse(sdr["LaunchDate"].ToString());
+                        groupEvent.GroupPurchase = this;
+                        groupEvent.IsNotify = bool.Parse(sdr["IsNotify"].ToString());
+                        if (isLoadGroupEventMember)
+                        {
+                            groupEvent.GroupPurchaseEventMembers = groupEvent.FindGroupPurchaseEventMembers(conn);
+                        }
+                        else
+                        {
+                            groupEvent.GroupPurchaseEventMembers = null;
+                        }
+
+                        groupEventList.Add(groupEvent);
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("查询指定团购下的所有活动", ex.ToString());
+            throw ex;
+        }
+
+        return groupEventList;
+    }
 
     /// <summary>
     /// 查询指定商品的最新团购，默认加载团购活动和成员
@@ -622,7 +568,7 @@ public class GroupPurchase
                         groupPurchase.Product = Fruit.FindFruitByID(conn, productID, false);
                         if (isLoadGroupEvent)
                         {
-                            groupPurchase.GroupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(conn, groupPurchase.ID, isLoadGroupEventMember);
+                            groupPurchase.GroupEvents = groupPurchase.FindGroupPurchaseEventByGroupID(conn, isLoadGroupEventMember);
                         }
                         else
                         {
@@ -855,8 +801,9 @@ public class GroupPurchase
 
                 try
                 {
+                    
                     //如果已有人参加此团购，则不能删除团购
-                    List<GroupPurchaseEvent> groupEvents = GroupPurchaseEvent.FindGroupPurchaseEventByGroupID(id, false);
+                    List<GroupPurchaseEvent> groupEvents = this.FindGroupPurchaseEventByGroupID(conn, false);
                     if (groupEvents.Count != 0)
                     {
                         throw new Exception("已有人参加此团购，不能删除。");
@@ -901,5 +848,24 @@ public class GroupPurchase
             throw ex;
         }
 
+    }
+
+    public int CompareTo(GroupPurchase other)
+    {
+        if (this.ID > other.ID)
+        {
+            return 1;
+        }
+        else
+        {
+            if (this.ID <= other.ID)
+            {
+                return -1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
     }
 }

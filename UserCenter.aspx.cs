@@ -79,7 +79,7 @@ public partial class UserCenter : System.Web.UI.Page
             //定义前端JS全局变量：微信地址JS参数
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
             //定义前端JS全局变量：微信卡券JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var cardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
+            ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var wxCardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
 
         }
         catch (System.Threading.ThreadAbortException)

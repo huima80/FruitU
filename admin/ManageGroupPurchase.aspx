@@ -83,7 +83,7 @@
                                                 <asp:Label ID="lblEventID" runat="server" Text='<%# "#"+Eval("ID") %>' CssClass="badge"></asp:Label>
                                                 <asp:Repeater ID="rpGroupEventMembers" runat="server" DataSource='<%# Eval("GroupPurchaseEventMembers") %>'>
                                                     <ItemTemplate>
-                                                        <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate") %>' />
+                                                        <asp:Image ID="imgEventMember" runat="server" CssClass="img-thumbnail user-portrait" ImageUrl='<%# Eval("GroupMember.HeadImgUrl") %>' AlternateText='<%# Eval("GroupMember.NickName") %>' ToolTip='<%# Eval("GroupMember.NickName")+"\n"+"参团时间："+Eval("JoinDate")+"\n"+((bool)Eval("IsPaid")?"已支付":"未支付") %>' />
                                                     </ItemTemplate>
                                                 </asp:Repeater>
                                                 <asp:Label ID="lblEventStatus" runat="server" CssClass="event-status"></asp:Label>
