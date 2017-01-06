@@ -386,10 +386,11 @@ public class GroupPurchaseEvent
                         eventMember.JoinDate = DateTime.Parse(sdr["JoinDate"].ToString());
                         eventMember.GroupPurchaseEvent = this;
 
-                        //检查当前成员是否有未支付的订单，必须全部订单支付成功才认为此用户参加的团购活动支付成功
+                        //检查当前成员是否有未支付、未撤单的订单，必须全部订单支付成功才认为此用户参加的团购活动支付成功
                         bool existNotPaidPO = poList.Exists(po =>
                         {
                             if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
+                            && !po.IsCancel
                             && po.TradeState != TradeState.SUCCESS
                             && po.TradeState != TradeState.CASHPAID
                             && po.TradeState != TradeState.AP_TRADE_FINISHED
