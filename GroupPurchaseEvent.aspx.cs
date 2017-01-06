@@ -72,12 +72,12 @@ public partial class GroupPurchaseEventInfo : System.Web.UI.Page
                             this.divLeftNumber.Visible = false;
                         }
 
-                        //显示参加团购活动的成员头像和列表
-                        if (groupEvent.GroupPurchaseEventMembers != null)
+                        //只显示已支付成功的团购活动成员头像和列表
+                        if (paidEventMembers != null)
                         {
                             string strEventMemberList = string.Empty, strEventMemberHeadImg = string.Empty;
                             //团购活动的成员
-                            groupEvent.GroupPurchaseEventMembers.ForEach(member =>
+                            paidEventMembers.ForEach(member =>
                             {
                                 strEventMemberHeadImg += string.Format("<img src='{0}'/>", member.GroupMember.HeadImgUrl);
                                 strEventMemberList += string.Format("<div class='col-xs-12 user-portrait {3}'><img src='{0}'/> 【{1}】 {2} {4}{5}</div>", member.GroupMember.HeadImgUrl, member.GroupMember.NickName, member.JoinDate.ToString(), !member.IsPaid ? "text-muted" : string.Empty, (member.GroupMember.OpenID == member.GroupPurchaseEvent.Organizer.OpenID) ? "开团" : "参团", !member.IsPaid ? "（未支付）" : string.Empty);
