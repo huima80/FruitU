@@ -387,24 +387,40 @@ public class GroupPurchaseEvent
                         eventMember.GroupPurchaseEvent = this;
 
                         //检查当前成员是否有未支付、未撤单的订单，必须全部订单支付成功才认为此用户参加的团购活动支付成功
-                        bool existNotPaidPO = poList.Exists(po =>
+                        int memberAllPO = 0, notPaidPO = 0, cancelledPO = 0;
+                        poList.ForEach(po =>
                         {
-                            if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
-                            && !po.IsCancel
-                            && po.TradeState != TradeState.SUCCESS
-                            && po.TradeState != TradeState.CASHPAID
-                            && po.TradeState != TradeState.AP_TRADE_FINISHED
-                            && po.TradeState != TradeState.AP_TRADE_SUCCESS)
+                            if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID)
                             {
-                                return true;
+                                memberAllPO++;
                             }
-                            else
+
+                            if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
+                                && !po.IsCancel
+                                && po.TradeState != TradeState.SUCCESS
+                                && po.TradeState != TradeState.CASHPAID
+                                && po.TradeState != TradeState.AP_TRADE_FINISHED
+                                && po.TradeState != TradeState.AP_TRADE_SUCCESS)
                             {
-                                return false;
+                                notPaidPO++;
+                            }
+
+                            if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
+                                && po.IsCancel)
+                            {
+                                cancelledPO++;
                             }
                         });
-                        //设置当前成员的支付标记
-                        eventMember.IsPaid = !existNotPaidPO ? true : false;
+
+                        //设置当前成员的支付标记，如果不存在未支付的订单，并且订单没有被全部取消，则认为此团购成员已支付
+                        if (notPaidPO == 0 && cancelledPO < memberAllPO)
+                        {
+                            eventMember.IsPaid = true;
+                        }
+                        else
+                        {
+                            eventMember.IsPaid = false;
+                        }
 
                         groupEventMemberList.Add(eventMember);
                     }
