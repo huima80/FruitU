@@ -401,7 +401,6 @@ public static class WeChatUserDAO
                         wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                     }
-                    sdrUser.Close();
                 }
 
             }
