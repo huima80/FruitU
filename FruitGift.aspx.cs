@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using LitJson;
+using System.Text;
 
 public partial class FruitGift : System.Web.UI.Page
 {
@@ -13,55 +14,67 @@ public partial class FruitGift : System.Web.UI.Page
         int topSellingIDWeekly, topSellingIDMonthly;
         List<Fruit> fruitGiftList;
 
-        //获取水果切片数据，并渲染模板显示
+        //获取水果礼盒类别数据，并渲染模板显示
         fruitGiftList = Fruit.FindFruitByCategoryID("45", out topSellingIDWeekly, out topSellingIDMonthly);
-        fruitGiftList.ForEach(fruit =>
-        {
-            switch (fruit.ID)
-            {
-                case 114:
-                    if (fruit.InventoryQty != 0)
-                    {
-                        this.gift198.Href = "javascript:openModal(114);";
-                        this.spanSellout198.Visible = false;
-                    }
-                    else
-                    {
-                        this.spanSellout198.Visible = true;
-                    }
-                    if(fruit.ActiveGroupPurchase != null)
-                    {
-                        this.spGroupPurchase198.Visible = true;
-                    }
-                    else
-                    {
-                        this.spGroupPurchase198.Visible = false;
-                    }
-                    break;
-                case 115:
-                    if (fruit.InventoryQty != 0)
-                    {
-                        this.gift298.Href = "javascript:openModal(115);";
-                        this.spanSellout298.Visible = false;
-                    }
-                    else
-                    {
-                        this.spanSellout298.Visible = true;
-                    }
-                    if (fruit.ActiveGroupPurchase != null)
-                    {
-                        this.spGroupPurchase298.Visible = true;
-                    }
-                    else
-                    {
-                        this.spGroupPurchase298.Visible = false;
-                    }
-                    break;
-            }
-        });
-        //把所有切片数据写入前端JS变量
+
+        //渲染模板并显示
+        this.divFruitGift.InnerHtml = RenderTmpl(fruitGiftList, topSellingIDWeekly);
+
+        //把所有水果礼盒数据写入前端JS变量
         JsonData jFruitGiftList = JsonMapper.ToJson(fruitGiftList);
         ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsSliceList", string.Format("var fruitGiftList={0};", jFruitGiftList.ToString()), true);
 
     }
+
+    private string RenderTmpl(List<Fruit> dataList, int topSellingIDWeekly)
+    {
+        StringBuilder sbJuiceList = new StringBuilder();
+        string tmplJuice = "<div class=\"col-xs-12\" onclick=\"openModal({{:ID}});\"><img src=\"images/{{:ImgName}}\" alt=\"{{:ImgDesc}}\">{{本周爆款}}{{今日售罄}}{{团}}</div>";
+        string resultStr;
+
+        dataList.Sort();
+        dataList.ForEach(data =>
+        {
+            if (data.InventoryQty != 0)
+            {
+                resultStr = tmplJuice.Replace("{{:ID}}", data.ID.ToString()).Replace("{{今日售罄}}", string.Empty);
+            }
+            else
+            {
+                resultStr = tmplJuice.Replace("onclick=\"openModal({{:ID}});\"", string.Empty).Replace("{{今日售罄}}", "<span class=\"label label-danger sell-out\">今日售罄</span>");
+            }
+
+            if (data.ActiveGroupPurchase != null)
+            {
+                resultStr = resultStr.Replace("{{团}}", "<span class=\"label label-warning group-purchase-label\"><i class=\"fa fa-group\"></i> 团购</span>");
+            }
+            else
+            {
+                resultStr = resultStr.Replace("{{团}}", string.Empty);
+            }
+
+            data.FruitImgList.ForEach(fruitImg =>
+            {
+                if (fruitImg.MainImg)
+                {
+                    resultStr = resultStr.Replace("{{:ImgName}}", fruitImg.ImgName).Replace("{{:ImgDesc}}", fruitImg.ImgDesc);
+                    return;
+                }
+            });
+
+            if (data.ID == topSellingIDWeekly)
+            {
+                resultStr = resultStr.Replace("{{本周爆款}}", "<span class=\"label label-danger top-selling-week-prod\"><i class=\"fa fa-trophy fa-lg\"></i>本周爆款</span>");
+            }
+            else
+            {
+                resultStr = resultStr.Replace("{{本周爆款}}", string.Empty);
+            }
+
+            sbJuiceList.Append(resultStr);
+        });
+
+        return sbJuiceList.ToString();
+    }
+
 }

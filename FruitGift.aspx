@@ -3,38 +3,12 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <link href="css/FruitList.css" rel="stylesheet" />
     <link href="Scripts/modal/component.css" rel="stylesheet" />
-    <style>
-        area {
-            outline: none;
-        }
-
-        .sell-out-198 {
-            position: absolute;
-            top: 82px;
-            left: 65px;
-        }
-
-        .sell-out-298 {
-            position: absolute;
-            top: 82px;
-            left: 198px;
-        }
-    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container text-center fruit-list">
-        <div class="row fruit-list text-center">
-            <div class="col-xs-12">
-                <img src="images/FruitGift_01.gif" />
-            </div>
-        </div>
         <div class="row">
             <div class="col-xs-12">
-                <img src="images/FruitGift_02.gif" usemap="#buyButton" hidefocus="true" />
-                <span id="spanSellout198" runat="server" class="label label-danger sell-out-198">今日售罄</span>
-                <span id="spanSellout298" runat="server" class="label label-danger sell-out-298">今日售罄</span>
-                <span id="spGroupPurchase198" runat="server" class="label label-warning group-purchase-label"><i class="fa fa-group"></i> 团购</span>
-                <span id="spGroupPurchase298" runat="server" class="label label-warning group-purchase-label"><i class="fa fa-group"></i> 团购</span>
+                <img src="images/FruitGift_01.gif" />
             </div>
         </div>
         <div class="row">
@@ -42,16 +16,20 @@
                 <img src="images/FruitGift_03.gif" />
             </div>
         </div>
+        <div class="row" id="divFruitGift" runat="server">
+        </div>
+        <hr />
         <div class="row">
             <div class="col-xs-12">
-                <img src="images/FruitGift_04.gif" />
+                <img src="images/FruitGift_11.gif" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="images/FruitUBottomLogo.gif" />
             </div>
         </div>
     </div>
-    <map name="buyButton" id="buyButton">
-        <area runat="server" id="gift198" shape="rect" coords="70,80,200,260" href="" alt="购买" />
-        <area runat="server" id="gift298" shape="rect" coords="200,80,340,310" href="" alt="购买" />
-    </map>
     <div class="md-modal md-effect-3" id="divModal">
         <div class="md-content">
             <img id="imgDetailImg" src="" />

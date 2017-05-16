@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using System.Web.UI.HtmlControls;
 using System.Text.RegularExpressions;
 using System.Data;
+using LitJson;
 
 public partial class ManageOrder : System.Web.UI.Page
 {
@@ -90,6 +91,9 @@ public partial class ManageOrder : System.Web.UI.Page
                 this.ddlTradeState.Items.Add(new ListItem("===货到付款状态===", "-1"));
                 this.ddlTradeState.Items.Add(new ListItem("已付现金", ((int)TradeState.CASHPAID).ToString()));
                 this.ddlTradeState.Items.Add(new ListItem("未付现金", ((int)TradeState.CASHNOTPAID).ToString()));
+
+                this.txtDeliveryName.Text = Config.DeliveryName;
+                this.txtDeliveryPhone.Text = Config.DeliveryPhone;
             }
             catch (Exception ex)
             {
@@ -227,9 +231,11 @@ public partial class ManageOrder : System.Web.UI.Page
                 pAgent.Visible = false;
             }
 
-            //控制显示积分优惠和微信优惠券优惠
+            //控制显示运费、积分优惠和微信优惠券优惠
+            HtmlGenericControl pFreight = e.Row.FindControl("pFreight") as HtmlGenericControl;
             HtmlGenericControl pMemberPointsDiscount = e.Row.FindControl("pMemberPointsDiscount") as HtmlGenericControl;
             HtmlGenericControl pWxCardDiscount = e.Row.FindControl("pWxCardDiscount") as HtmlGenericControl;
+            pFreight.Visible = (po.Freight != 0) ? true : false;
             pMemberPointsDiscount.Visible = (po.MemberPointsDiscount != 0) ? true : false;
             pWxCardDiscount.Visible = (po.WxCardDiscount != 0) ? true : false;
 
@@ -427,27 +433,27 @@ public partial class ManageOrder : System.Web.UI.Page
             }
 
             //查询条件：收货人姓名
-            if (!string.IsNullOrEmpty(this.txtDeliverName.Text.Trim()))
+            if (!string.IsNullOrEmpty(this.txtReceiverName.Text.Trim()))
             {
-                UtilityHelper.AntiSQLInjection(this.txtDeliverName.Text);
-                listWhere.Add(string.Format("DeliverName like '%{0}%'", this.txtDeliverName.Text.Trim()));
-                this.txtDeliverName.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+                UtilityHelper.AntiSQLInjection(this.txtReceiverName.Text);
+                listWhere.Add(string.Format("DeliverName like '%{0}%'", this.txtReceiverName.Text.Trim()));
+                this.txtReceiverName.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
-                this.txtDeliverName.Style.Clear();
+                this.txtReceiverName.Style.Clear();
             }
 
             //查询条件：收货人电话
-            if (!string.IsNullOrEmpty(this.txtDeliverPhone.Text.Trim()))
+            if (!string.IsNullOrEmpty(this.txtReceiverPhone.Text.Trim()))
             {
-                UtilityHelper.AntiSQLInjection(this.txtDeliverPhone.Text);
-                listWhere.Add(string.Format("DeliverPhone like '%{0}%'", this.txtDeliverPhone.Text.Trim()));
-                this.txtDeliverPhone.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
+                UtilityHelper.AntiSQLInjection(this.txtReceiverPhone.Text);
+                listWhere.Add(string.Format("DeliverPhone like '%{0}%'", this.txtReceiverPhone.Text.Trim()));
+                this.txtReceiverPhone.Style.Add("background-color", CRITERIA_BG_COLOR.Name);
             }
             else
             {
-                this.txtDeliverPhone.Style.Clear();
+                this.txtReceiverPhone.Style.Clear();
             }
 
             //查询条件：订单ID
@@ -565,11 +571,11 @@ public partial class ManageOrder : System.Web.UI.Page
         this.ddlIsCancel.SelectedIndex = 0;
         this.ddlIsCancel.Style.Clear();
 
-        this.txtDeliverName.Text = string.Empty;
-        this.txtDeliverName.Style.Clear();
+        this.txtReceiverName.Text = string.Empty;
+        this.txtReceiverName.Style.Clear();
 
-        this.txtDeliverPhone.Text = string.Empty;
-        this.txtDeliverPhone.Style.Clear();
+        this.txtReceiverPhone.Text = string.Empty;
+        this.txtReceiverPhone.Style.Clear();
 
         this.txtOrderID.Text = string.Empty;
         this.txtOrderID.Style.Clear();
@@ -717,4 +723,62 @@ public partial class ManageOrder : System.Web.UI.Page
             }
         }
     }
+
+    /// <summary>
+    /// 绑定微信门店信息
+    /// </summary>
+    //private void BindPOIList()
+    //{
+    //    JsonData jPOIList;
+
+    //    jPOIList = JsonMapper.ToObject(WxJSAPI.GetPOIList());
+    //    if (jPOIList["errcode"].ToString() == "0" && jPOIList.Keys.Contains("business_list"))
+    //    {
+    //        for (int i = 0; i < jPOIList["business_list"].Count; i++)
+    //        {
+    //            ListItem li = new ListItem(jPOIList["business_list"][i]["base_info"]["business_name"].ToString(), jPOIList["business_list"][i]["base_info"]["poi_id"].ToString());
+    //            li.Attributes.Add("data-city", jPOIList["business_list"][i]["base_info"]["city"].ToString());
+    //            li.Attributes.Add("data-telephone", jPOIList["business_list"][i]["base_info"]["telephone"].ToString());
+    //            li.Attributes.Add("data-address", jPOIList["business_list"][i]["base_info"]["address"].ToString());
+    //            li.Attributes.Add("data-lng", jPOIList["business_list"][i]["base_info"]["longitude"].ToString());
+    //            li.Attributes.Add("data-lat", jPOIList["business_list"][i]["base_info"]["latitude"].ToString());
+    //            this.ddlWxPOIList.Items.Add(li);
+    //        }
+    //    }
+    //}
+
+    /// <summary>
+    /// 绑定达达配送的城市
+    /// </summary>
+    //private void BindDaDaCityCode()
+    //{
+    //    JsonData jCityCode = DaDaBiz.GetCityCode();
+    //    if (jCityCode["code"].ToString() == "0" && jCityCode["result"].IsArray)
+    //    {
+    //        this.ddlCityCode.Items.Clear();
+    //        for (int i = 0; i < jCityCode["result"].Count; i++)
+    //        {
+    //            ListItem li = new ListItem(jCityCode["result"][i]["cityName"].ToString(), jCityCode["result"][i]["cityCode"].ToString());
+    //            li.Selected = (li.Value == "021") ? true : false;
+    //            this.ddlCityCode.Items.Add(li);
+    //        }
+    //    }
+    //}
+
+    /// <summary>
+    /// 绑定达达订单取消原因
+    /// </summary>
+    //private void BindCancelReasons()
+    //{
+    //    JsonData jCancelReasons = DaDaBiz.GetCancelReason();
+    //    if (jCancelReasons["code"].ToString() == "0" && jCancelReasons["result"].IsArray)
+    //    {
+    //        this.ddlCancelReason.Items.Clear();
+    //        for (int i = 0; i < jCancelReasons["result"].Count; i++)
+    //        {
+    //            ListItem li = new ListItem(jCancelReasons["result"][i]["reason"].ToString(), jCancelReasons["result"][i]["id"].ToString());
+    //            this.ddlCancelReason.Items.Add(li);
+    //        }
+    //    }
+    //}
 }

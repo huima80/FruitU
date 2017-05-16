@@ -10,7 +10,7 @@
             <div class="panel-heading text-center">
                 <h2 class="panel-title">团购查询</h2>
             </div>
-            <div class="panel-body">
+            <div class="panel-body form-inline">
                 <div class="row">
                     <div class="col-lg-7">
                         <ul>
@@ -123,7 +123,7 @@
         </div>
         <div class="row">
             <div class="col-lg-12 table-responsive">
-                <asp:DetailsView ID="dvGroupPurchase" CssClass="table table-condensed" runat="server" AutoGenerateRows="False" DataSourceID="odsGroupPurchase" GridLines="Horizontal" OnItemInserted="dvGroupPurchase_ItemInserted" OnItemInserting="dvGroupPurchase_ItemInserting" OnItemUpdating="dvGroupPurchase_ItemUpdating" OnItemUpdated="dvGroupPurchase_ItemUpdated" OnItemCommand="dvGroupPurchase_ItemCommand">
+                <asp:DetailsView ID="dvGroupPurchase" CssClass="table table-condensed form-inline" runat="server" AutoGenerateRows="False" DataSourceID="odsGroupPurchase" GridLines="Horizontal" OnItemInserted="dvGroupPurchase_ItemInserted" OnItemInserting="dvGroupPurchase_ItemInserting" OnItemUpdating="dvGroupPurchase_ItemUpdating" OnItemUpdated="dvGroupPurchase_ItemUpdated" OnItemCommand="dvGroupPurchase_ItemCommand">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
                         <asp:BoundField DataField="ID" HeaderText="ID" SortExpression="ID" InsertVisible="False" ReadOnly="True" />

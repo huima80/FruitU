@@ -32,7 +32,7 @@ public class QQAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
             if (string.IsNullOrEmpty(code))
             {
                 //随机生成state，防止CSRF攻击
-                context.Session["state"] = UtilityHelper.GetMd5Hash((new Random()).ToString());
+                context.Session["state"] = UtilityHelper.GetMD5Hash((new Random()).ToString());
 
                 authUrl = String.Format(@"https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id={0}&redirect_uri={1}&state={2}&scope={3}&display={4}",
                     Config.QQAppID,

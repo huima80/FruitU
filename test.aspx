@@ -9,7 +9,7 @@
     <script src="Scripts/require.js"></script>
     <link href="css/MyOrders.css" rel="stylesheet" />
     <link href="css/bootstrap.min-3.3.5.css" rel="stylesheet" />
-    <link href="css/ladda-themeless.min.css" rel="stylesheet" />
+    <link href="Scripts/ladda/ladda-themeless.min.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
     <link href="css/MasterPage.css" rel="stylesheet" />
     <link href="css/shake.css" rel="stylesheet" />
@@ -28,7 +28,26 @@
         <br />
         <asp:Button ID="btnSendSMS" runat="server" OnClick="btnSendSMS_Click" Text="发送短信" />
     </div>
-        <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" Text="Button" />
+        <asp:Button ID="btnGetCityCode" runat="server" OnClick="btnGetCityCode_Click" Text="获取达达城市编码" />
+        <asp:DropDownList ID="ddlCityCode" runat="server">
+        </asp:DropDownList>
+        <asp:TextBox ID="txtOrderID" runat="server" ToolTip="业务订单ID"></asp:TextBox>
+        <asp:RadioButtonList ID="rblAddOrderType" runat="server">
+            <asp:ListItem Selected="True" Value="1">新增订单</asp:ListItem>
+            <asp:ListItem Value="2">重新发单</asp:ListItem>
+            <asp:ListItem Value="3">订单预发布</asp:ListItem>
+        </asp:RadioButtonList>
+        <br />
+        <asp:Button ID="btnSendOrder" runat="server" OnClick="btnSendOrder_Click" Text="新增达达订单" />
+        <asp:Button ID="btnAccept" runat="server" OnClick="btnAccept_Click" Text="模拟接单" />
+        <asp:Button ID="btnFetch" runat="server" OnClick="btnFetch_Click" Text="模拟完成取货" />
+        <asp:Button ID="btnFinish" runat="server" OnClick="btnFinish_Click" Text="模拟完成订单" />
+        <asp:Button ID="btnCancel" runat="server" OnClick="btnCancel_Click" Text="模拟取消订单" />
+        <asp:Button ID="btnExpire" runat="server" OnClick="btnExpire_Click" Text="模拟订单过期" />
+        <asp:Label ID="lblMsg" runat="server" Text=""></asp:Label>
+
+        <textarea id="txtTest" rows="3"></textarea>
+        <button onclick="sub();">提交</button>
     </form>
 </body>
 
@@ -61,7 +80,9 @@
             jssorslider: 'jssor.slider.mini',
             cart: 'cart',
             pager: 'pager',
-            webConfig: 'webConfig'
+            webConfig: 'webConfig',
+            //高德地图
+            amap: "http://webapi.amap.com/maps?v=1.3&key=aee0e92073edb1ecddc7303ece02eba5&callback=init",
         }
     });
 </script>
@@ -86,8 +107,54 @@
                     console.warn("微信卡券参数错误");
                 }
 
+                //requirejs(['dada'], function (dada) {
+                //    var dadaClient = new dada.DaDaClient();
+                //    dadaClient.cityCode(function (jRet) {
+                //        console.log(jRet);
+                //    });
+                //});
+
+            });
+
+            
+        });
+
+        function sub(){
+            var orderInfo = {
+                a: $("#txtTest").val().trim()
+            };
+            
+            $.ajax({
+                data: JSON.stringify(orderInfo),
+                method: "POST",
+                url: "test.ashx"
+            });
+        }
+
+        requirejs(['amap'], function () {
+            window.init = function () {
+                require(['require-initMap'], function (mapIniter) {
+                    mapIniter.init();
+                })
+            }
+
+            AMap.service('AMap.Geocoder', function () {
+                //实例化Geocoder
+                geocoder = new AMap.Geocoder({
+                    city: "021"//城市，默认：“全国”
+                });
+                //TODO: 使用geocoder 对象完成相关功能
+                geocoder.getLocation("北京市海淀区苏州街", function (status, result) {
+                    if (status === 'complete' && result.info === 'OK') {
+                        //TODO:获得了有效经纬度，可以做一些展示工作
+                        //比如在获得的经纬度上打上一个Marker
+                    } else {
+                        //获取经纬度失败
+                    }
+                });
             });
         });
+
 
         //拉取微信卡券列表并获取用户选择信息
         function wxChooseCard(event) {

@@ -11,14 +11,14 @@
     }
         // AMD module
     else if (typeof define === 'function' && define.amd) {
-        define(['jquery'], factory(jQuery));
+        define(['jquery'], factory);
     }
         // Browser global
     else {
         root.cart = factory(jQuery);
     }
 }
-(window, function ($) {
+(this, function ($) {
 
     //购物车类
     function Cart(options) {

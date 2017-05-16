@@ -13,7 +13,7 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <img id="imgRandomJuice" src="images/selective-barrier.gif" />
+                <img id="imgRandomJuice" src="images/selective-barrier.gif" hidefocus="true" />
             </div>
         </div>
         <div class="row">

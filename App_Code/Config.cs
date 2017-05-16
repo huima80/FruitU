@@ -97,7 +97,7 @@ public static class Config
     //=======【代理服务器设置】===================================
     /* 默认IP和端口号分别为0.0.0.0和0，此时不开启代理（如有需要才设置）
     */
-    public const string PROXY_URL = "http://10.152.18.220:8080";
+    public const string PROXY_URL = "";
 
     //=======【上报信息配置】===================================
     /* 测速上报等级，0.关闭上报; 1.仅错误时上报; 2.全量上报
@@ -233,6 +233,77 @@ public static class Config
 
     //////////////////////支付宝配置参数////////////////////
 
+    ///自主送货人信息///
+    public static readonly string DeliveryName;
+    public static readonly string DeliveryPhone;
+
+    //////////////////////达达配置参数https://newopen.imdada.cn////////////////////
+
+    /// <summary>
+    /// 测试环境：newopen.qa.imdada.cn
+    /// 线上环境：newopen.imdada.cn
+    /// </summary>
+    public const string DaDaServer = "http://newopen.qa.imdada.cn";
+
+    /// <summary>
+    /// 达达app_key
+    /// </summary>
+    public const string DaDaAppKey = "dadad2531cd8c66c679";
+
+    /// <summary>
+    /// 达达app_secret
+    /// </summary>
+    public const string DaDaAppSecret = "44d197085446ff965a577d537f0d7468";
+
+    /// <summary>
+    /// 达达商户ID
+    /// 测试商户号：73753
+    /// 上海以东：437
+    /// </summary>
+    public const string DaDaSourceID = "73753";
+
+    /// <summary>
+    /// 达达门店编号
+    /// 测试门店编号：11047059
+    /// </summary>
+    public const string DaDaShopNo = "11047059";
+
+    /// <summary>
+    /// 每次订单状态发生变化时，会对添加订单接口中callback的URL进行回调。
+    /// 1. 参数以application/json方式传递。若回调服务器响应失败（响应非200），会每隔1分钟重试一次，最多重试10次。
+    /// 2. 每次订单状态变化都会发生回调，如果出现订单状态回调顺序不一致，请根据回调参数中的时间戳进行判断。
+    /// 3. 在线上环境中，订单状态的变化会主动触发订单的回调；而在测试环境中，需要模拟订单的各个状态来触发回调。
+    /// </summary>
+    public static readonly string DaDaCallback;
+
+    /// <summary>
+    /// 达达请求超时
+    /// </summary>
+    public const int DaDaAPITimeout = 6;
+
+    //////////////////////达达配置参数////////////////////
+
+
+    //////////////////////闪送配置参数////////////////////
+    public const string ShanSongServer = "http://open.s.bingex.com";
+    
+    public const string ShanSongPartnerNo = "1034";
+
+    public const string ShanSongMerchantID = "YP1034";
+
+    public const string ShanSongMerchantMobile = "13770696350";
+
+    public const string ShanSongMerchantName = "Fruit U";
+
+    public const string ShanSongMerchantToken = "lL&pm7ETlI&JAN/xYE0ZDLk7787BoKJaN9Fcd9G5QNg=";
+
+    public const string ShanSongMD5Key = "12345abcde";
+
+    public static readonly string ShanSongCallback;
+
+    //////////////////////闪送配置参数////////////////////
+
+
     static Config()
     {
         Config.ConnStr = ConfigurationManager.ConnectionStrings["FruitU"].ToString();
@@ -253,6 +324,10 @@ public static class Config
         Config.AlipayPublicKey = ConfigurationManager.AppSettings["AlipayPublicKey"].ToString();
         Config.AlipayNotifyUrl = ConfigurationManager.AppSettings["AlipayNotifyUrl"].ToString();
         Config.AlipayReturnUrl = ConfigurationManager.AppSettings["AlipayReturnUrl"].ToString();
+        Config.DaDaCallback = ConfigurationManager.AppSettings["DaDaCallback"].ToString();
+        Config.ShanSongCallback = ConfigurationManager.AppSettings["ShanSongCallback"].ToString();
+        Config.DeliveryName = ConfigurationManager.AppSettings["DeliveryName"].ToString();
+        Config.DeliveryPhone = ConfigurationManager.AppSettings["DeliveryPhone"].ToString();
 
         int productListPageSize;
         if (int.TryParse(ConfigurationManager.AppSettings["ProductListPageSize"].ToString(), out productListPageSize))

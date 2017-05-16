@@ -557,8 +557,8 @@ public class WxCard
                     {
                         case "DATE_TYPE_FIX_TIME_RANGE":
                             wxCard.DateType = AvailableDateType.DATE_TYPE_FIX_TIME_RANGE;
-                            wxCard.BeginTime = UtilityHelper.GetTime(jBaseInfo["date_info"]["begin_timestamp"].ToString());
-                            wxCard.EndTime = UtilityHelper.GetTime(jBaseInfo["date_info"]["end_timestamp"].ToString());
+                            wxCard.BeginTime = UtilityHelper.TimestampToDateTime(jBaseInfo["date_info"]["begin_timestamp"].ToString());
+                            wxCard.EndTime = UtilityHelper.TimestampToDateTime(jBaseInfo["date_info"]["end_timestamp"].ToString());
                             break;
                         case "DATE_TYPE_FIX_TERM":
                             wxCard.DateType = AvailableDateType.DATE_TYPE_FIX_TERM;

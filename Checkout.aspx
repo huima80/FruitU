@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-xs-12">
                 <div class="panel panel-info">
-                    <div id="divPanelHeading" class="panel-heading" onclick="selectWxAddress();">
+                    <div id="divPanelHeading" class="panel-heading" onclick="wxOpenAddress();">
                         <i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货人信息 >>
                     </div>
                     <div id="divWxAddrInfo" class="panel-body wx-user-addr-info">
@@ -261,9 +261,6 @@
                 });
 
                 try {
-                    //注册选择收货人信息单击事件处理函数，使用此JSSDK获取地址信息，微信会提示用户，影响体验，暂不用
-                    //$("#divPanelHeading").on("click", wx, wxOpenAddress);
-
                     //服务端生成的微信卡券JSAPI参数
                     if (typeof wxCardParam == "object" && wxCardParam.cardSign != undefined) {
                         $.extend(wxCardParam, {
@@ -393,20 +390,63 @@
         //微信用户地址信息
         var wxUserName = "", wxTelNumber = "", wxAddrProvince = "", wxAddrCity = "", wxAddrCounty = "", wxAddrDetailInfo = "", wxPostalCode = "";
 
-        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress，由于微信客户端会弹出确认窗口，所以暂不使用此接口
-        function wxOpenAddress(event) {
-            var wx = event.data;
-            wx.openAddress({
-                success: function (res) {
-                    // 用户成功拉出地址 
-                    if (res.errMsg.indexOf("ok") != -1) {
+        //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
+        function wxOpenAddress() {
+            requirejs(['jweixin110'], function (wx) {
+                wx.openAddress({
+                    success: function (res) {
+                        // 用户成功拉出地址 
+                        if (res.errMsg.indexOf("ok") != -1) {
+                            wxUserName = res.userName;
+                            wxTelNumber = res.telNumber;
+                            wxAddrProvince = res.provinceName;
+                            wxAddrCity = res.cityName;
+                            wxAddrCounty = res.countryName;
+                            wxAddrDetailInfo = res.detailInfo;
+                            wxPostalCode = res.postalCode;
+                            //对于直辖市，则省略省份信息
+                            if (wxAddrProvince == wxAddrCity) {
+                                wxAddrProvince = '';
+                            }
+                            if (wxPostalCode != undefined && wxPostalCode != '') {
+                                wxPostalCode = "[" + wxPostalCode + "]";
+                            }
+                            $("span.wx-user-name").text(wxUserName);
+                            $("span.wx-tel-number").text(wxTelNumber);
+                            $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
+                            $("#divCustomizeAddrInfo").hide();
+                            $("#divWxAddrInfo").slideDown();
+                        }
+                        else {
+                            alert("无法获取您的地址，请手工填写收货地址。");
+                            $("#divWxAddrInfo").hide();
+                            $("#divCustomizeAddrInfo").slideDown();
+                            console.warn(res.errMsg);
+                        }
+                    },
+                    cancel: function () {
+                        // 用户取消拉出地址
+                        alert("请选择您的收货地址");
+                    }
+                });
+            });
+        }
+
+        //[已过时]获取微信用户地址，调用微信JS内置函数editAddress
+        function editAddress() {
+            WeixinJSBridge.invoke(
+                'editAddress',
+                wxEditAddrParam,   //后端获取的参数
+                function (res) {
+                    //显示微信地址信息，如获取不到，则显示手工填写地址栏
+                    if (res.err_msg.indexOf("ok") != -1) {
                         wxUserName = res.userName;
                         wxTelNumber = res.telNumber;
-                        wxAddrProvince = res.provinceName;
-                        wxAddrCity = res.cityName;
-                        wxAddrCounty = res.countryName;
-                        wxAddrDetailInfo = res.detailInfo;
-                        wxPostalCode = res.postalCode;
+                        wxAddrProvince = res.proviceFirstStageName;
+                        wxAddrCity = res.addressCitySecondStageName;
+                        wxAddrCounty = res.addressCountiesThirdStageName;
+                        wxAddrDetailInfo = res.addressDetailInfo;
+                        wxPostalCode = res.addressPostalCode;
                         //对于直辖市，则省略省份信息
                         if (wxAddrProvince == wxAddrCity) {
                             wxAddrProvince = '';
@@ -421,67 +461,25 @@
                         $("#divWxAddrInfo").slideDown();
                     }
                     else {
-                        alert("无法获取您的地址，请手工填写收货地址。");
-                        $("#divWxAddrInfo").hide();
-                        $("#divCustomizeAddrInfo").slideDown();
-                        console.warn(res.errMsg);
+                        if (res.err_msg.indexOf("function_not_exist") != -1) {
+                            alert("您的微信版本过低，请填写收货地址。");
+                            $("#divWxAddrInfo").hide();
+                            $("#divCustomizeAddrInfo").slideDown();
+                        }
+                        else {
+                            if (res.err_msg.indexOf("fail") != -1 || res.err_msg.indexOf("access_denied") != -1 || res.err_msg.indexOf("unkonwPermission") != -1 || res.err_msg.indexOf("domain") != -1) {
+                                alert("无法获取您的地址，请填写收货地址。");
+                                $("#divWxAddrInfo").hide();
+                                $("#divCustomizeAddrInfo").slideDown();
+                                console.warn(res.err_msg);
+                            }
+                        }
                     }
-                },
-                cancel: function () {
-                    // 用户取消拉出地址
-                    alert("请选择您的收货地址");
                 }
-            });
+            );
         }
 
-        //获取微信用户地址，调用微信JS内置函数editAddress
-        function editAddress() {
-            WeixinJSBridge.invoke(
-                'editAddress',
-                wxEditAddrParam,   //后端获取的参数
-                  function (res) {
-                      //显示微信地址信息，如获取不到，则显示手工填写地址栏
-                      if (res.err_msg.indexOf("ok") != -1) {
-                          wxUserName = res.userName;
-                          wxTelNumber = res.telNumber;
-                          wxAddrProvince = res.proviceFirstStageName;
-                          wxAddrCity = res.addressCitySecondStageName;
-                          wxAddrCounty = res.addressCountiesThirdStageName;
-                          wxAddrDetailInfo = res.addressDetailInfo;
-                          wxPostalCode = res.addressPostalCode;
-                          //对于直辖市，则省略省份信息
-                          if (wxAddrProvince == wxAddrCity) {
-                              wxAddrProvince = '';
-                          }
-                          if (wxPostalCode != undefined && wxPostalCode != '') {
-                              wxPostalCode = "[" + wxPostalCode + "]";
-                          }
-                          $("span.wx-user-name").text(wxUserName);
-                          $("span.wx-tel-number").text(wxTelNumber);
-                          $("span.wx-user-address").text(wxAddrProvince + wxAddrCity + wxAddrCounty + wxAddrDetailInfo + wxPostalCode);
-                          $("#divCustomizeAddrInfo").hide();
-                          $("#divWxAddrInfo").slideDown();
-                      }
-                      else {
-                          if (res.err_msg.indexOf("function_not_exist") != -1) {
-                              alert("您的微信版本过低，请升级到最新版，也可以手工填写收货地址。");
-                              $("#divWxAddrInfo").hide();
-                              $("#divCustomizeAddrInfo").slideDown();
-                          }
-                          else {
-                              if (res.err_msg.indexOf("fail") != -1 || res.err_msg.indexOf("access_denied") != -1 || res.err_msg.indexOf("unkonwPermission") != -1 || res.err_msg.indexOf("domain") != -1) {
-                                  alert("无法获取您的地址，请手工填写收货地址。");
-                                  $("#divWxAddrInfo").hide();
-                                  $("#divCustomizeAddrInfo").slideDown();
-                                  console.warn(res.err_msg);
-                              }
-                          }
-                      }
-                  }
-              );
-        }
-
-        //调用微信用户地址信息JS-SDK
+        //[已过时]调用微信用户地址信息JS-SDK
         function selectWxAddress() {
             if (typeof WeixinJSBridge == "undefined") {
                 if (document.addEventListener) {
@@ -504,45 +502,45 @@
         function onBridgeReady() {
             WeixinJSBridge.invoke(
                 'getBrandWCPayRequest',
-                 wxPayParam,
-                 function (res) {
-                     WeixinJSBridge.log(res.err_msg);
-                     //alert(res.err_code + res.err_desc + res.err_msg);
-                     if (res.err_msg.indexOf("ok") != -1) {
-                         //如果购物车里的订单项有团购，则提示用户到我的订单页面去分享团购链接
-                         var groupProds = "";
-                         $.cart.getProdItems().each(function () {
-                             if (this.groupPurchase) {
-                                 if (groupProds == "") {
-                                     groupProds = this.groupPurchase.name;
-                                 } else {
-                                     groupProds += "，" + this.groupPurchase.name;
-                                 }
-                             }
-                         });
-                         if (groupProds != "") {
-                             alert("您团购了“" + groupProds + "”，请在“我的订单”中分享给朋友、微信群、朋友圈，团购达到人数后即发货。");
-                         }
-                         //订单提交成功后清空购物车
-                         $.cart.clearProdItems();
-                         //alert("付款成功！我们将为您送货上门。");
-                         //打开模式窗口，3秒后关闭
-                         openModal();
-                         setTimeout("closeModal();", 3000);
-                     }
-                     else {
-                         if (res.err_msg.indexOf("cancel") != -1) {
-                             alert("您取消了支付，请继续完成支付。");
-                         }
-                         else {
-                             alert("支付失败，请重新下单。");
-                         }
-                     }
+                wxPayParam,
+                function (res) {
+                    WeixinJSBridge.log(res.err_msg);
+                    //alert(res.err_code + res.err_desc + res.err_msg);
+                    if (res.err_msg.indexOf("ok") != -1) {
+                        //如果购物车里的订单项有团购，则提示用户到我的订单页面去分享团购链接
+                        var groupProds = "";
+                        $.cart.getProdItems().each(function () {
+                            if (this.groupPurchase) {
+                                if (groupProds == "") {
+                                    groupProds = this.groupPurchase.name;
+                                } else {
+                                    groupProds += "，" + this.groupPurchase.name;
+                                }
+                            }
+                        });
+                        if (groupProds != "") {
+                            alert("您团购了“" + groupProds + "”，请在“我的订单”中分享给朋友、微信群、朋友圈，团购达到人数后即发货。");
+                        }
+                        //订单提交成功后清空购物车
+                        $.cart.clearProdItems();
+                        //alert("付款成功！我们将为您送货上门。");
+                        //打开模式窗口，3秒后关闭
+                        openModal();
+                        setTimeout("closeModal();", 3000);
+                    }
+                    else {
+                        if (res.err_msg.indexOf("cancel") != -1) {
+                            alert("您取消了支付，请继续完成支付。");
+                        }
+                        else {
+                            alert("支付失败，请重新下单。");
+                        }
+                    }
 
-                     //停止按钮loading动画
-                     lBtnWxPay.stop();
+                    //停止按钮loading动画
+                    lBtnWxPay.stop();
 
-                 });
+                });
         }
 
         function JsApiPay() {

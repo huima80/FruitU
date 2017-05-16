@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="row text-center">
-            <div id="divWxAddress" class="col-xs-12" onclick="selectDeliverAddress();">
+            <div id="divWxAddress" class="col-xs-12" onclick="wxOpenAddress();">
                 <div class="btn btn-block btn-primary"><i class="fa fa-map-marker"></i>&nbsp;&nbsp;收货地址</div>
             </div>
         </div>
@@ -95,9 +95,6 @@
         requirejs(['jquery', 'jweixin110'], function ($, wx) {
 
             $(function () {
-                //注册选择收货人信息单击事件处理函数
-                //$("#divWxAddress").on("click", wx, wxOpenAddress);
-
                 if (typeof wxCardParam == "object" && wxCardParam.cardSign != "undefined") {
                     $.extend(wxCardParam, {
                         complete: function () {
@@ -148,49 +145,51 @@
         }
 
         //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
-        function wxOpenAddress(event) {
-            var wx = event.data;
-            wx.openAddress({
-                success: function (res) {
-                    // 用户成功拉出地址 
-                    if (res.errMsg.indexOf("ok") != -1) {
+        function wxOpenAddress() {
+            requirejs(['jweixin110'], function (wx) {
+                wx.openAddress({
+                    success: function (res) {
+                        // 用户成功拉出地址 
+                        if (res.errMsg.indexOf("ok") != -1) {
+                            alert("收货地址可在下单时选用");
+                        }
+                        else {
+                            alert("无法获取您的地址");
+                        }
+                    },
+                    cancel: function () {
+                        // 用户取消拉出地址
                         alert("收货地址可在下单时选用");
                     }
-                    else {
-                        alert("无法获取您的地址");
-                    }
-                },
-                cancel: function () {
-                    // 用户取消拉出地址
-                    alert("收货地址可在下单时选用");
-                }
+                });
             });
         }
 
-        //获取微信用户地址
+        //[已过时]获取微信用户地址
         function editAddress() {
             WeixinJSBridge.invoke(
                 'editAddress',
                 wxEditAddrParam,   //后端获取的参数
-                  function (res) {
-                      if (res.err_msg.indexOf("ok") != -1) {
-                          alert("收货地址可在下单时选用");
-                      }
-                      else {
-                          if (res.err_msg.indexOf("function_not_exist") != -1) {
-                              alert("您的微信版本过低，请升级到最新版。");
-                          }
-                          else {
-                              if (res.err_msg.indexOf("fail") != -1 || res.err_msg.indexOf("access_denied") != -1 || res.err_msg.indexOf("unkonwPermission") != -1 || res.err_msg.indexOf("domain") != -1) {
-                                  alert("无法获取您的地址，请通知我们处理。");
-                                  console.log(res.err_msg);
-                              }
-                          }
-                      }
-                  }
-              );
+                function (res) {
+                    if (res.err_msg.indexOf("ok") != -1) {
+                        alert("收货地址可在下单时选用");
+                    }
+                    else {
+                        if (res.err_msg.indexOf("function_not_exist") != -1) {
+                            alert("您的微信版本过低，请升级到最新版。");
+                        }
+                        else {
+                            if (res.err_msg.indexOf("fail") != -1 || res.err_msg.indexOf("access_denied") != -1 || res.err_msg.indexOf("unkonwPermission") != -1 || res.err_msg.indexOf("domain") != -1) {
+                                alert("无法获取您的地址，请通知我们处理。");
+                                console.log(res.err_msg);
+                            }
+                        }
+                    }
+                }
+            );
         }
 
+        //[已过时]调用微信地址框
         function selectDeliverAddress() {
             if (typeof WeixinJSBridge == "undefined") {
                 if (document.addEventListener) {

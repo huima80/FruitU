@@ -20,14 +20,37 @@ public class HttpService
         return true;
     }
 
+    /// <summary>
+    /// 发起HTTP POST请求，默认ContentType=text/xml
+    /// </summary>
+    /// <param name="content">提交内容</param>
+    /// <param name="url">服务器URL</param>
+    /// <param name="isUseCert">是否使用证书</param>
+    /// <param name="timeout">服务器超时等待时间</param>
+    /// <returns></returns>
     public static string Post(string content, string url, bool isUseCert, int timeout)
     {
-        System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
+        return Post(content, url, "text/xml", isUseCert, timeout);
+    }
 
-        string result = "";//返回结果
+    /// <summary>
+    /// 发起HTTP POST请求
+    /// </summary>
+    /// <param name="content">提交内容</param>
+    /// <param name="url">服务器URL</param>
+    /// <param name="contentType">数据格式</param>
+    /// <param name="isUseCert">是否使用证书</param>
+    /// <param name="timeout">服务器超时等待时间</param>
+    /// <returns></returns>
+    public static string Post(string content, string url, string contentType, bool isUseCert, int timeout)
+    {
+        //System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
+
+        //返回结果
+        string result = string.Empty;
 
         HttpWebRequest request = null;
-        HttpWebResponse response = null;
+        //HttpWebResponse response = null;
 
         try
         {
@@ -47,16 +70,17 @@ public class HttpService
 
             request.Method = "POST";
             request.Timeout = timeout * 1000;
+            request.ContentType = contentType;
+            byte[] bContent = System.Text.Encoding.UTF8.GetBytes(content);
+            request.ContentLength = bContent.Length;
 
             //设置代理服务器
-            //WebProxy proxy = new WebProxy();                          //定义一个网关对象
-            //proxy.Address = new Uri(WxPayConfig.PROXY_URL);              //网关服务器端口:端口
-            //request.Proxy = proxy;
-
-            //设置POST的数据类型和长度
-            request.ContentType = "text/xml";
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(content);
-            request.ContentLength = data.Length;
+            if (!string.IsNullOrEmpty(Config.PROXY_URL))
+            {
+                WebProxy proxy = new WebProxy();
+                proxy.Address = new Uri(Config.PROXY_URL);
+                request.Proxy = proxy;
+            }
 
             //是否使用证书
             if (isUseCert)
@@ -64,25 +88,27 @@ public class HttpService
                 string path = HttpContext.Current.Request.PhysicalApplicationPath;
                 X509Certificate2 cert = new X509Certificate2(path + Config.SSLCertPath, Config.SSLCERT_PASSWORD);
                 request.ClientCertificates.Add(cert);
-                Log.Debug("WxPayApi", "PostXml used cert");
+                Log.Debug("HttpService", "PostXml used cert");
             }
 
             //往服务器写入数据
             using (Stream reqStream = request.GetRequestStream())
             {
-                reqStream.Write(data, 0, data.Length);
+                reqStream.Write(bContent, 0, bContent.Length);
                 reqStream.Close();
             }
 
             //获取服务端返回
-            response = (HttpWebResponse)request.GetResponse();
-
-            //获取服务端返回数据
-            using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             {
-                result = sr.ReadToEnd().Trim();
-                sr.Close();
+                //获取服务端返回数据
+                using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                {
+                    result = sr.ReadToEnd().Trim();
+                    sr.Close();
+                }
             }
+
         }
         catch (System.Threading.ThreadAbortException e)
         {
@@ -106,10 +132,10 @@ public class HttpService
         finally
         {
             //关闭连接和流
-            if (response != null)
-            {
-                response.Close();
-            }
+            //if (response != null)
+            //{
+            //    response.Close();
+            //}
             if (request != null)
             {
                 request.Abort();
@@ -125,11 +151,11 @@ public class HttpService
     /// <returns>http GET成功后返回的数据，失败抛WebException异常</returns>
     public static string Get(string url)
     {
-        System.GC.Collect();
+        //System.GC.Collect();
         string result = "";
 
         HttpWebRequest request = null;
-        HttpWebResponse response = null;
+        //HttpWebResponse response = null;
 
         //请求url以获取数据
         try
@@ -150,20 +176,25 @@ public class HttpService
 
             request.Method = "GET";
 
-            //设置代理
-            //WebProxy proxy = new WebProxy();
-            //proxy.Address = new Uri(Config.PROXY_URL);
-            //request.Proxy = proxy;
+            //设置代理服务器
+            if (!string.IsNullOrEmpty(Config.PROXY_URL))
+            {
+                WebProxy proxy = new WebProxy();
+                proxy.Address = new Uri(Config.PROXY_URL);
+                request.Proxy = proxy;
+            }
 
             //获取服务器返回
-            response = (HttpWebResponse)request.GetResponse();
-
-            //获取HTTP返回数据
-            using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             {
-                result = sr.ReadToEnd().Trim();
-                sr.Close();
+                //获取HTTP返回数据
+                using (StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                {
+                    result = sr.ReadToEnd().Trim();
+                    sr.Close();
+                }
             }
+
         }
         catch (System.Threading.ThreadAbortException e)
         {
@@ -187,10 +218,10 @@ public class HttpService
         finally
         {
             //关闭连接和流
-            if (response != null)
-            {
-                response.Close();
-            }
+            //if (response != null)
+            //{
+            //    response.Close();
+            //}
             if (request != null)
             {
                 request.Abort();

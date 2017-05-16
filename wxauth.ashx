@@ -88,10 +88,11 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                     //在微信用户表和成员资格表中查找此用户信息，并刷新最近活动时间
                     WeChatUser wxUser = WeChatUserDAO.FindUserByOpenID(jAuthInfo["openid"].ToString(), true);
 
-                    //此用户在微信用户表中存在，但在成员资格表中不存在，则删除微信用户表数据，后续再重建
+                    //此用户在微信用户表中存在，但在成员资格表中不存在，即用户信息不一致，则删除微信用户表数据，后续再重建
                     if (wxUser != null && wxUser.ProviderUserKey == null)
                     {
                         WeChatUserDAO.DeleteUserByOpenID(jAuthInfo["openid"].ToString());
+                        wxUser = null;
                     }
 
                     //如果此微信用户在微信用户表中不存在，则新建用户
@@ -134,6 +135,7 @@ public class WxAuth : IHttpHandler, System.Web.SessionState.IRequiresSessionStat
                         wxUser.AgentOpenID = rxAgentOpenID.Groups[1].Value;
                     }
 
+                    //根据授权方式，再进一步获取用户的昵称、头像、性别等信息
                     if (jAuthInfo["scope"].ToString().ToLower() == "snsapi_base")
                     {
                         //微信用户网页授权access_token，后续调用编辑地址信息JSSDK时需要

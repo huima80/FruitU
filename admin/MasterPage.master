@@ -10,6 +10,7 @@
     <link href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css" rel="stylesheet" />
     <link href="../css/bootstrap.min-3.3.7.css" rel="stylesheet" />
     <link href="../css/font-awesome.min.css" rel="stylesheet" />
+    <link href="../Scripts/jquery-niftymodals/jquery.niftymodals.css" rel="stylesheet" />
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <style>
@@ -83,12 +84,22 @@
                 JTreeContextmenu: 'JTree/jquery.contextmenu',
                 JTreeSaaS: 'JTree/saas',
                 JTreeDnR: 'JTree/jqDnR',
-                datepickerCN: 'datepicker-zh-CN'
+                //http://momentjs.com/
+                moment: 'moment.min',
+                //http://api.jqueryui.com/datepicker/,
+                datepickerCN: 'datepicker-zh-CN',
+                //https://github.com/foxythemes/jquery-niftymodals
+                niftymodals: 'jquery-niftymodals/jquery.niftymodals',
+                //高德地图
+                amap: "http://webapi.amap.com/maps?v=1.3&key=aee0e92073edb1ecddc7303ece02eba5&callback=init",
+                //达达客户端
+                dada: 'dada'
             },
             shim: {
                 'flexslider': ['jquery'],
-                'bootstrap': ['jquery'],
+                'bootstrap': ['jquery']
             }
+             , urlArgs: "bust=" + (new Date()).getTime()
         });
 
         requirejs.onError = function (err) {
@@ -137,7 +148,7 @@
 
 </head>
 <body>
-    <form id="form1" runat="server" enctype="multipart/form-data" class="form-inline">
+    <form id="form1" runat="server" enctype="multipart/form-data">
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
                 <!-- Brand and toggle get grouped for better mobile display -->
@@ -183,6 +194,14 @@
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">支付宝 <span class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a href="https://b.alipay.com" target="_blank">支付宝商户平台</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">第三方物流 <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="https://newopen.imdada.cn/#/manager/shop/recharge" target="_blank">达达</a></li>
+                                <li><a href="http://wuliu.baidu.com/" target="_blank">百度物流</a></li>
+                                <li><a href="http://www.ishansong.com/" target="_blank">闪送</a></li>
                             </ul>
                         </li>
                         <li id="liWebConfig"><a href="#">平台参数设置</a></li>

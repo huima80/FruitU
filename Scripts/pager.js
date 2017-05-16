@@ -7,14 +7,14 @@
     }
         // AMD module
     else if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'jsrender'], factory(jQuery));
+        define(['jquery', 'jsrender'], factory);
     }
         // jquery plugin
     else {
         factory(jQuery);
     }
 }
-(window, function ($) {
+(this, function ($) {
 
     //分页类
     function Pager() {

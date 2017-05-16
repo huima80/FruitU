@@ -190,10 +190,10 @@ public static class WeChatUserDAO
                                     wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                     wxUser.Privilege = sdrUser["Privilege"].ToString();
                                     wxUser.ClientIP = sdrUser["ClientIP"].ToString();
-                                    wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                    wxUser.OrderCount = sdrUser["OrderCount"] != null ? int.Parse(sdrUser["OrderCount"].ToString()) : 0;
-                                    wxUser.AgentOrderCount = sdrUser["AgentOrderCount"] != null ? int.Parse(sdrUser["AgentOrderCount"].ToString()) : 0;
-                                    wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                                    wxUser.IsSubscribe = sdrUser["IsSubscribe"] != DBNull.Value ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                                    wxUser.OrderCount = sdrUser["OrderCount"] != DBNull.Value ? int.Parse(sdrUser["OrderCount"].ToString()) : 0;
+                                    wxUser.AgentOrderCount = sdrUser["AgentOrderCount"] != DBNull.Value ? int.Parse(sdrUser["AgentOrderCount"].ToString()) : 0;
+                                    wxUser.MemberPoints = sdrUser["MemberPoints"] != DBNull.Value ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                                     userPerPage.Add(wxUser);
                                 }
@@ -278,8 +278,8 @@ public static class WeChatUserDAO
                                 wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                 wxUser.Privilege = sdrUser["Privilege"].ToString();
                                 wxUser.ClientIP = sdrUser["ClientIP"].ToString();
-                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != DBNull.Value ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                                wxUser.MemberPoints = sdrUser["MemberPoints"] != DBNull.Value ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                             }
                             sdrUser.Close();
@@ -397,8 +397,8 @@ public static class WeChatUserDAO
                         wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                         wxUser.Privilege = sdrUser["Privilege"].ToString();
                         wxUser.ClientIP = sdrUser["ClientIP"].ToString();
-                        wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                        wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                        wxUser.IsSubscribe = sdrUser["IsSubscribe"] != DBNull.Value ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                        wxUser.MemberPoints = sdrUser["MemberPoints"] != DBNull.Value ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                     }
                 }
@@ -462,8 +462,8 @@ public static class WeChatUserDAO
                                 wxUser.HeadImgUrl = sdrUser["HeadImgUrl"].ToString();
                                 wxUser.Privilege = sdrUser["Privilege"].ToString();
                                 wxUser.ClientIP = sdrUser["ClientIP"].ToString();
-                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != null ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
-                                wxUser.MemberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                                wxUser.IsSubscribe = sdrUser["IsSubscribe"] != DBNull.Value ? bool.Parse(sdrUser["IsSubscribe"].ToString()) : false;
+                                wxUser.MemberPoints = sdrUser["MemberPoints"] != DBNull.Value ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
 
                                 userList.Add(wxUser);
                             }
@@ -523,7 +523,7 @@ public static class WeChatUserDAO
                     {
                         while (sdrUser.Read())
                         {
-                            memberPoints = sdrUser["MemberPoints"] != null ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
+                            memberPoints = sdrUser["MemberPoints"] != DBNull.Value ? int.Parse(sdrUser["MemberPoints"].ToString()) : 0;
                         }
                         sdrUser.Close();
                     }

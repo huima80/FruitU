@@ -26,7 +26,7 @@
                     <div class="panel-heading text-center">
                         <h2 class="panel-title">用户查询</h2>
                     </div>
-                    <div class="panel-body" id="divCriterias">
+                    <div class="panel-body form-inline" id="divCriterias">
                         <div class="row">
                             <div class="col-lg-10">
                                 <div class="form-group">

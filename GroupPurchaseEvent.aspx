@@ -61,7 +61,7 @@
             </div>
         </div>
     </div>
-    <asp:Label ID="lblMsg" runat="server" Text="" class="alert alert-danger" role="alert" Visible="False"></asp:Label>
+    <asp:Label ID="lblMsg" runat="server" Text="" class="alert alert-danger center-block text-center" role="alert" Visible="False"></asp:Label>
     <div class="md-wxshare" id="divModal">
         <div class="weixin-tip-arrow"><i class="fa fa-hand-o-up fa-3x"></i></div>
         <div class="weixin-tip-text">把团购分享给朋友、微信群、朋友圈吧！</div>

@@ -10,7 +10,7 @@
             <div class="panel-heading text-center">
                 <h2 class="panel-title">商品查询</h2>
             </div>
-            <div class="panel-body">
+            <div class="panel-body form-inline">
                 <div class="row">
                     <div class="col-lg-2">
                         <asp:Button ID="btnAddFruit" runat="server" Text="新增商品" OnClick="btnAddFruit_Click" CssClass="btn btn-danger" OnClientClick="jumpToGrid();" />
@@ -111,7 +111,7 @@
         </div>
         <div class="row">
             <div class="col-lg-12 table-responsive">
-                <asp:DetailsView CssClass="table table-condensed" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged" OnDataBound="dvFruit_DataBound">
+                <asp:DetailsView CssClass="table table-condensed form-inline" ID="dvFruit" runat="server" AutoGenerateRows="False" DataSourceID="odsFruit" DataKeyNames="ID" GridLines="Horizontal" OnItemInserted="dvFruit_ItemInserted" OnItemInserting="dvFruit_ItemInserting" OnItemUpdating="dvFruit_ItemUpdating" OnItemUpdated="dvFruit_ItemUpdated" OnModeChanged="dvFruit_ModeChanged" OnDataBound="dvFruit_DataBound">
                     <FieldHeaderStyle CssClass="col-xs-2 col-sm-2 col-md-2 col-lg-2"></FieldHeaderStyle>
                     <Fields>
                         <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID"></asp:BoundField>

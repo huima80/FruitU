@@ -30,7 +30,7 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <img src="images/FruitGift_04.gif" />
+                <img src="images/FruitUBottomLogo.gif" />
             </div>
         </div>
     </div>

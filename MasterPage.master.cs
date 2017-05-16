@@ -71,6 +71,15 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 wxUser.AgentOpenID = agentOpenID;
             }
 
+            if(string.IsNullOrEmpty(Page.Title))
+            {
+                Page.Title = Config.SiteTitle;
+            }
+            else
+            {
+                Page.Title = Config.SiteTitle + " -- " + Page.Title;
+            }
+
             //注册JS变量openID，用于用户分享页面时带上自己的OpenID
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "openID", string.Format("var openID = '{0}';", wxUser.OpenID), true);
             //注册JS变量wxJsApiParam，用于调用微信的JS SDK

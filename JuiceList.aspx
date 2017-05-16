@@ -26,11 +26,11 @@
                 <img src="images/FreshJuiceBanner.gif" />
             </div>
         </div>--%>
-         <div class="row">
+<%--         <div class="row">
             <div class="col-xs-12">
                 <img src="images/FruitMilk.gif" />
             </div>
-        </div>
+        </div>--%>
         <div runat="server" id="divFruitMilkList" class="row"></div>
        <div class="row">
             <div class="col-xs-12">

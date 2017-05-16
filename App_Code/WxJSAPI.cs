@@ -373,4 +373,22 @@ public class WxJSAPI
 
         return editAddrParam;
     }
+
+    /// <summary>
+    /// 获取微信门店信息
+    /// </summary>
+    /// <returns></returns>
+    public static string GetPOIList()
+    {
+        JsonData reqParam;
+        string strPOIList;
+        string apiUrl = String.Format(@"https://api.weixin.qq.com/cgi-bin/poi/getpoilist?access_token={0}", GetAccessToken());
+        reqParam = new JsonData();
+        reqParam["begin"] = 0;
+        reqParam["limit"] = 50;
+
+        strPOIList = HttpService.Post(reqParam.ToJson(), apiUrl, "application/json", false, Config.WeChatAPITimeout);
+
+        return strPOIList;
+    }
 }

@@ -62,7 +62,7 @@ public class PrintOrder : IHttpHandler, System.Web.SessionState.IReadOnlySession
         finally
         {
             context.Response.Clear();
-            context.Response.ContentType = "text/plain";
+            context.Response.ContentType = "application/json";
             if (!string.IsNullOrEmpty(strPO))
             {
                 context.Response.Write(strPO);
