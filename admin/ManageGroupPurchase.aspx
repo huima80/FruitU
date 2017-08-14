@@ -144,19 +144,19 @@
                         </asp:BoundField>
                         <asp:TemplateField HeaderText="团购起止日期" SortExpression="StartDate">
                             <EditItemTemplate>
-                                <asp:TextBox ID="txtStartDate" runat="server" size="10" Text='<%# Bind("StartDate") %>' placeholder="团购开始日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
+                                <asp:TextBox ID="txtStartDate" runat="server" size="10" Text='<%# Bind("StartDate", "{0:yyyy-MM-ddTHH:mm}") %>' placeholder="团购开始日期" CssClass="form-control" ClientIDMode="Static" TextMode="DateTimeLocal"></asp:TextBox>
                                 至
-                                <asp:TextBox ID="txtEndDate" runat="server" size="10" Text='<%# Bind("EndDate") %>' placeholder="团购结束日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
+                                <asp:TextBox ID="txtEndDate" runat="server" size="10" Text='<%# Bind("EndDate", "{0:yyyy-MM-ddTHH:mm}") %>' placeholder="团购结束日期" CssClass="form-control" ClientIDMode="Static" TextMode="DateTimeLocal"></asp:TextBox>
                             </EditItemTemplate>
                             <InsertItemTemplate>
-                                <asp:TextBox ID="txtStartDate" runat="server" size="10" Text='<%# Bind("StartDate") %>' placeholder="团购开始日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
+                                <asp:TextBox ID="txtStartDate" runat="server" size="10" Text='<%# Bind("StartDate", "{0:yyyy-MM-ddTHH:mm}") %>' placeholder="团购开始日期" CssClass="form-control" ClientIDMode="Static" TextMode="DateTimeLocal"></asp:TextBox>
                                 至
-                               <asp:TextBox ID="txtEndDate" runat="server" size="10" Text='<%# Bind("EndDate") %>' placeholder="团购结束日期" CssClass="form-control" ClientIDMode="Static"></asp:TextBox>
+                               <asp:TextBox ID="txtEndDate" runat="server" size="10" Text='<%# Bind("EndDate", "{0:yyyy-MM-ddTHH:mm}") %>' placeholder="团购结束日期" CssClass="form-control" ClientIDMode="Static" TextMode="DateTimeLocal"></asp:TextBox>
                             </InsertItemTemplate>
                             <ItemTemplate>
-                                <asp:Label ID="lblStartDate" runat="server" Text='<%# Eval("StartDate") %>'></asp:Label>
+                                <asp:Label ID="lblStartDate" runat="server" Text='<%# Eval("StartDate", "{0:yyyy-MM-ddTHH:mm}") %>'></asp:Label>
                                 至
-                                <asp:Label ID="lblEndDate" runat="server" Text='<%# Eval("EndDate") %>'></asp:Label>
+                                <asp:Label ID="lblEndDate" runat="server" Text='<%# Eval("EndDate", "{0:yyyy-MM-ddTHH:mm}") %>'></asp:Label>
                             </ItemTemplate>
                             <ControlStyle CssClass="form-control" />
                         </asp:TemplateField>
@@ -181,26 +181,19 @@
         requirejs(['jquery', 'jqueryui'], function ($) {
 
             $(function () {
-
-                //http://api.jqueryui.com/datepicker/
-                requirejs(['datepickerCN'], function () {
-                    $("#txtStartDate").datepicker({ dateFormat: 'yy-mm-dd' });
-                    $("#txtEndDate").datepicker({ dateFormat: 'yy-mm-dd' });
-
-                    $("#txtStartDate").on("change", function () {
-                        if ($(this).val() != "" && $("#txtEndDate").val() != "")
-                            if ($(this).val() > $("#txtEndDate").val()) {
-                                alert("开始时间必须早于结束时间。");
-                                $(this).val("");
-                            }
-                    });
-                    $("#txtEndDate").on("change", function () {
-                        if ($(this).val() != "" && $("#txtStartDate").val() != "")
-                            if ($(this).val() < $("#txtStartDate").val()) {
-                                alert("结束时间必须晚于开始时间。");
-                                $(this).val("");
-                            }
-                    });
+                $("#txtStartDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtEndDate").val() != "")
+                        if ($(this).val() > $("#txtEndDate").val()) {
+                            alert("开始时间必须早于结束时间。");
+                            $(this).val("");
+                        }
+                });
+                $("#txtEndDate").on("change", function () {
+                    if ($(this).val() != "" && $("#txtStartDate").val() != "")
+                        if ($(this).val() < $("#txtStartDate").val()) {
+                            alert("结束时间必须晚于开始时间。");
+                            $(this).val("");
+                        }
                 });
             });
 

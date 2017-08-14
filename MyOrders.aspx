@@ -216,30 +216,30 @@
         function onBridgeReady() {
             WeixinJSBridge.invoke(
                 'getBrandWCPayRequest',
-                 wxPayParam,
-                 function (res) {
-                     WeixinJSBridge.log(res.err_msg);
-                     //alert(res.err_code + res.err_desc + res.err_msg);
-                     if (res.err_msg.indexOf("ok") != -1) {
-                         alert("付款成功！我们将为您送货上门。");
+                wxPayParam,
+                function (res) {
+                    WeixinJSBridge.log(res.err_msg);
+                    //alert(res.err_code + res.err_desc + res.err_msg);
+                    if (res.err_msg.indexOf("ok") != -1) {
+                        alert("付款成功！我们将为您送货上门。");
 
-                         //付款成功后，隐藏撤单、修改订单状态、隐藏微信支付按钮
-                         $("#CancelOrder" + lastPoID).hide();
-                         $("#PayOrder" + lastPoID).removeClass("doing").addClass("done");
-                         $("#btnWxPay" + lastPoID).hide();
-                         $("#btnAliPay" + lastPoID).hide();
-                     }
-                     else {
-                         if (res.err_msg.indexOf("cancel") != -1) {
-                             alert("您取消了支付，请继续完成支付。");
-                         }
-                         else {
-                             alert("支付失败，请重新下单。");
-                         }
-                     }
-                     Ladda.stopAll();   //停止按钮loading动画
+                        //付款成功后，隐藏撤单、修改订单状态、隐藏微信支付按钮
+                        $("#CancelOrder" + lastPoID).hide();
+                        $("#PayOrder" + lastPoID).removeClass("doing").addClass("done");
+                        $("#btnWxPay" + lastPoID).hide();
+                        $("#btnAliPay" + lastPoID).hide();
+                    }
+                    else {
+                        if (res.err_msg.indexOf("cancel") != -1) {
+                            alert("您取消了支付，请继续完成支付。");
+                        }
+                        else {
+                            alert("支付失败，请重新下单。");
+                        }
+                    }
+                    Ladda.stopAll();   //停止按钮loading动画
 
-                 });
+                });
         }
 
         function JsApiPay() {
@@ -361,19 +361,19 @@
                     success: function (response) {
                         if (response["result_code"] == "SUCCESS") {
                             alert("撤单成功");
-                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("label label-warning").addClass("done");
+                            $("#CancelOrder" + poID).prop("onclick", "").text("(已撤单)").removeClass("label cancel-order").addClass("done");
                             $("#AcceptOrder" + poID).prop("onclick", "");
                             $("#btnWxPay" + poID).hide();
                             $("#btnAliPay" + poID).hide();
                         }
                         else {
                             alert("撤单失败：" + response["err_code_des"]);
-                            $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('取消订单').removeClass("done").addClass("label label-warning");
+                            $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").text('撤单').removeClass("done").addClass("label cancel-order");
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         alert("撤单失败：" + textStatus);
-                        $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").html('取消订单').removeClass("done").addClass("label label-warning");
+                        $("#CancelOrder" + poID).prop("onclick", "cancelOrder(" + poID + ");").text('撤单').removeClass("done").addClass("label cancel-order");
                         console.warn(errorThrown + ":" + textStatus);
                     }
                 });

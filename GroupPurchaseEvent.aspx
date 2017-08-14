@@ -176,43 +176,62 @@
 
             if (secondLeft < 0) {
                 secondLeft = 60 + secondLeft;
-                minuteLeft = minuteLeft--;
+                minuteLeft--;
             }
             if (minuteLeft < 0) {
                 minuteLeft = 60 + minuteLeft;
-                hourLeft = hourLeft--;
+                hourLeft--;
             }
             if (hourLeft < 0) {
                 hourLeft = 24 + hourLeft;
-                dateLeft = dateLeft--;
+                dateLeft--;
             }
             if (dateLeft < 0) {
-                dateLeft = 31 + dateLeft;
-                monthLeft = monthLeft--;
+                switch (groupEventEndDate.getMonth() + 1 - 1) {
+                    case 1:
+                    case 3:
+                    case 5:
+                    case 7:
+                    case 8:
+                    case 10:
+                    case 12:
+                        dateLeft = 31 + dateLeft;
+                        break;
+                    case 4:
+                    case 6:
+                    case 9:
+                    case 11:
+                        dateLeft = 30 + dateLeft;
+                        break;
+                    case 2:
+                        dateLeft = 28 + dateLeft;
+                        break;
+                }
+                monthLeft--;
             }
             if (monthLeft < 0) {
                 monthLeft = 12 + monthLeft;
-                yearLeft = yearLeft--;
+                yearLeft--;
             }
 
             var countDownText = '剩余';
             if (yearLeft != 0) {
-                countDownText = '<span class="spYearLeft">' + yearLeft + '</span>年, ';
+                countDownText = ' <span class="spYearLeft"> ' + yearLeft + ' </span>年';
             }
             if (monthLeft != 0) {
-                countDownText += '<span class="spMonthLeft">' + monthLeft + '</span>月, ';
+                countDownText += '<span class="spMonthLeft"> ' + monthLeft + ' </span>月';
             }
             if (dateLeft != 0) {
-                countDownText += '<span class="spDateLeft">' + dateLeft + '</span>天, ';
+                countDownText += '<span class="spDateLeft"> ' + dateLeft + ' </span>天';
             }
             if (hourLeft != 0) {
-                countDownText += '<span class="spHourLeft">' + hourLeft + '</span>小时, ';
+                countDownText += '<span class="spHourLeft"> ' + hourLeft + ' </span>小时';
             }
             if (minuteLeft != 0) {
-                countDownText += '<span class="spMinuteLeft">' + minuteLeft + '</span>分, ';
+                countDownText += '<span class="spMinuteLeft"> ' + minuteLeft + ' </span>分';
             }
             if (secondLeft >= 0) {
-                countDownText += '<span class="spSecondLeft">' + secondLeft + '</span>秒, 结束';
+                countDownText += '<span class="spSecondLeft"> ' + secondLeft + ' </span>秒, 结束';
             }
             if (secondLeft != 0 || minuteLeft != 0 || hourLeft != 0 || dateLeft != 0 || monthLeft != 0 || yearLeft != 0) {
                 document.getElementById('spCountDown').innerHTML = countDownText;
@@ -252,7 +271,7 @@
                     mainImg = webConfig.defaultImg;
                 }
                 var groupPurchase = new $.cart.GroupPurchase(groupEvent.GroupPurchase.ID, groupEvent.GroupPurchase.Name, groupEvent.GroupPurchase.Description, groupEvent.GroupPurchase.StartDate, groupEvent.GroupPurchase.EndDate, groupEvent.GroupPurchase.RequiredNumber, groupEvent.GroupPurchase.GroupPrice);
-                //根据商品信息构造JS商品对象
+                //根据商品信息构造JS商品对象，包含团购和团购活动ID
                 var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, groupEvent.GroupPurchase.GroupPrice, parseInt($("input#txtQty").val()), prod.InventoryQty, groupPurchase, groupEvent.ID);
                 //把商品对象插入到购物车里，并跳转到购物车页面
                 if ($.cart.insertProdItem(prodItem)) {

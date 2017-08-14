@@ -130,14 +130,14 @@
                 this.qty = qty;
                 //商品库存量
                 this.inventoryQty = inventoryQty;
-                //团购对象
+                //团购对象，用于指定参加的团购
                 if (groupPurchase == null || (groupPurchase instanceof Cart.prototype.GroupPurchase)) {
                     this.groupPurchase = groupPurchase;
                 }
                 else {
                     throw new TypeError("参数groupPurchase不是团购对象");
                 }
-                //团购活动ID
+                //团购活动ID，用于指定参加的团购活动
                 this.groupPurchaseEventID = groupPurchaseEventID;
             } catch (error) {
                 alert(error.message);
@@ -665,6 +665,7 @@
                     switch (wxCard.cardType) {
                         //代金券
                         case this.WxCardType.cash:
+                            isSupported = true;
                             subTotal = this.subTotal();
                             freight = this.calFreight();
                             //有门槛的代金券：商品价格+运费>=微信优惠券起用金额，才能使用优惠券
@@ -672,12 +673,10 @@
                                 if (subTotal + freight >= wxCard.leastCost) {
                                     this.wxCard = wxCard;
                                     isMeetCondition = true;
-                                    isSupported = true;
                                 }
                                 else {
                                     this.wxCard = new this.WxCard();
                                     isMeetCondition = false;
-                                    isSupported = true;
                                 }
                             }
                             else {
@@ -685,12 +684,10 @@
                                 if (subTotal + freight > wxCard.reduceCost) {
                                     this.wxCard = wxCard;
                                     isMeetCondition = true;
-                                    isSupported = true;
                                 }
                                 else {
                                     this.wxCard = new this.WxCard();
                                     isMeetCondition = false;
-                                    isSupported = true;
                                 }
                             }
                             break;

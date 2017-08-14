@@ -99,7 +99,7 @@
                 'flexslider': ['jquery'],
                 'bootstrap': ['jquery']
             }
-             , urlArgs: "bust=" + (new Date()).getTime()
+            , urlArgs: "bust=" + (new Date()).getTime()
         });
 
         requirejs.onError = function (err) {
@@ -174,25 +174,19 @@
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">经营数据分析 <span class="caret"></span></a>
                             <ul class="dropdown-menu">
-                                <li><a href="#">商品统计</a></li>
+                                <li><a href="HWBigData.aspx">华为大数据分析</a></li>
                                 <li><a href="http://changyan.kuaizhan.com/" target="_blank">商品评论管理</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li><a href="#">订单统计</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li><a href="http://new.cnzz.com/v1/login.php?siteid=1257060290" target="_blank">CNZZ统计</a></li>
                                 <li><a href="http://zhanzhang.baidu.com/" target="_blank">百度统计</a></li>
                             </ul>
                         </li>
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">微信平台 <span class="caret"></span></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">第三方支付 <span class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a href="http://mp.weixin.qq.com/" target="_blank">微信公众平台</a></li>
                                 <li><a href="https://pay.weixin.qq.com/" target="_blank">微信支付商户平台</a></li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">支付宝 <span class="caret"></span></a>
-                            <ul class="dropdown-menu">
+                                <li role="separator" class="divider"></li>
                                 <li><a href="https://b.alipay.com" target="_blank">支付宝商户平台</a></li>
                             </ul>
                         </li>

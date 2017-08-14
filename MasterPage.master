@@ -203,11 +203,11 @@
                         }
                     });
 
-                    //显示购物车里的商品数量，并注册购物车事件处理函数
                     requirejs(['cart'], function () {
+                        //显示购物车里的商品数量
                         refreshCartProdQty(null, { prodQty: $.cart.prodAmount() });
 
-                        //注册购物车商品变动前后的事件处理函数
+                        //注册购物车里商品变动前后的事件处理函数
                         $($.cart).on({
                             "onProdItemInserting onProdItemUpdating onProdItemDeleting onProdItemClearing": shakeCart,
                             "onProdItemInserted onProdItemUpdated onProdItemDeleted onProdItemCleared": refreshCartProdQty

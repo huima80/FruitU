@@ -5,7 +5,7 @@
     <link href="../Scripts/ladda/ladda-themeless.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css" />
     <script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=aee0e92073edb1ecddc7303ece02eba5"></script>
-<%--    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=IcCARel5ElCGEYQTIK5Dot0oZ7ZCFd1K"></script>--%>
+    <%--    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=IcCARel5ElCGEYQTIK5Dot0oZ7ZCFd1K"></script>--%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="container-fluid">
@@ -176,7 +176,7 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单操作">
                             <ItemTemplate>
-                                <button type="button" id="btnDelivery" class="btn btn-sm btn-block btn-success ladda-button" data-style="zoom-in" onclick='showDelivery("<%# Eval("OrderID") %>");'>配送(测试)</button>
+                                <button type="button" id="btnDelivery" class="btn btn-sm btn-block btn-success ladda-button" data-style="zoom-in" onclick='showDelivery("<%# Eval("OrderID") %>");'>配送</button>
                                 <asp:Button ID="btnDeliver" runat="server" Text="发货" CssClass="" data-style="zoom-in" CommandName="Deliver" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发货吗？');" />
                                 <asp:Button ID="btnAccept" runat="server" Text="签收" CssClass="" data-style="zoom-in" CommandName="Accept" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认签收吗？');" />
                                 <asp:Button ID="btnCalMemberPoints" runat="server" Text="发放积分" CssClass="" data-style="zoom-in" CommandName="CalMemberPoints" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发放积分吗？');" />
@@ -200,7 +200,6 @@
                 <li role="presentation" class="active"><a id="aSelfDelivery" href="#divSelfDelivery" role="tab" data-toggle="pill">自主配送</a></li>
                 <li role="presentation"><a id="aDaDa" href="#divDaDa" role="tab" data-toggle="pill">达达配送</a></li>
                 <li role="presentation"><a id="aShanSong" href="#divShanSong" role="tab" data-toggle="pill">闪送</a></li>
-                <li role="presentation"><a id="aBaiduWuliu" href="#divBaiduWuliu" role="tab" data-toggle="pill">百度配送</a></li>
             </ul>
             <!-- Tab panes -->
             <div class="tab-content">
@@ -543,7 +542,6 @@
                         </div>
                     </div>
                 </div>
-                <div role="tabpanel" class="tab-pane fade" id="divBaiduWuliu">开发中...</div>
             </div>
         </div>
     </div>
@@ -739,21 +737,21 @@
                     },
                     //This option allow to attach a callback to a button with the class 'md-close'
                     buttons: [
-                      {
-                          class: 'btn-ok',
-                          callback: function (btn, modal, event) {
-                              //You can cancel the modal hide event by returning false
-                              alert("You need to check your info!");
-                              return false;
-                          }
-                      },
-                      {
-                          class: 'btn-cancel',
-                          callback: function (btn, modal, event) {
-                              //You can access to the modal data here
-                              var modal_data = modal.data.some_data;
-                          }
-                      }
+                        {
+                            class: 'btn-ok',
+                            callback: function (btn, modal, event) {
+                                //You can cancel the modal hide event by returning false
+                                alert("You need to check your info!");
+                                return false;
+                            }
+                        },
+                        {
+                            class: 'btn-cancel',
+                            callback: function (btn, modal, event) {
+                                //You can access to the modal data here
+                                var modal_data = modal.data.some_data;
+                            }
+                        }
                     ],
                     beforeOpen: function (modal) {
                         //You can cancel the modal show event by returning false

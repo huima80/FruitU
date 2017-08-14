@@ -271,15 +271,20 @@ public class GroupPurchaseEvent
         return groupEvent;
     }
 
+    /// <summary>
+    /// 根据OpenID查询用户参加的所有团购活动，默认加载团购活动成员
+    /// </summary>
+    /// <param name="openID"></param>
+    /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(string openID)
     {
         return FindGroupPurchaseEventByOpenID(openID, true);
     }
 
     /// <summary>
-    /// 根据ID查询指定的团购活动
+    /// 根据OpenID查询用户参加的所有团购活动
     /// </summary>
-    /// <param name="id">团购活动ID</param>
+    /// <param name="openID">用户OpenID</param>
     /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
     /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(string openID, bool isLoadGroupEventMember)
@@ -297,13 +302,20 @@ public class GroupPurchaseEvent
         }
         catch (Exception ex)
         {
-            Log.Error("根据ID查询指定团购活动", ex.ToString());
+            Log.Error("根据OpenID查询用户参加的所有团购活动", ex.ToString());
             throw ex;
         }
 
         return groupEventList;
     }
 
+    /// <summary>
+    /// 根据OpenID查询用户参加的所有团购活动
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <param name="openID"></param>
+    /// <param name="isLoadGroupEventMember">是否加载团购活动成员</param>
+    /// <returns></returns>
     public static List<GroupPurchaseEvent> FindGroupPurchaseEventByOpenID(SqlConnection conn, string openID, bool isLoadGroupEventMember)
     {
         List<GroupPurchaseEvent> groupEventList = new List<GroupPurchaseEvent>();
@@ -348,13 +360,18 @@ public class GroupPurchaseEvent
         }
         catch (Exception ex)
         {
-            Log.Error("根据ID查询指定团购活动", ex.ToString());
+            Log.Error("根据OpenID查询用户参加的所有团购活动", ex.ToString());
             throw ex;
         }
 
         return groupEventList;
     }
 
+    /// <summary>
+    /// 查询团购活动成员
+    /// </summary>
+    /// <param name="conn"></param>
+    /// <returns></returns>
     public List<GroupPurchaseEventMember> FindGroupPurchaseEventMembers(SqlConnection conn)
     {
         List<GroupPurchaseEventMember> groupEventMemberList = new List<GroupPurchaseEventMember>();
@@ -392,6 +409,7 @@ public class GroupPurchaseEvent
                         {
                             if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID)
                             {
+                                //计算团购活动里的所有订单数量
                                 memberAllPO++;
                             }
 
@@ -402,12 +420,14 @@ public class GroupPurchaseEvent
                                 && po.TradeState != TradeState.AP_TRADE_FINISHED
                                 && po.TradeState != TradeState.AP_TRADE_SUCCESS)
                             {
+                                //计算团购活动里的未支付订单数量
                                 notPaidPO++;
                             }
 
                             if (po.Purchaser.OpenID == eventMember.GroupMember.OpenID
                                 && po.IsCancel)
                             {
+                                //计算团购活动里的取消订单数量
                                 cancelledPO++;
                             }
                         });
