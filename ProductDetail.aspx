@@ -8,10 +8,11 @@
     <div class="container">
         <div class="row">
             <div class="col-xs-12">
-                <div id="jssorSliderContainer" class="center-block" style="position: relative; top: 0px; left: 0px; min-width: 100%; height: 150px;">
+                <asp:Image ID="imgMainImg" runat="server" />
+                <%--                <div id="jssorSliderContainer" class="center-block" style="position: relative; top: 0px; left: 0px; min-width: 100%; height: 150px;">
                     <!-- Slides Container -->
                     <div id="divSlides" runat="server" u="slides" style="cursor: grab; position: absolute; overflow: hidden; left: 0px; top: 0px; min-width: 100%; height: 150px;"></div>
-                </div>
+                </div>--%>
             </div>
         </div>
         <div class="row prod-detail">
@@ -35,12 +36,11 @@
                     </span>
                 </div>
                 <div>
-                    <asp:Label CssClass="original-price" ID="lblOriginalPrice" runat="server" Text=""></asp:Label><br />
-                    <asp:Label CssClass="sales-volume" ID="lblSalesVolume" runat="server" Text=""></asp:Label>
+                    <asp:Label CssClass="sales-volume" ID="lblSalesVolume" runat="server" Text="" Visible="false"></asp:Label>
                 </div>
                 <div class="buy-button">
-                    <button class="btn btn-warning add-cart" type="button" id="btnAddCart" runat="server"><i class="fa fa-cart-plus fa-lg fa-fw"></i>加入购物车</button>
-                    <button class="btn btn-danger buynow" type="button" id="btnBuynow" runat="server">立即购买</button>
+                    <button id="btnLaunchGroupEvent" class="btn btn-warning" type="button" runat="server"></button>
+                    <button id="btnAddToCart" class="btn btn-danger add-cart" type="button" runat="server"></button>
                 </div>
                 <asp:Label CssClass="prod-state" ID="lblProdState" runat="server" Text=""></asp:Label>
             </div>
@@ -63,25 +63,26 @@
     </div>
 
     <script>
-        requirejs(['jquery', 'jqueryui', 'jssorslider', 'webConfig', 'cart'], function ($) {
+        requirejs(['jquery', 'jqueryui', 'jssorslider', 'cart'], function ($) {
             $(function () {
 
                 //轮播图
-                var jssor_slider1 = new $JssorSlider$('jssorSliderContainer',
-                    {
-                        $AutoPlay: true,
-                        $ThumbnailNavigatorOptions: true,
-                        $FillMode: 2,
-                    });
+                //var jssor_slider1 = new $JssorSlider$('jssorSliderContainer',
+                //    {
+                //        $AutoPlay: true,
+                //        $ThumbnailNavigatorOptions: true,
+                //        $FillMode: 2,
+                //    });
+
+                $("#btnAddToCart").on("click", addToCart);
+                $("#btnLaunchGroupEvent").on("click", launchGroupEvent);
 
                 //tab页插件
                 $("#tabs").tabs();
 
-                $('#btnAddCart').on('click', addToCart);
-
-                $('#btnBuynow').on('click', function () {
-                    addToCart();
-                    location.href = "Checkout.aspx";
+                //超出库存事件处理函数
+                $($.cart).on("onOutOfStock", function (event, data) {
+                    alert("您购买的数量超过库存数了哦。");
                 });
 
                 //requirejs(['cart'], function () {
@@ -91,7 +92,7 @@
 
             });
 
-            //递减果汁数量
+            //递减数量
             $("#btnDesc").on("click", function () {
                 var currQty = $("#txtQty").val();
                 if (!isNaN(currQty)) {
@@ -110,7 +111,7 @@
                 }
             });
 
-            //递增果汁数量
+            //递增数量
             $("#btnAsc").on("click", function () {
                 var currQty = $("#txtQty").val();
                 if (!isNaN(currQty)) {
@@ -135,12 +136,59 @@
 
             //加入购物车
             function addToCart() {
-                if (prodInfo) {
+                if (prod) {
+                    //查找商品主图
+                    for (var i = 0; i < prod.FruitImgList.length; i++) {
+                        if (prod.FruitImgList[i]["MainImg"]) {
+                            mainImg = prod.FruitImgList[i]["ImgName"];
+                            break;
+                        }
+                    }
+
+                    if (!mainImg) {
+                        mainImg = webConfig.defaultImg;
+                    }
+
+                    var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, prod.FruitPrice, parseInt($("input#txtQty").val()), prod.InventoryQty, null, null);
                     //购物车里添加商品
-                    $.cart.insertProdItem(prodInfo.prodID, prodInfo.prodName, prodInfo.prodDesc, "images/" + prodInfo.prodImg, prodInfo.price, $("#txtQty").val());
+                    $.cart.insertProdItem(prodItem);
                 }
                 else {
-                    alert("获取商品信息失败");
+                    alert("商品数据异常");
+                    console.warn("var prod=" + prod);
+                }
+            }
+
+            //新发起团购活动
+            function launchGroupEvent() {
+                if (prod) {
+                    //查找商品主图
+                    for (var i = 0; i < prod.FruitImgList.length; i++) {
+                        if (prod.FruitImgList[i]["MainImg"]) {
+                            mainImg = prod.FruitImgList[i]["ImgName"];
+                            break;
+                        }
+                    }
+
+                    if (!mainImg) {
+                        mainImg = webConfig.defaultImg;
+                    }
+
+                    //根据商品里的团购信息构造JS团购对象
+                    if (!!prod.ActiveGroupPurchase) {
+                        var groupPurchase = new $.cart.GroupPurchase(prod.ActiveGroupPurchase.ID, prod.ActiveGroupPurchase.Name, prod.ActiveGroupPurchase.Description, prod.ActiveGroupPurchase.StartDate, prod.ActiveGroupPurchase.EndDate, prod.ActiveGroupPurchase.RequiredNumber, prod.ActiveGroupPurchase.GroupPrice);
+                        //根据商品信息构造JS商品对象，商品价格为团购价
+                        var prodItem = new $.cart.ProdItem(prod.ID, prod.FruitName, prod.FruitDesc, "images/" + mainImg, groupPurchase.groupPrice, parseInt($("input#txtQty").val()), prod.InventoryQty, groupPurchase, null);
+                        //把商品对象插入到购物车里
+                        $.cart.insertProdItem(prodItem);
+                    } else {
+                        alert("商品团购信息异常");
+                        console.warn("prod=" + prod.ActiveGroupPurchase);
+                    }
+                }
+                else {
+                    alert("商品数据异常");
+                    console.warn("var prod=" + prod);
                 }
             }
 

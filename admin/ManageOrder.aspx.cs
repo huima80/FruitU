@@ -304,18 +304,24 @@ public partial class ManageOrder : System.Web.UI.Page
             }
 
             //发货、签收、发放积分按钮
-            Button btnDeliver = e.Row.FindControl("btnDeliver") as Button;
+            HtmlButton btnDelivery = e.Row.FindControl("btnDelivery") as HtmlButton;
             Button btnAccept = e.Row.FindControl("btnAccept") as Button;
             Button btnCalMemberPoints = e.Row.FindControl("btnCalMemberPoints") as Button;
             if (po.IsDelivered)
             {
-                btnDeliver.Enabled = false;
-                btnDeliver.CssClass = BTN_DONE_CSS;
-                btnDeliver.ToolTip = po.DeliverDate.HasValue ? "发货时间：" + po.DeliverDate.ToString() : string.Empty;
+                btnDelivery.Attributes.Add("disabled", "disabled");
+                btnDelivery.Attributes.Add("class", BTN_DONE_CSS);
+                btnDelivery.Attributes.Add("title", po.DeliverDate.HasValue ? "发货时间：" + po.DeliverDate.ToString() : string.Empty);
+
+                //btnDelivery.Enabled = false;
+                //btnDelivery.CssClass = BTN_DONE_CSS;
+                //btnDelivery.ToolTip = po.DeliverDate.HasValue ? "发货时间：" + po.DeliverDate.ToString() : string.Empty;
             }
             else
             {
-                btnDeliver.CssClass = BTN_DOING_CSS;
+                btnDelivery.Attributes.Add("class", BTN_DOING_CSS);
+                btnDelivery.Attributes.Add("onclick", "showDelivery('" + po.OrderID + "')");
+                //btnDelivery.CssClass = BTN_DOING_CSS;
             }
             if (po.IsAccept)
             {
@@ -342,8 +348,11 @@ public partial class ManageOrder : System.Web.UI.Page
             if (po.IsCancel)
             {
                 //屏蔽发货按钮
-                btnDeliver.Enabled = false;
-                btnDeliver.ToolTip = "已撤单，不能发货";
+                btnDelivery.Attributes.Add("disabled", "disabled");
+                btnDelivery.Attributes.Add("class", BTN_DONE_CSS);
+                btnDelivery.Attributes.Add("title", "已撤单，不能发货");
+                //btnDelivery.Enabled = false;
+                //btnDelivery.ToolTip = "已撤单，不能发货";
 
                 //屏蔽签收按钮
                 btnAccept.Enabled = false;

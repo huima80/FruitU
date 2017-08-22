@@ -176,8 +176,8 @@
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="订单操作">
                             <ItemTemplate>
-                                <button type="button" id="btnDelivery" class="btn btn-sm btn-block btn-success ladda-button" data-style="zoom-in" onclick='showDelivery("<%# Eval("OrderID") %>");'>配送</button>
-                                <asp:Button ID="btnDeliver" runat="server" Text="发货" CssClass="" data-style="zoom-in" CommandName="Deliver" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发货吗？');" />
+                                <button runat="server" type="button" id="btnDelivery" class="btn btn-sm btn-block btn-success ladda-button" data-style="zoom-in">配送</button>
+                                <%--                                <asp:Button ID="btnDeliver" runat="server" Text="发货" CssClass="" data-style="zoom-in" CommandName="Deliver" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发货吗？');" />--%>
                                 <asp:Button ID="btnAccept" runat="server" Text="签收" CssClass="" data-style="zoom-in" CommandName="Accept" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认签收吗？');" />
                                 <asp:Button ID="btnCalMemberPoints" runat="server" Text="发放积分" CssClass="" data-style="zoom-in" CommandName="CalMemberPoints" CommandArgument='<%# Eval("ID") %>' OnClientClick="return confirm('确认发放积分吗？');" />
                                 <button id="btnPrintPreview" class="<%#BTN_DOING_CSS %>" type="button" data-style="zoom-in" onclick='printPreview(<%# Eval("ID") %>);'><i class="fa fa-print"></i>&nbsp;打印</button>
@@ -240,7 +240,7 @@
                         </div>
                         <div id="divSelfDeliveryBtn" class="form-group">
                             <div class="col-sm-12 text-center">
-                                <button type="button" id="btnSelfDelivery" class="btn btn-info ladda-button" data-style="zoom-in" onclick="selfDelivery()">发货</button>
+                                <button type="button" id="btnSelfDelivery" class="btn btn-info ladda-button" data-style="zoom-in" onclick="if(confirm('确认发货吗？'))selfDelivery();">发货</button>
                             </div>
                         </div>
                     </div>
@@ -710,7 +710,7 @@
         //显示配送模态窗
         function showDelivery(orderID) {
 
-            //显示当前处理的订单ID
+            //设置并显示当前处理的订单ID
             $("#divModal").data("orderid", orderID);
             $("#spOrderID").text(orderID);
 
@@ -867,6 +867,7 @@
             lBtnSelfDelivery.start();
             $.ajax({
                 url: "OrderHandler.ashx?Action=SelfDelivery",
+                data: { OrderID: $("#divModal").data("orderid") },
                 type: "POST",
                 dataType: "json",
                 cache: false,
@@ -874,10 +875,7 @@
                     try {
                         if (!!jRet && jRet["result"] == 1) {
                             alert("发货成功");
-                            $("#txtDeliveryName").attr("disabled", "disabled");
-                            $("#txtDeliveryPhone").attr("disabled", "disabled");
-                            $("#divDeliveryDate").show();
-                            $("#divSelfDeliveryBtn").hide();
+                            location.reload();
                         }
                         else {
                             throw new Error("发货错误");

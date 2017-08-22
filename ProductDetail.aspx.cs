@@ -5,14 +5,13 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.HtmlControls;
+using Newtonsoft.Json;
 
 public partial class ProductDetail : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
         int prodID;
-        string jsProdInfo;
-        FruitImg mainImg = null;
 
         try
         {
@@ -31,13 +30,15 @@ public partial class ProductDetail : System.Web.UI.Page
             {
                 fruit.FruitImgList.ForEach(fi =>
                 {
-                    if (!fi.MainImg)
+                    if (fi.MainImg)
                     {
-                        this.divSlides.InnerHtml += string.Format("<div><img u=\"image\" src=\"images/{0}\" alt=\"{1}:{2}\" /></div>", fi.ImgName, fruit.FruitName, fruit.FruitDesc);
+                        this.imgMainImg.ImageUrl = "~/images/" + fi.ImgName;
+                        this.imgMainImg.AlternateText = fi.ImgDesc;
+                        this.imgMainImg.CssClass = "img-responsive";
                     }
                     else
                     {
-                        mainImg = fi;
+                        //this.divSlides.InnerHtml += string.Format("<div><img u=\"image\" src=\"images/{0}\" alt=\"{1}:{2}\" /></div>", fi.ImgName, fruit.FruitName, fruit.FruitDesc);
                     }
                 });
 
@@ -63,14 +64,25 @@ public partial class ProductDetail : System.Web.UI.Page
                 this.lblProdDesc.Text = fruit.FruitDesc;
                 this.lblProdPrice.Text = fruit.FruitPrice.ToString();
                 this.lblProdUnit.Text = "元/" + fruit.FruitUnit;
-                this.lblOriginalPrice.Text = "原价格：" + (fruit.FruitPrice * (decimal)1.5).ToString("F02");
                 this.lblSalesVolume.Text = "累计销量：" + Fruit.SalesVolume(prodID).ToString();
 
                 if (fruit.InventoryQty == 0)
                 {
-                    this.btnAddCart.Disabled = true;
-                    this.btnBuynow.Disabled = true;
+                    this.btnAddToCart.Disabled = true;
+                    this.btnLaunchGroupEvent.Disabled = true;
                     this.lblProdState.Text = "商品已售罄，我们正在补货ing...";
+                }
+
+                if(fruit.ActiveGroupPurchase == null)
+                {
+                    this.btnLaunchGroupEvent.Visible = false;
+                    this.btnAddToCart.InnerHtml = "<i class='fa fa-cart-plus fa-lg fa-fw'></i>&nbsp;加入购物车";
+                }
+                else
+                {
+                    this.btnLaunchGroupEvent.Visible = true;
+                    this.btnLaunchGroupEvent.InnerHtml = string.Format("<i class='fa fa-group fa-lg fa-fw'></i>&nbsp;团购价：{0}元/{1} {2}人团", fruit.ActiveGroupPurchase.GroupPrice, fruit.FruitUnit, fruit.ActiveGroupPurchase.RequiredNumber);
+                    this.btnAddToCart.InnerHtml = "<i class='fa fa-cart-plus fa-lg fa-fw'></i>&nbsp;单独购买";
                 }
 
                 HtmlImage hiDetailImg;
@@ -87,8 +99,16 @@ public partial class ProductDetail : System.Web.UI.Page
                 });
 
                 //生成商品信息JS对象，用于前端JS操作
-                jsProdInfo = string.Format("var prodInfo={{prodID:{0},prodName:\"{1}\",prodDesc:\"{2}\",prodImg:\"{3}\",price:{4}}};", fruit.ID, fruit.FruitName, fruit.FruitDesc, (mainImg != null) ? mainImg.ImgName : "", fruit.FruitPrice);
-                ScriptManager.RegisterClientScriptBlock(Page, this.GetType(), "jsProdInfo", jsProdInfo, true);
+                JsonConvert.DefaultSettings = new Func<JsonSerializerSettings>(() =>
+                {
+                    JsonSerializerSettings jSetting = new JsonSerializerSettings();
+                    jSetting.DateFormatHandling = DateFormatHandling.MicrosoftDateFormat;
+                    jSetting.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                    jSetting.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                    return jSetting;
+                });
+                string jProd = JsonConvert.SerializeObject(fruit);
+                ScriptManager.RegisterStartupScript(Page, this.GetType(), "jProdInfo", string.Format("var prod={0};", jProd), true);
 
                 //搜狐畅言所需的页面文章ID
                 //参考：http://changyan.kuaizhan.com/help/f-source-id.html
@@ -102,6 +122,7 @@ public partial class ProductDetail : System.Web.UI.Page
         catch (Exception ex)
         {
             Log.Error(this.GetType().ToString(), ex.Message);
+            throw ex;
         }
     }
 }

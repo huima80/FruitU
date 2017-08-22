@@ -2688,7 +2688,7 @@ public class ProductOrder : IComparable<ProductOrder>
         po.OrderDate = DateTime.Parse(sdr["OrderDate"].ToString());
         po.TradeState = (TradeState)sdr["TradeState"];
         po.TradeStateDesc = sdr["TradeStateDesc"].ToString();
-        po.DeliveryType = sdr["DeliveryType"] != DBNull.Value ? (DeliveryType?)sdr["DeliveryType"] : null;
+        po.DeliveryType = sdr["DeliveryType"] != DBNull.Value ? (DeliveryType?)int.Parse(sdr["DeliveryType"].ToString()) : null;
         po.IsDelivered = bool.Parse(sdr["IsDelivered"].ToString());
         po.DeliverDate = sdr["DeliverDate"] != DBNull.Value ? (DateTime?)DateTime.Parse(sdr["DeliverDate"].ToString()) : null;
         po.IsAccept = bool.Parse(sdr["IsAccept"].ToString());
