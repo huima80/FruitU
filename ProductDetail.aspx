@@ -109,7 +109,7 @@
 
                 //设置微信分享参数
                 wxShareInfo.desc = '我买了【' + prod.FruitName + '】' + prod.FruitDesc;
-                wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
+                wxShareInfo.link = location.href + '&AgentOpenID=' + openID;
                 wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
 
                 wx.ready(function () {
