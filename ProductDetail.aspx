@@ -63,7 +63,7 @@
     </div>
 
     <script>
-        requirejs(['jquery', 'jqueryui', 'jssorslider', 'cart'], function ($) {
+        requirejs(['jquery', 'jweixin110', 'jqueryui', 'jssorslider', 'cart'], function ($, wx) {
             $(function () {
 
                 //轮播图
@@ -90,7 +90,49 @@
                 //    $($.cart).on("onProdItemInserting", flyToCart);
                 //});
 
+
             });
+
+            //设置微信分享参数
+            try {
+                if (typeof wxShareInfo == "undefined") {
+                    throw new Error("微信分享参数错误");
+                }
+
+                //查找此商品的主图
+                var mainImg = webConfig.defaultImg;
+                for (var i = 0; i < prod.FruitImgList.length; i++) {
+                    if (prod.FruitImgList[i]["MainImg"]) {
+                        mainImg = prod.FruitImgList[i]["ImgName"];
+                    }
+                }
+
+                //设置微信分享参数
+                wxShareInfo.desc = '我买了【' + prod.FruitName + '】' + prod.FruitDesc;
+                wxShareInfo.link = location.href + '?AgentOpenID=' + openID;
+                wxShareInfo.imgUrl = location.origin + '/images/' + mainImg;
+
+                wx.ready(function () {
+                    //分享到朋友圈
+                    wx.onMenuShareTimeline(wxShareInfo);
+
+                    //分享给朋友
+                    wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                    //分享到QQ
+                    wx.onMenuShareQQ(wxShareInfo);
+
+                    //分享到腾讯微博
+                    wx.onMenuShareWeibo(wxShareInfo);
+
+                    //分享到QQ空间
+                    wx.onMenuShareQZone(wxShareInfo);
+                });
+
+            } catch (error) {
+                alert(error.message);
+                return false;
+            }
 
             //递减数量
             $("#btnDesc").on("click", function () {

@@ -80,24 +80,114 @@
         var wxShareInfo;
 
         requirejs(['jquery', 'webConfig'], function ($) {
+            try {
+                //检测是否在微信中打开网页
+                if (!webConfig.browserVersion.wechat) {
+                    //如果打开的不是阿里支付宝网页，则报错；否则不报错，直接返回
+                    if (location.href.toLowerCase().indexOf('alipay') == -1) {
+                        throw new Error("请在微信中打开链接");
+                    } else {
+                        return false;
+                    }
+                }
+            } catch (error) {
+                alert(error.message);
+                return false;
+            }
+
+            //加载服务器端的系统配置参数，并初始化
+            if (!!webConfigServer) {
+                $.extend(webConfig, webConfigServer);
+            }
+
+            //微信分享参数，每个具体页面中可以覆盖此参数值
+            wxShareInfo = {
+                title: webConfig.siteTitle + "--" + webConfig.siteDesc, // 分享标题
+                desc: webConfig.siteDesc, // 分享描述
+                link: location.origin + "/index.aspx?AgentOpenID=" + openID, // 分享链接
+                imgUrl: location.origin + "/images/" + webConfig.defaultImg, // 分享图标
+                success: shareTipForMemberPoints,
+                cancel: shareTipForMemberPoints
+            };
+
+            //设置微信JSSDK参数
+            requirejs(['jweixin110'], function (wx) {
+                try {
+                    if (typeof wxJsApiParam == "undefined") {
+                        throw new Error("微信JSSDK参数错误");
+                    }
+
+                    $.extend(wxJsApiParam, {
+                        debug: false,
+                        jsApiList: [
+                            'checkJsApi',
+                            'onMenuShareTimeline',
+                            'onMenuShareAppMessage',
+                            'onMenuShareQQ',
+                            'onMenuShareWeibo',
+                            'onMenuShareQZone',
+                            'hideMenuItems',
+                            'showMenuItems',
+                            'hideAllNonBaseMenuItem',
+                            'showAllNonBaseMenuItem',
+                            'translateVoice',
+                            'startRecord',
+                            'stopRecord',
+                            'onVoiceRecordEnd',
+                            'playVoice',
+                            'onVoicePlayEnd',
+                            'pauseVoice',
+                            'stopVoice',
+                            'uploadVoice',
+                            'downloadVoice',
+                            'chooseImage',
+                            'previewImage',
+                            'uploadImage',
+                            'downloadImage',
+                            'getNetworkType',
+                            'openLocation',
+                            'getLocation',
+                            'hideOptionMenu',
+                            'showOptionMenu',
+                            'closeWindow',
+                            'scanQRCode',
+                            'chooseWXPay',
+                            'openProductSpecificView',
+                            'addCard',
+                            'chooseCard',
+                            'openCard',
+                            'openAddress'
+                        ]
+                    });
+
+                    //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
+                    wx.config(wxJsApiParam);
+
+                    wx.ready(function () {
+                        //分享到朋友圈
+                        wx.onMenuShareTimeline(wxShareInfo);
+
+                        //分享给朋友
+                        wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                        //分享到QQ
+                        wx.onMenuShareQQ(wxShareInfo);
+
+                        //分享到腾讯微博
+                        wx.onMenuShareWeibo(wxShareInfo);
+
+                        //分享到QQ空间
+                        wx.onMenuShareQZone(wxShareInfo);
+                    });
+                }
+                catch (error) {
+                    alert(error.message);
+                    return false;
+                }
+            });
 
             $(function () {
                 try {
-                    //检测是否在微信中打开网页
-                    if (!webConfig.browserVersion.wechat) {
-                        //如果打开的不是阿里支付宝网页，则报错；否则不报错，直接返回
-                        if (location.href.toLowerCase().indexOf('alipay') == -1) {
-                            throw new Error("请在微信中打开链接");
-                        } else {
-                            return false;
-                        }
-                    }
-
-                    //加载服务器端的系统配置参数，并初始化
-                    if (!!webConfigServer) {
-                        $.extend(webConfig, webConfigServer);
-                    }
-
                     //根据当前页面高亮菜单项
                     if (location.href.toLowerCase().indexOf("index") != -1) {
                         $("#navHomeBtn").addClass("active");
@@ -117,91 +207,6 @@
                             }
                         }
                     }
-
-                    //设置微信JSSDK参数
-                    requirejs(['jweixin110'], function (wx) {
-                        try {
-                            if (typeof wxJsApiParam == "undefined") {
-                                throw new Error("微信JSSDK参数错误");
-                            }
-
-                            $.extend(wxJsApiParam, {
-                                debug: false,
-                                jsApiList: [
-                                    'checkJsApi',
-                                    'onMenuShareTimeline',
-                                    'onMenuShareAppMessage',
-                                    'onMenuShareQQ',
-                                    'onMenuShareWeibo',
-                                    'onMenuShareQZone',
-                                    'hideMenuItems',
-                                    'showMenuItems',
-                                    'hideAllNonBaseMenuItem',
-                                    'showAllNonBaseMenuItem',
-                                    'translateVoice',
-                                    'startRecord',
-                                    'stopRecord',
-                                    'onVoiceRecordEnd',
-                                    'playVoice',
-                                    'onVoicePlayEnd',
-                                    'pauseVoice',
-                                    'stopVoice',
-                                    'uploadVoice',
-                                    'downloadVoice',
-                                    'chooseImage',
-                                    'previewImage',
-                                    'uploadImage',
-                                    'downloadImage',
-                                    'getNetworkType',
-                                    'openLocation',
-                                    'getLocation',
-                                    'hideOptionMenu',
-                                    'showOptionMenu',
-                                    'closeWindow',
-                                    'scanQRCode',
-                                    'chooseWXPay',
-                                    'openProductSpecificView',
-                                    'addCard',
-                                    'chooseCard',
-                                    'openCard',
-                                    'openAddress'
-                                ]
-                            });
-
-                            //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
-                            wx.config(wxJsApiParam);
-
-                            wx.ready(function () {
-                                wxShareInfo = {
-                                    title: webConfig.siteTitle + "--" + webConfig.siteDesc, // 分享标题
-                                    desc: webConfig.siteDesc, // 分享描述
-                                    link: location.origin + "/index.aspx?AgentOpenID=" + openID, // 分享链接
-                                    imgUrl: location.origin + "/images/" + webConfig.defaultImg, // 分享图标
-                                    success: shareTipForMemberPoints,
-                                    cancel: shareTipForMemberPoints
-                                };
-
-                                //分享到朋友圈
-                                wx.onMenuShareTimeline(wxShareInfo);
-
-                                //分享给朋友
-                                wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
-
-                                //分享到QQ
-                                wx.onMenuShareQQ(wxShareInfo);
-
-                                //分享到腾讯微博
-                                wx.onMenuShareWeibo(wxShareInfo);
-
-                                //分享到QQ空间
-                                wx.onMenuShareQZone(wxShareInfo);
-                            });
-                        }
-                        catch (error) {
-                            alert(error.message);
-                            return false;
-                        }
-                    });
 
                     requirejs(['cart'], function () {
                         //显示购物车里的商品数量
@@ -287,6 +292,7 @@
                 }
             }
 
+            //微信分享后的回调函数
             function shareTipForMemberPoints() {
                 alert("分享给朋友消费有100积分(5元)奖励哦！");
             }
