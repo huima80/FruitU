@@ -110,8 +110,7 @@ public partial class ProductDetail : System.Web.UI.Page
                 string jProd = JsonConvert.SerializeObject(fruit);
                 ScriptManager.RegisterStartupScript(Page, this.GetType(), "jProdInfo", string.Format("var prod={0};", jProd), true);
 
-                //搜狐畅言所需的页面文章ID
-                //参考：http://changyan.kuaizhan.com/help/f-source-id.html
+                //搜狐畅言所需的页面文章ID，参考：http://changyan.kuaizhan.com/help/f-source-id.html
                 this.SOHUCS.Attributes["sid"] = Request.Url.GetHashCode().ToString();
             }
             else
