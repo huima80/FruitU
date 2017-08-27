@@ -242,7 +242,7 @@
                             }
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
-                            alert(errorThrown + ":" + textStatus);
+                            console.error(errorThrown + ":" + textStatus);
                         }
                     });
 
@@ -266,7 +266,7 @@
                             }
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
-                            alert(errorThrown + ":" + textStatus);
+                            console.error(errorThrown + ":" + textStatus);
                         }
                     });
                 }
