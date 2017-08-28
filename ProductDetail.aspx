@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        requirejs(['jquery', 'jweixin110', 'jqueryui', 'jssorslider', 'cart'], function ($, wx) {
+        requirejs(['jquery', 'jweixin', 'jqueryui', 'jssorslider', 'cart'], function ($, wx) {
             $(function () {
 
                 //轮播图

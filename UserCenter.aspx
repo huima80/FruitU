@@ -92,7 +92,7 @@
 
     <script>
 
-        requirejs(['jquery', 'jweixin110'], function ($, wx) {
+        requirejs(['jquery', 'jweixin'], function ($, wx) {
 
             $(function () {
                 if (typeof wxCardParam == "object" && wxCardParam.cardSign != "undefined") {
@@ -146,7 +146,7 @@
 
         //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
         function wxOpenAddress() {
-            requirejs(['jweixin110'], function (wx) {
+            requirejs(['jweixin'], function (wx) {
                 wx.openAddress({
                     success: function (res) {
                         // 用户成功拉出地址 

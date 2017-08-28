@@ -11,54 +11,53 @@ public partial class UserCenter : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
         WeChatUser wxUser;
-        string wxEditAddrParam = string.Empty;
         string cardSign = string.Empty, timeStamp = string.Empty, nonceStr = string.Empty;
 
         try
         {
             wxUser = Session["WxUser"] as WeChatUser;
 
-            string authUrl;
-            string redirectUri = Request.Url.AbsoluteUri;
+            //string authUrl;
+            //string redirectUri = Request.Url.AbsoluteUri;
 
-            //如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
-            if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
-            {
-                if (Request.QueryString["CODE"] == null)
-                {
-                    authUrl = String.Format(@"https://open.weixin.qq.com/connect/oauth2/authorize?appid={0}&redirect_uri={1}&response_type=code&scope={2}&state=STATE#wechat_redirect",
-                        Config.APPID,
-                        HttpUtility.UrlEncode(redirectUri),
-                        "snsapi_base");
+            ////如果wxUser中不包含snsapi_base模式授权的token或token已超时，则发起snsapi_base授权
+            //if (string.IsNullOrEmpty(wxUser.AccessTokenForBase) || DateTime.Now >= wxUser.ExpireOfAccessTokenForBase)
+            //{
+            //    if (Request.QueryString["CODE"] == null)
+            //    {
+            //        authUrl = String.Format(@"https://open.weixin.qq.com/connect/oauth2/authorize?appid={0}&redirect_uri={1}&response_type=code&scope={2}&state=STATE#wechat_redirect",
+            //            Config.APPID,
+            //            HttpUtility.UrlEncode(redirectUri),
+            //            "snsapi_base");
 
-                    Response.Redirect(authUrl);
-                }
-                else
-                {
-                    authUrl = String.Format(@"https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&grant_type=authorization_code",
-                        Config.APPID,
-                        Config.APPSECRET,
-                        Request.QueryString["CODE"]);
+            //        Response.Redirect(authUrl);
+            //    }
+            //    else
+            //    {
+            //        authUrl = String.Format(@"https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&grant_type=authorization_code",
+            //            Config.APPID,
+            //            Config.APPSECRET,
+            //            Request.QueryString["CODE"]);
 
-                    string strAuth = HttpService.Get(authUrl);
-                    JsonData jAccessToken = JsonMapper.ToObject(strAuth);
+            //        string strAuth = HttpService.Get(authUrl);
+            //        JsonData jAccessToken = JsonMapper.ToObject(strAuth);
 
-                    if (jAccessToken != null && jAccessToken is JsonData && jAccessToken.Keys.Contains("access_token") && jAccessToken.Keys.Contains("refresh_token") && jAccessToken.Keys.Contains("expires_in"))
-                    {
-                        wxUser.AccessTokenForBase = jAccessToken["access_token"].ToString();
-                        wxUser.RefreshTokenForBase = jAccessToken["refresh_token"].ToString();
-                        wxUser.ExpireOfAccessTokenForBase = DateTime.Now.AddSeconds(double.Parse(jAccessToken["expires_in"].ToString()));
-                    }
-                    else
-                    {
-                        throw new Exception("snsapi_base模式认证失败");
-                    }
+            //        if (jAccessToken != null && jAccessToken is JsonData && jAccessToken.Keys.Contains("access_token") && jAccessToken.Keys.Contains("refresh_token") && jAccessToken.Keys.Contains("expires_in"))
+            //        {
+            //            wxUser.AccessTokenForBase = jAccessToken["access_token"].ToString();
+            //            wxUser.RefreshTokenForBase = jAccessToken["refresh_token"].ToString();
+            //            wxUser.ExpireOfAccessTokenForBase = DateTime.Now.AddSeconds(double.Parse(jAccessToken["expires_in"].ToString()));
+            //        }
+            //        else
+            //        {
+            //            throw new Exception("snsapi_base模式认证失败");
+            //        }
 
-                }
-            }
+            //    }
+            //}
 
-            //获取“收货地址共享接口参数”，传给前端JS
-            wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
+            ////获取“收货地址共享接口参数”，传给前端JS
+            //wxEditAddrParam = WxJSAPI.MakeEditAddressJsParam(wxUser.AccessTokenForBase, redirectUri);
 
             //获取最新的用户积分信息
             wxUser.MemberPoints = WeChatUserDAO.FindMemberPointsByOpenID(wxUser.OpenID);
@@ -76,8 +75,6 @@ public partial class UserCenter : System.Web.UI.Page
             this.lblMemberPointsExchageRate.Text = Config.MemberPointsExchangeRate.ToString();
             ////结束：显示auth.ashx鉴权获取的微信用户信息
 
-            //定义前端JS全局变量：微信地址JS参数
-            ScriptManager.RegisterStartupScript(Page, this.GetType(), "wxAddrParam", string.Format("var wxEditAddrParam = {0};", (!string.IsNullOrEmpty(wxEditAddrParam) ? wxEditAddrParam : "undefined")), true);
             //定义前端JS全局变量：微信卡券JS参数
             ScriptManager.RegisterStartupScript(Page, this.GetType(), "jsWxCard", string.Format("var wxCardParam={{cardSign:'{0}',timestamp:'{1}',nonceStr:'{2}',signType:'SHA1'}};", cardSign, timeStamp, nonceStr), true);
 

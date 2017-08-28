@@ -299,7 +299,7 @@
             }
 
             //设置微信分享参数
-            requirejs(['jweixin110'], function (wx) {
+            requirejs(['jweixin'], function (wx) {
                 wx.ready(function () {
 
                     wxShareInfo.title = '团购惊爆价' + groupEvent.GroupPurchase.GroupPrice + '元【' + groupEvent.GroupPurchase.Name + '】';
