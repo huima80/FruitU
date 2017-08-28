@@ -821,7 +821,6 @@
                     }
                     //调用微信卡券JS
                     wx.chooseCard(wxCardParam);
-                    alert(JSON.stringify(wxCardParam));
                 }
                 else {
                     //取消卡券，同时更新购物车里的卡券信息
