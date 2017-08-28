@@ -47,7 +47,7 @@
                 ladda: 'ladda/ladda.min',
                 spin: 'ladda/spin.min',
                 masonry: ['masonry.pkgd.min', 'https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.min'],
-                jweixin: 'http://res.wx.qq.com/open/js/jweixin-1.0.0',
+                jweixin: 'http://res.wx.qq.com/open/js/jweixin-1.2.0',
                 jweixin110: 'http://res.wx.qq.com/open/js/jweixin-1.1.0',
                 lodash: 'lodash.min',
                 html5shiv: 'http://apps.bdimg.com/libs/html5shiv/3.7/html5shiv.min',
@@ -79,7 +79,7 @@
 
         var wxShareInfo;
 
-        requirejs(['jquery', 'webConfig'], function ($) {
+        requirejs(['jquery', 'jweixin', 'webConfig'], function ($, wx) {
             try {
                 //检测是否在微信中打开网页
                 if (!webConfig.browserVersion.wechat) {
@@ -111,80 +111,78 @@
             };
 
             //设置微信JSSDK参数
-            requirejs(['jweixin110'], function (wx) {
-                try {
-                    if (typeof wxJsApiParam == "undefined") {
-                        throw new Error("微信JSSDK参数错误");
-                    }
-
-                    $.extend(wxJsApiParam, {
-                        debug: false,
-                        jsApiList: [
-                            'checkJsApi',
-                            'onMenuShareTimeline',
-                            'onMenuShareAppMessage',
-                            'onMenuShareQQ',
-                            'onMenuShareWeibo',
-                            'onMenuShareQZone',
-                            'hideMenuItems',
-                            'showMenuItems',
-                            'hideAllNonBaseMenuItem',
-                            'showAllNonBaseMenuItem',
-                            'translateVoice',
-                            'startRecord',
-                            'stopRecord',
-                            'onVoiceRecordEnd',
-                            'playVoice',
-                            'onVoicePlayEnd',
-                            'pauseVoice',
-                            'stopVoice',
-                            'uploadVoice',
-                            'downloadVoice',
-                            'chooseImage',
-                            'previewImage',
-                            'uploadImage',
-                            'downloadImage',
-                            'getNetworkType',
-                            'openLocation',
-                            'getLocation',
-                            'hideOptionMenu',
-                            'showOptionMenu',
-                            'closeWindow',
-                            'scanQRCode',
-                            'chooseWXPay',
-                            'openProductSpecificView',
-                            'addCard',
-                            'chooseCard',
-                            'openCard',
-                            'openAddress'
-                        ]
-                    });
-
-                    //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
-                    wx.config(wxJsApiParam);
-
-                    wx.ready(function () {
-                        //分享到朋友圈
-                        wx.onMenuShareTimeline(wxShareInfo);
-
-                        //分享给朋友
-                        wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
-
-                        //分享到QQ
-                        wx.onMenuShareQQ(wxShareInfo);
-
-                        //分享到腾讯微博
-                        wx.onMenuShareWeibo(wxShareInfo);
-
-                        //分享到QQ空间
-                        wx.onMenuShareQZone(wxShareInfo);
-                    });
+            try {
+                if (typeof wxJsApiParam == "undefined") {
+                    throw new Error("微信JSSDK参数错误");
                 }
-                catch (error) {
-                    alert(error.message);
-                    return false;
-                }
-            });
+
+                $.extend(wxJsApiParam, {
+                    debug: false,
+                    jsApiList: [
+                        'checkJsApi',
+                        'onMenuShareTimeline',
+                        'onMenuShareAppMessage',
+                        'onMenuShareQQ',
+                        'onMenuShareWeibo',
+                        'onMenuShareQZone',
+                        'hideMenuItems',
+                        'showMenuItems',
+                        'hideAllNonBaseMenuItem',
+                        'showAllNonBaseMenuItem',
+                        'translateVoice',
+                        'startRecord',
+                        'stopRecord',
+                        'onVoiceRecordEnd',
+                        'playVoice',
+                        'onVoicePlayEnd',
+                        'pauseVoice',
+                        'stopVoice',
+                        'uploadVoice',
+                        'downloadVoice',
+                        'chooseImage',
+                        'previewImage',
+                        'uploadImage',
+                        'downloadImage',
+                        'getNetworkType',
+                        'openLocation',
+                        'getLocation',
+                        'hideOptionMenu',
+                        'showOptionMenu',
+                        'closeWindow',
+                        'scanQRCode',
+                        'chooseWXPay',
+                        'openProductSpecificView',
+                        'addCard',
+                        'chooseCard',
+                        'openCard',
+                        'openAddress'
+                    ]
+                });
+
+                //所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用,目前Android微信客户端不支持pushState的H5新特性，所以使用pushState来实现web app的页面会导致签名失败，此问题会在Android6.2中修复）。
+                wx.config(wxJsApiParam);
+
+                wx.ready(function () {
+                    //分享到朋友圈
+                    wx.onMenuShareTimeline(wxShareInfo);
+
+                    //分享给朋友
+                    wx.onMenuShareAppMessage($.extend({}, wxShareInfo, { type: 'link', dataUrl: '' }));
+
+                    //分享到QQ
+                    wx.onMenuShareQQ(wxShareInfo);
+
+                    //分享到腾讯微博
+                    wx.onMenuShareWeibo(wxShareInfo);
+
+                    //分享到QQ空间
+                    wx.onMenuShareQZone(wxShareInfo);
+                });
+            }
+            catch (error) {
+                alert(error.message);
+                return false;
+            }
 
             $(function () {
                 try {

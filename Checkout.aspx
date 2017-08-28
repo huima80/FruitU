@@ -132,7 +132,7 @@
         //Ladda loading控制按钮
         var lBtnWxPay, lBtnPayCash, lBtnAliPay;
 
-        requirejs(['jquery', 'ladda', 'jweixin110', 'encoder'], function ($, ladda, wx) {
+        requirejs(['jquery', 'ladda', 'jweixin', 'encoder'], function ($, ladda, wx) {
 
             $(function () {
 
@@ -392,7 +392,7 @@
 
         //获取微信地址信息的JSSDK接口，调用微信JS函数openAddress
         function wxOpenAddress() {
-            requirejs(['jweixin110'], function (wx) {
+            requirejs(['jweixin'], function (wx) {
                 wx.openAddress({
                     success: function (res) {
                         // 用户成功拉出地址 
@@ -495,7 +495,7 @@
             }
         }
 
-        //微信支付JSSDK参数，由后端生成，供前端调用
+        //微信支付JSSDK参数，点击“微信支付”由后端生成，供前端JS拉起微信支付密码框
         var wxPayParam;
 
         //调用微信JS api 支付，后台调用统一下单接口生成所需参数后，在微信浏览器中调用此函数发起支付
@@ -815,12 +815,16 @@
             var wx = event.data;
             try {
                 if ($(this).is(":checked")) {
+                    //微信卡券和会员积分不能同时使用
                     if ($("#cbMemberPoints").is(":checked")) {
                         $("#cbMemberPoints").click();
                     }
+                    //调用微信卡券JS
                     wx.chooseCard(wxCardParam);
+                    alert(JSON.stringify(wxCardParam));
                 }
                 else {
+                    //取消卡券，同时更新购物车里的卡券信息
                     var wxCard = new $.cart.WxCard();
                     $.cart.updateWxCard(wxCard);
                 }
