@@ -219,8 +219,9 @@
         </nav>
         <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
         </asp:ContentPlaceHolder>
-        <!-- #include file="../cs.aspx" -->
-        <img src="<%= new CS(1257060290).TrackPageView()%>" width="0" height="0" />
+        <div style="display: none">
+            <script src="https://s95.cnzz.com/z_stat.php?id=1257060290&web_id=1257060290" language="JavaScript"></script>
+        </div>
     </form>
 </body>
 
