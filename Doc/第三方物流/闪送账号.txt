@@ -1,5 +1,0 @@
-闪送需提供参数－测试：
-1、parterNo = 1034，merchantId=YP1034
-2、md5加密key = 12345abcde
-3、余额支付token: lL&pm7ETlI&JAN/xYE0ZDLk7787BoKJaN9Fcd9G5QNg=
-（绑定商户手机号：   13770696350  ）
